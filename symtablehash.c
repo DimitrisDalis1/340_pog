@@ -88,7 +88,7 @@ void length_increase(unsigned int yyscore){
 
 int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
     int hashIndex;
-    SymbolTableEntry* temp;
+    SymbolTableEntry* temp_entry;
     char *tempkey;
 
     /*check if we have a node with this key*/
@@ -96,30 +96,29 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
 
     /*Initialize*/
     if(type==GLOBAL|type==LOCAL|type==FORMAL){
-        temp->value.varVal=(struct Variable*)malloc(sizeof(Variable));
-        temp->isActive=true;
-        temp->type=type;
-        temp->value.varVal->line=yyline;
-        temp->value.varVal->scope=yyscope;
-        temp->value.varVal->name=strdup(name);
+        temp_entry->value.varVal=(struct Variable*)malloc(sizeof(Variable));
+        temp_entry->isActive=true;
+        temp_entry->type=type;
+        temp_entry->value.varVal->line=yyline;
+        temp_entry->value.varVal->scope=yyscope;
+        temp_entry->value.varVal->name=strdup(name);
         //add id to the correct scope list
     }else{
-        temp->value.funcVal=(struct Function*)malloc(sizeof(Function));
-        temp->isActive=true;
-        temp->type=type;
-        temp->value.funcVal->line=yyline;
-        temp->value.funcVal->args=args;
-        temp->value.funcVal->scope=yyscope;
+        temp_entry->value.funcVal=(struct Function*)malloc(sizeof(Function));
+        temp_entry->isActive=true;
+        temp_entry->type=type;
+        temp_entry->value.funcVal->line=yyline;
+        temp_entry->value.funcVal->args=args;
+        temp_entry->value.funcVal->scope=yyscope;
         //add id to the correct scope list
-    \
-        temp->value.funcVal->name=strdup(name);
+        temp_entry->value.funcVal->name=strdup(name);
     }
     /*Generate the hash index*/
     hashIndex=SymTable_hash(name,oSymTable->buckets);
 
     /*Put it in the hash table*/
-    temp->next=oSymTable->hashtable[hashIndex];
-    oSymTable->hashtable[hashIndex]=temp;
+    temp_entry->next=oSymTable->hashtable[hashIndex];
+    oSymTable->hashtable[hashIndex]=temp_entry;
     oSymTable->size++;
     
 
@@ -176,9 +175,10 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             }
             while (temp_head->symbol->next_in_scope != NULL)
             {
-                temp_head->symbol->next_in_scope = temp_head->symbol->next_in_scope;
+                temp_head->symbol = temp_head->symbol->next_in_scope;
+        
             }
-            temp_head->symbol->next_in_scope = temp;
+            temp_head->symbol->next_in_scope = temp_entry;
         }
     }
 
