@@ -2,11 +2,11 @@
 
 unsigned int length=0;
 
-id_list *insert(id_list *ptr,char *name){
+int insert(id_list *ptr,char *name){
     assert(ptr);
     id_list *x = malloc(sizeof(id_list));
     x = ptr->head;
-    if (list_contains(ptr,name))
+    if (id_list_contains(ptr,name))
     {
         return 0;
     }
@@ -104,7 +104,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
         temp->value.varVal->name=strdup(name);
         //add id to the correct scope list
     }else{
-        temp->value.funcVal=(struct Variable*)malloc(sizeof(Function));
+        temp->value.funcVal=(struct Function*)malloc(sizeof(Function));
         temp->isActive=true;
         temp->type=type;
         temp->value.funcVal->line=yyline;
@@ -121,6 +121,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     temp->next=oSymTable->hashtable[hashIndex];
     oSymTable->hashtable[hashIndex]=temp;
     oSymTable->size++;
+    
 
     if(head_scope_node == NULL){
         head_scope_node = create_scope(oSymTable->hashtable[hashIndex],0,NULL,NULL);
@@ -268,7 +269,7 @@ static void expand(SymTable_T *oSymTable){
 }
 
 
-SymTable_T* SymTable_new(void){
+SymTable_T** SymTable_new(void){
     SymTable_T *oSymTable=malloc(sizeof(SymTable_T*));
     assert(oSymTable);
     oSymTable->hashtable=malloc(509 * sizeof(SymbolTableEntry*));
