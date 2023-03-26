@@ -269,7 +269,7 @@ static void expand(SymTable_T *oSymTable){
 }
 
 
-SymTable_T** SymTable_new(void){
+SymTable_T* SymTable_new(void){
     SymTable_T *oSymTable=malloc(sizeof(SymTable_T*));
     assert(oSymTable);
     oSymTable->hashtable=malloc(509 * sizeof(SymbolTableEntry*));
