@@ -1,0 +1,92 @@
+%{
+    #include <stdio.h>
+    int yyerror (char* yaccProvidedMessage);
+    int yylex(void);
+
+    extern int yylineno;
+    extern char* yytext;
+    extern FILE* yyin;
+
+%}
+
+
+%start program
+
+%union{
+    char* stringValue;
+    int intValue;
+    double doubleValue;
+}
+
+%expect 2
+
+%token<stringValue> ID
+%token<stringValue> STRING
+%token<intValue> INT
+%token<doubleValue> REAL
+%token<stringValue> IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL
+%token<stringValue> ASSIGN PLUS MINUS MULT DIV PERC EQUAL NOT_EQUAL PLUS2 MINUS2 BIGGER SMALLER BIGGER_EQUAL SMALLER_EQUAL 
+%token<stringValue> LEFTCURLY RIGHTCURLY LEFTBRACE RIGHTBRACE LEFTPAR RIGHTPAR SEMICOLON COMMA COLON COLON2 PERIOD PERIOD2
+
+%left ASSIGN
+%left OR
+%left AND
+%nonassoc EQUAL NOT_EQUAL
+%nonassoc BIGGER SMALLER BIGGER_EQUAL SMALLER_EQUAL
+%left PLUS MINUS
+%left MULT DIV PERC
+%right NOT PLUS2 MINUS2 
+%nonassoc UMINUS
+%left PERIOD PERIOD2
+%left LEFTBRACE RIGHTBRACE
+%left LEFTPAR RIGHTPAR
+
+%type <stringValue> stmt
+%type <stringValue> lvalue
+%type <stringValue> call
+%type <stringValue> elist
+%type <stringValue> callsuffix
+%type <stringValue> normcall
+%type <stringValue> funcdef
+
+
+
+
+
+%%
+
+program: stmt program|{};
+
+stmt:	expr SEMICOLON|BREAK SEMICOLON|CONTINUE SEMICOLON|SEMICOLON;
+
+expr:	assignexpr|expr PLUS expr;
+
+assignexpr:	lvalue ASSIGN expr;
+
+lvalue:	ID|LOCAL ID|COLON2 ID|member;
+
+member: lvalue PERIOD ID| lvalue LEFTBRACE expr RIGHTBRACE| call PERIOD ID
+
+call: call LEFTPAR elist RIGHTPAR
+	|lvalue callsuffix
+	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR
+	|objectdef;
+
+elist: expr
+	|elist COMMA expr|{};
+
+objectdef: LEFTBRACE elist RIGHTBRACE
+	|LEFTBRACE indexed RIGHTBRACE;
+
+indexed: indexedelem
+	|indexed COMMA indexedelem;
+
+indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY;
+
+callsuffix: normcall
+
+normcall: LEFTPAR elist RIGHTPAR;
+
+/*To parakatw exei MH dhmiourghmena dependencies*/
+funcdef: FUNCTION ID LEFTPAR idlist RIGHTPAR block
+
