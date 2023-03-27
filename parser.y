@@ -40,29 +40,29 @@
 %left LEFTBRACE RIGHTBRACE
 %left LEFTPAR RIGHTPAR
 
-%type <stringValue> stmt
-%type <stringValue> ifstmt
-%type <stringValue> whilestmt
-%type <stringValue> forstmt
-%type <stringValue> returnstmt
-%type <stringValue> block
-%type <stringValue> funcdef
-%type <stringValue> expr
-%type <stringValue> assignexpr
-%type <stringValue> term
-%type <stringValue> lvalue
-%type <stringValue> primary
-%type <stringValue> objectdef
+%type stmt
+%type ifstmt
+%type whilestmt
+%type forstmt
+%type returnstmt
+%type block
+%type funcdef
+%type expr
+%type assignexpr
+%type term
+%type lvalue
+%type primary
+%type objectdef
 %type const
-%type <stringValue> member
-%type <stringValue> call
-%type <stringValue> callsuffix
-%type <stringValue> normcall
-%type <stringValue> methodcall
-%type <stringValue> elist
-%type <stringValue> indexed
-%type <stringValue> indexedelem
-%type <stringValue> idlist
+%type member
+%type call
+%type callsuffix
+%type normcall
+%type methodcall
+%type elist
+%type indexed
+%type indexedelem
+%type idlist
 
 
 
