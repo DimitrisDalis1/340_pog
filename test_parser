@@ -6,6 +6,8 @@
     extern int yylineno;
     extern char* yytext;
     extern FILE* yyin;
+    FILE* yyout_y; 
+    int scope=0;
 
 %}
 
@@ -67,105 +69,125 @@
 program: stmt program  
 	| ;
 
-stmt:	expr SEMICOLON  
-	|ifstmt
-	|whilestmt
-	|forstmt
-	|returnstmt
-	|BREAK SEMICOLON  
-	|CONTINUE SEMICOLON 
-	|block
-	|funcdef
-	|SEMICOLON ;
-
-expr:	assignexpr  
-	|expr PLUS expr 
-	|expr MINUS expr	
-	| expr MULT expr
-	| expr DIV expr		
-	| expr PERC expr
-	| expr BIGGER expr
-	| expr BIGGER_EQUAL expr
-	| expr SMALLER expr
-	| expr SMALLER_EQUAL expr
-	| expr EQUAL expr
-	| expr NOT_EQUAL expr
-	| expr AND expr		
-	| expr OR expr	
-	|term ;
-
-term: LEFTPAR expr RIGHTPAR 
-	| MINUS expr 
-	|NOT expr
-	|PLUS2 lvalue
-	|lvalue PLUS2
-	|MINUS2 lvalue
-	|lvalue MINUS2
-	|primary;
-
-primary: lvalue
-	|call
-	|objectdef
-	|LEFTPAR funcdef RIGHTPAR
-	|const ;
-
-const: INT | REAL | STRING |NIL |TRUE |FALSE ;
-
-assignexpr:	lvalue ASSIGN expr ;
-
-lvalue:	ID  
-	|LOCAL ID  
-	|COLON2 ID  
-	|member  ;
-
-member: lvalue PERIOD ID 
-	| lvalue LEFTBRACE expr RIGHTBRACE  
-	| call PERIOD ID  
-	| call LEFTBRACE expr RIGHTBRACE ;
-
-call: call LEFTPAR elist RIGHTPAR  
-	|lvalue callsuffix  
-	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  
-	 ;
-
-elist: expr  
-	|elist COMMA expr  
-	| {};
-
-objectdef: LEFTBRACE elist RIGHTBRACE  
-	|LEFTBRACE indexed RIGHTBRACE  ;
-
-indexed: indexedelem  
-	|indexed COMMA indexedelem  ;
-
-indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY  ;
-
-callsuffix: normcall  | methodcall;
-
-methodcall: PERIOD2 ID LEFTPAR elist RIGHTPAR ;
-
-normcall: LEFTPAR elist RIGHTPAR  ;
-
-/*To parakatw exei MH dhmiourghmena dependencies*/
-temp_id: ID | {};
-
-funcdef: FUNCTION temp_id LEFTPAR idlist RIGHTPAR block   ;
-
-idlist: ID | idlist COMMA ID  |  {};
-
-temp: temp stmt | {}; 
-
-block: LEFTCURLY temp RIGHTCURLY;
-
-ifstmt: IF LEFTPAR expr RIGHTPAR stmt ELSE stmt
-	|IF LEFTPAR expr RIGHTPAR stmt 
+stmt:	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); }
+	|ifstmt		{ fprintf(yyout_y,"stmt -> ifstmt\n"); }
+	|whilestmt	{ fprintf(yyout_y,"stmt -> whilestmt\n"); }
+	|forstmt	{ fprintf(yyout_y,"stmt -> forstmt\n"); }
+	|returnstmt	{ fprintf(yyout_y,"stmt -> returnstmt\n"); }
+	|BREAK SEMICOLON  { fprintf(yyout_y,"stmt -> break;\n"); }
+	|CONTINUE SEMICOLON { fprintf(yyout_y,"stmt -> continue;\n"); }
+	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
+	|funcdef	{ fprintf(yyout_y,"stmt -> funcdef\n"); }
+	|SEMICOLON 	{ fprintf(yyout_y,"stmt -> ;\n"); }
 	;
 
-whilestmt: WHILE LEFTPAR expr RIGHTPAR stmt ;
+expr:	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
+	|expr PLUS expr { fprintf(yyout_y,"expr -> expr + expr\n"); }
+	|expr MINUS expr { fprintf(yyout_y,"expr -> expr - expr\n"); }
+	| expr MULT expr { fprintf(yyout_y,"expr -> expr * expr\n"); }
+	| expr DIV expr	 { fprintf(yyout_y,"expr -> expr / expr\n"); }
+	| expr PERC expr { fprintf(yyout_y,"expr -> expr % expr\n"); }
+	| expr BIGGER expr { fprintf(yyout_y,"expr -> expr > expr\n"); }
+	| expr BIGGER_EQUAL expr { fprintf(yyout_y,"expr -> expr >= expr\n"); }
+	| expr SMALLER expr  { fprintf(yyout_y,"expr -> expr < expr\n"); }
+	| expr SMALLER_EQUAL expr { fprintf(yyout_y,"expr -> expr <= expr\n"); }
+	| expr EQUAL expr { fprintf(yyout_y,"expr -> expr == expr\n"); }
+	| expr NOT_EQUAL expr { fprintf(yyout_y,"expr -> expr != expr\n"); }
+	| expr AND expr  { fprintf(yyout_y,"expr -> expr and expr\n"); }		
+	| expr OR expr	 { fprintf(yyout_y,"expr -> expr or expr\n"); }
+	|term  { fprintf(yyout_y,"expr -> term\n"); } 
+	;
 
-forstmt: FOR LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt ;
+term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
+	| MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
+	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
+	|PLUS2 lvalue { fprintf(yyout_y,"term -> ++lvalue\n"); }
+	|lvalue PLUS2 { fprintf(yyout_y,"term -> lvalue++\n"); }
+	|MINUS2 lvalue { fprintf(yyout_y,"term -> --lvalue\n"); }
+	|lvalue MINUS2 { fprintf(yyout_y,"term -> lvalue--\n"); }
+	|primary   { fprintf(yyout_y,"term -> primary\n"); };
 
-returnstmt: RETURN SEMICOLON
-	| RETURN expr SEMICOLON
+assignexpr: lvalue ASSIGN expr   { fprintf(yyout_y,"assignexpr -> lvalue = expr\n"); }
+	;
+
+
+primary: lvalue { fprintf(yyout_y,"primary -> lvalue\n"); }
+	|call  { fprintf(yyout_y,"primary -> call\n"); }
+	|objectdef  { fprintf(yyout_y,"primary -> objectdef\n"); }
+	|LEFTPAR funcdef RIGHTPAR  { fprintf(yyout_y,"primary -> ( funcdef )\n"); }
+	|const  { fprintf(yyout_y,"primary -> const\n"); } 
+	;
+	
+lvalue:	ID  { fprintf(yyout_y,"lvalue -> id\n");  }/****/
+	|LOCAL ID  { fprintf(yyout_y,"lvalue -> local id\n"); }/****/
+	|COLON2 ID  { fprintf(yyout_y,"lvalue -> ::id\n"); } /*******************/
+	|member  { fprintf(yyout_y,"lvalue -> member\n"); } ;
+	
+member: lvalue PERIOD ID {fprintf(yyout_y,"member -> lvalue.id\n");}/////**/
+	| lvalue LEFTBRACE expr RIGHTBRACE  {fprintf(yyout_y,"member -> lvalue [ expr ]\n");}//////////****/
+	| call PERIOD ID  {fprintf(yyout_y,"member -> call.id\n");}
+	| call LEFTBRACE expr RIGHTBRACE {fprintf(yyout_y,"member -> call [ expr ]\n");}
+	;
+	
+call: call LEFTPAR elist RIGHTPAR   {fprintf(yyout_y,"call -> call ( elist )\n");}
+	|lvalue callsuffix  {fprintf(yyout_y,"call -> lvalue callsuffix\n");} ///***/
+	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
+	 ;
+
+callsuffix: normcall  {fprintf(yyout_y,"callsuffix -> normcall\n");}
+	| methodcall  {fprintf(yyout_y,"callsuffix -> methodcall\n");}
+	;
+	
+normcall: LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"normcall -> ( elist )\n");}
+	;
+	
+methodcall: PERIOD2 ID LEFTPAR elist RIGHTPAR {fprintf(yyout_y,"methodcall -> ..id ( elist )\n");}
+	;
+	
+elist: expr  {fprintf(yyout_y,"elist -> expr\n");}
+	|elist COMMA expr  
+	| {};
+ 
+const: INT {fprintf(yyout_y,"const -> number\n");}
+	| REAL {fprintf(yyout_y,"const -> number\n");}
+	| STRING  {fprintf(yyout_y,"const -> string\n");}
+	|NIL  {fprintf(yyout_y,"const -> nil\n");}
+	|TRUE  {fprintf(yyout_y,"const -> true\n");}
+	|FALSE  {fprintf(yyout_y,"const -> false\n");}
+	;
+
+
+objectdef: LEFTBRACE elist RIGHTBRACE {fprintf(yyout_y,"objectdef -> { elist }\n");} 
+	|LEFTBRACE indexed RIGHTBRACE {fprintf(yyout_y,"objectdef -> { indexed }\n");} ;
+
+indexed: indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");} 
+	|indexed COMMA indexedelem {fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  ;
+
+indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
+
+temp_id: ID {fprintf(yyout_y,"temp_id -> id\n");} /*****/
+	| {};
+
+funcdef: FUNCTION temp_id LEFTPAR idlist RIGHTPAR block {fprintf(yyout_y,"funcdef -> function_return temp_id ( idlist ) {}\n");}   ; /*****/
+
+idlist: ID {fprintf(yyout_y,"idlist -> id\n");} /***/
+	| idlist COMMA ID {fprintf(yyout_y,"idlist -> idlist , id\n");} /****/
+	|  {};
+
+temp: temp stmt {fprintf(yyout_y,"temp -> temp stmt\n");}
+	| {}; 
+
+block: LEFTCURLY temp RIGHTCURLY {fprintf(yyout_y,"block -> { temp }\n");}; /*******/
+
+ifstmt: IF LEFTPAR expr RIGHTPAR stmt ELSE stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt else stmt\n");}
+	|IF LEFTPAR expr RIGHTPAR stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt\n");}
+	;
+
+whilestmt: WHILE LEFTPAR expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
+
+forstmt: FOR LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
+
+returnstmt: RETURN SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
+	| RETURN expr SEMICOLON {fprintf(yyout_y,"returnstmt -> return expr ;\n");}
 	;
 
