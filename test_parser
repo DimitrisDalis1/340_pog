@@ -45,7 +45,7 @@
 %left LEFTPAR RIGHTPAR
 
 %type stmt
-%type lvalue
+%type<exprNode> lvalue
 %type call
 %type elist
 %type callsuffix
@@ -99,7 +99,7 @@ expr:	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
 	;
 
 term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
-	| MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
+	|MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
 	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
 	|PLUS2 lvalue { fprintf(yyout_y,"term -> ++lvalue\n"); }
 	|lvalue PLUS2 { fprintf(yyout_y,"term -> lvalue++\n"); }
@@ -177,7 +177,7 @@ idlist: ID {fprintf(yyout_y,"idlist -> id\n");} /***/
 temp: temp stmt {fprintf(yyout_y,"temp -> temp stmt\n");}
 	| {}; 
 
-block: LEFTCURLY temp RIGHTCURLY {fprintf(yyout_y,"block -> { temp }\n");}; /*******/
+block: LEFTCURLY{scope_up();} temp RIGHTCURLY{scope_down();} {fprintf(yyout_y,"block -> { temp }\n");}; /*******/
 
 ifstmt: IF LEFTPAR expr RIGHTPAR stmt ELSE stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt else stmt\n");}
 	|IF LEFTPAR expr RIGHTPAR stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt\n");}
