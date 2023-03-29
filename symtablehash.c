@@ -105,6 +105,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
         temp_entry->value.varVal->line=yyline;
         temp_entry->value.varVal->scope=yyscope;
         temp_entry->value.varVal->name=strdup(name);
+        
         //add id to the correct scope list
     }else{
         temp_entry->value.funcVal=(struct Function*)malloc(sizeof(Function));
@@ -289,55 +290,84 @@ SymTable_T* SymTable_new(void){
     oSymTable->buckets=509;
     oSymTable->size=0;
     SymTable_insert(oSymTable,"print",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"input",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"input",0,NULL,0,GLOBAL);
+    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,USERFUNC);
+    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,7,LIBFUNC);
     SymTable_insert(oSymTable,"objectcopy",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"totalarguments",0,NULL,8,LIBFUNC);
+    SymTable_insert(oSymTable,"totalarguments",0,NULL,8,USERFUNC);
     SymTable_insert(oSymTable,"argument",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"typeof",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"strtonum",0,NULL,1,LIBFUNC);
     SymTable_insert(oSymTable,"sqrt",0,NULL,1,LIBFUNC);
-    SymTable_insert(oSymTable,"cos",0,NULL,3,LIBFUNC);
+    SymTable_insert(oSymTable,"cos",0,NULL,3,LOCAL);
     SymTable_insert(oSymTable,"sin",0,NULL,7,LIBFUNC);
     return oSymTable;
 }
 
-void symtable_print(Scope_node *head){
+int getMaxNameLength(SymTable_T* hashTable) {
+    int maxLen = 0;
+    int len,i;
+    // Iterate over each bucket in the hash table
+    for (i = 0; i < hashTable->buckets; i++) {
+        SymbolTableEntry* node = hashTable->hashtable[i];
+
+        // Iterate over each node in the linked list
+        while (node != NULL) {
+            if(node->type==LIBFUNC||node->type==USERFUNC){
+              len = strlen(node->value.funcVal->name);
+            }else{
+                len = strlen(node->value.varVal->name);
+            }
+            if (len > maxLen) {
+                maxLen = len;
+            }
+            node = node->next;
+        }
+    }
+
+    return maxLen;
+}
+
+void symtable_print(Scope_node *head,SymTable_T*  hashtable){
     SymbolTableEntry *temp;
+    int length;
     Scope_node *ptr=head;
+    length=getMaxNameLength(hashtable);
     assert(ptr);
+    printf("                        SYNTAX ANALYSIS                             \n");
     while(ptr != NULL)
     {
-        printf("--------- #%d --------- \n",ptr->scope);
+        printf("-------------------------   Scope #%d   ------------------------- \n",ptr->scope);
         temp = ptr->symbol;
         while (temp != NULL)
         {
             if (temp->type == LIBFUNC || temp->type == USERFUNC)
             {
-                printf("%s ",temp->value.funcVal->name);
+                printf("%-*s \t",length,temp->value.funcVal->name);
                 if (temp->type == LIBFUNC)
                 {
-                   printf("[library function] ");
+                   printf(" [library function] ");
                 }else if(temp->type == USERFUNC){
-                    printf("[user function] ");
+                   printf("  [user  function]  ");
                 }
-                printf("(line %d) ",temp->value.funcVal->line);
-                printf("(scope %d)",temp->value.funcVal->scope);
+                printf(" (line %d) ",temp->value.funcVal->line);
+                printf(" (scope %d)",temp->value.funcVal->scope);
             }else{
+                printf("%-*s \t",length,temp->value.varVal->name);
                 if(temp->type == GLOBAL){
-                    printf("[global variable] ");
+                   printf(" [global  variable] ");
                 }else if(temp->type == LOCAL){
-                    printf("[local variable] ");
+                   printf(" [local   variable] ");
                 }else if(temp->type == FORMAL){
-                    printf("[formal variable] ");
+                   printf(" [formal  variable] ");
                 }
-                printf("(line %d) ",temp->value.varVal->line);
-                printf("(scope %d)",temp->value.varVal->scope);
+                printf(" (line %d) ",temp->value.varVal->line);
+                printf(" (scope %d) ",temp->value.varVal->scope);
             }
             printf("\n");
             temp = temp->next_in_scope;
         }
+        printf("\n");
         ptr = ptr->next;
     }
     return;
@@ -403,7 +433,7 @@ int main()
 {
     SymTable_T* hash ;
     hash = SymTable_new();
-    symtable_print(head_scope_node);
+    symtable_print(head_scope_node,hash);
     //SymTable_insert(hash, "abcd", 1, id, 0, GLOBAL);
     //SymTable_insert(hash, "expr", 1, id, 0, LOCAL);
     
