@@ -1,7 +1,7 @@
 #include "symtable.h"
 
 unsigned int length=0;
-Scope_node *head_scope_node;
+Scope_node *head_scope_node=NULL;
 
 int insert(id_list *ptr,char *name){
     assert(ptr);
@@ -120,6 +120,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     if(temp_hash == NULL){
         oSymTable->hashtable[hashIndex]=temp_entry;
         oSymTable->size++;
+       
     }else{
         while(temp_hash->next != NULL){
             temp_hash=temp_hash->next;
@@ -127,13 +128,15 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
         temp_hash->next=temp_entry;
         
     }
+
+    temp_entry->next=NULL;
     
     if(head_scope_node == NULL){
         head_scope_node = create_scope(temp_entry,0,NULL,NULL);
         head_scope_node->symbol->next_in_scope = NULL;
     }else{
-        Scope_node *temp;
         Scope_node *temp_head;
+        Scope_node *temp;
         temp_head = head_scope_node;
         flag=yyscope;
         if(yyscope==head_scope_node->scope){
@@ -141,30 +144,32 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                 temp_head->symbol=temp_head->symbol->next_in_scope;
             }
             temp_head->symbol->next_in_scope=temp_entry;
-            //printf("%d",temp_entry->type);
+            
+            printf("%s",temp_entry->value.funcVal->name);
             temp_entry->next_in_scope=NULL;
         }else{
+            printf("%s",temp_entry->value.funcVal->name);
             while(flag!=0){
                 if(temp_head->next==NULL){
-                    temp_head->next=create_scope(temp_entry,flag,NULL,temp_head);
+                    temp=create_scope(temp_entry,flag,NULL,temp_head);
+                    temp_head->next=temp;
                     length++;
-                    temp_head->symbol->next_in_scope=NULL;
+                    temp_head->next->symbol->next_in_scope=NULL;
                     return 0;
                 }else{
                    temp_head=temp_head->next;
                 }
                  --flag;
             }   
-              while(temp_head->symbol->next_in_scope!=NULL){
+                    while(temp_head->symbol->next_in_scope!=NULL){
                         temp_head->symbol=temp_head->symbol->next_in_scope;
-               }
+                    }
                     temp_head->symbol->next_in_scope=temp_entry;
                     temp_entry->next_in_scope=NULL;
-                    return 0;
-            
+                
         }
     }
-
+   
     /*Check if it should be expaned or not*/
     expand(oSymTable);
     return 1;
@@ -271,15 +276,16 @@ SymTable_T* SymTable_new(void){
     SymTable_insert(oSymTable,"totalarguments",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"argument",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"typeof",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"sqrt",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"cos",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"sin",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,1,LIBFUNC);
+    SymTable_insert(oSymTable,"sqrt",0,NULL,1,LIBFUNC);
+    SymTable_insert(oSymTable,"cos",0,NULL,2,LIBFUNC);
+    SymTable_insert(oSymTable,"sin",0,NULL,3,LIBFUNC);
     return oSymTable;
 }
 
-void symtable_print(Scope_node *ptr){
+void symtable_print(Scope_node *head){
     SymbolTableEntry *temp;
+    Scope_node *ptr=head;
     assert(ptr);
     while(ptr != NULL)
     {
