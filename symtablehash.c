@@ -91,6 +91,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     int hashIndex,flag;
     SymbolTableEntry* temp_entry=NULL;
     SymbolTableEntry* temp_hash=NULL;
+    SymbolTableEntry *temp_head_entry=NULL;
     Scope_node *temp_head=NULL;
     Scope_node *temp=NULL;
     char *tempkey;
@@ -137,16 +138,20 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
         head_scope_node = create_scope(temp_entry,0,NULL,NULL);
         (head_scope_node)->symbol->next_in_scope=NULL;
     }else{
-        
         temp_head = head_scope_node;
+        temp_head_entry= head_scope_node->symbol;
         flag=yyscope;
         if(yyscope==temp_head->scope){
-            while(temp_head->symbol->next_in_scope!=NULL){
-                temp_head->symbol=temp_head->symbol->next_in_scope;
+            while(temp_head_entry!=NULL){
+                temp_head_entry=temp_head_entry->next_in_scope;
+                //printf(" inside loop temp is %s \n",(temp_head)->symbol->value.funcVal->name);
+                //printf(" inside loop head is %s \n",(head_scope_node)->symbol->value.funcVal->name);
             }
             temp_head->symbol->next_in_scope=temp_entry;
-            
             temp_entry->next_in_scope=NULL;
+            temp_head = head_scope_node;
+            //printf(" after loop temp is %s \n",(temp_head)->symbol->value.funcVal->name);
+            //printf(" after loop head is %s \n",(head_scope_node)->symbol->value.funcVal->name);
         }else{
             while(flag!=0){
                 if(temp_head->next==NULL){
@@ -161,15 +166,16 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                  
                  --flag;
             }   
-                    while(temp_head->symbol->next_in_scope!=NULL){
-                        temp_head->symbol=temp_head->symbol->next_in_scope;
-                    }
-                    temp_head->symbol->next_in_scope=temp_entry;
-                    temp_entry->next_in_scope=NULL;
+            while(temp_head->symbol->next_in_scope!=NULL){
+                    temp_head->symbol=temp_head->symbol->next_in_scope;
+            }
+            temp_head->symbol->next_in_scope=temp_entry;
+            temp_entry->next_in_scope=NULL;
                 
         }
     }
-   printf(" this is %s ",(head_scope_node)->symbol->value.funcVal->name);
+    printf(" head is %s \n",(head_scope_node)->symbol->value.funcVal->name);
+
     /*Check if it should be expaned or not*/
     expand(oSymTable);
     return 1;
@@ -425,5 +431,4 @@ int main()
 
     return 0;
 }
-
 
