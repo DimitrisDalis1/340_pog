@@ -118,7 +118,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     /*Put it in the hash table*/
    temp_hash=oSymTable->hashtable[hashIndex];
     if(temp_hash == NULL){
-        temp_hash=temp_entry;
+        oSymTable->hashtable[hashIndex]=temp_entry;
         oSymTable->size++;
     }else{
         while(temp_hash->next != NULL){
@@ -141,10 +141,13 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                 temp_head->symbol=temp_head->symbol->next_in_scope;
             }
             temp_head->symbol->next_in_scope=temp_entry;
+            //printf("%d",temp_entry->type);
+            temp_entry->next_in_scope=NULL;
         }else{
             while(flag!=0){
                 if(temp_head->next==NULL){
                     temp_head->next=create_scope(temp_entry,flag,NULL,temp_head);
+                    length++;
                     return 0;
                 }else{
                    temp_head=temp_head->next;
@@ -164,6 +167,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     expand(oSymTable);
     return 1;
 }
+
 
 /* Return a hash code for name. */
 static unsigned int SymTable_hash(const char *name,unsigned int SIZE){
