@@ -366,3 +366,50 @@ int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int sco
     oSymTable->size++;
     return 0;
 }
+
+int main()
+{
+    SymTable_T* hash = malloc(sizeof(SymTable_T*));
+    const char* name = "print";
+    const char* name1 = "input";
+    assert(hash);
+    hash->hashtable=malloc(509 * sizeof(SymbolTableEntry*));
+    hash->buckets=509;
+    hash->size = 1;
+    SymbolTableEntry* temp_entry;
+    int hashIndex1=SymTable_hash("print",hash->buckets);
+    int hashIndex2=SymTable_hash("input",hash->buckets);
+
+    temp_entry = (struct SymbolTableEntry*) malloc (sizeof(SymbolTableEntry));
+    temp_entry->value.funcVal=(struct Function*)malloc(sizeof(Function));
+    temp_entry->next = (struct SymbolTableEntry*) malloc (sizeof(SymbolTableEntry));
+    temp_entry->next->value.funcVal=(struct Function*)malloc(sizeof(Function));
+    temp_entry->value.funcVal->name=strdup(name);
+    temp_entry->next->value.funcVal->name=strdup(name1);
+    temp_entry->type=LIBFUNC;
+    temp_entry->next->type=LIBFUNC;
+    temp_entry->value.funcVal->scope = 0;
+    temp_entry->next->value.funcVal->scope = 0;
+    temp_entry->isActive = true;
+    temp_entry->next->isActive = true;
+    hash->hashtable[hashIndex1]=temp_entry;
+    hash->hashtable[hashIndex2]=temp_entry->next;
+
+    
+
+    id_list *id;
+    /*
+    printf("%s\n", temp_entry->value.funcVal->name );
+    printf("hash index inside main: %d\n", hashIndex);
+    */
+    //SymTable_contains(hash, "print", 0);
+    //SymTable_contains(hash, "input", 0);
+    
+    hash = SymTable_new();
+    //SymTable_insert(hash, "abcd", 1, id, 0, GLOBAL);
+    //SymTable_insert(hash, "expr", 1, id, 0, LOCAL);
+    
+//printf("%d", SymTable_getLength(hash));
+
+    return 0;
+}
