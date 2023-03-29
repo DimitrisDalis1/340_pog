@@ -1,6 +1,7 @@
 #include "symtable.h"
 
 unsigned int length=0;
+Scope_node *head_scope_node;
 
 int insert(id_list *ptr,char *name){
     assert(ptr);
@@ -57,12 +58,12 @@ void id_list_free(id_list *ptr){
 }
 
 
-Scope_node *head_scope_node;
+
 
 
 Scope_node *create_scope(SymbolTableEntry *symbol,unsigned int scope,Scope_node *next,Scope_node *previous){
     Scope_node *new_scope =  malloc(sizeof(Scope_node));
-    if (new_scope) return NULL;
+    assert(new_scope);
     new_scope->symbol = symbol;
     new_scope->scope = scope;
     new_scope->next = next;
@@ -87,15 +88,13 @@ void length_increase(unsigned int yyscore){
 }
 
 int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
-    int hashIndex;
+    int hashIndex,flag;
     SymbolTableEntry* temp_entry;
+    SymbolTableEntry* temp_hash;
     char *tempkey;
-
-    /*check if we have a node with this key*/
-    if(SymTable_contains(oSymTable,name,yyscope)) return 0; 
-
+    temp_entry = (struct SymbolTableEntry*) malloc (sizeof(SymbolTableEntry));
     /*Initialize*/
-    if(type==GLOBAL|type==LOCAL|type==FORMAL){
+    if(type==GLOBAL || type==LOCAL || type==FORMAL){
         temp_entry->value.varVal=(struct Variable*)malloc(sizeof(Variable));
         temp_entry->isActive=true;
         temp_entry->type=type;
@@ -108,7 +107,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
         temp_entry->isActive=true;
         temp_entry->type=type;
         temp_entry->value.funcVal->line=yyline;
-        temp_entry->value.funcVal->args=args;
+       //////////// temp_entry->value.funcVal->args=args;
         temp_entry->value.funcVal->scope=yyscope;
         //add id to the correct scope list
         temp_entry->value.funcVal->name=strdup(name);
@@ -117,68 +116,47 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     hashIndex=SymTable_hash(name,oSymTable->buckets);
 
     /*Put it in the hash table*/
-    temp_entry->next=oSymTable->hashtable[hashIndex];
-    oSymTable->hashtable[hashIndex]=temp_entry;
-    oSymTable->size++;
+   temp_hash=oSymTable->hashtable[hashIndex];
+    if(temp_hash == NULL){
+        temp_hash=temp_entry;
+        oSymTable->size++;
+    }else{
+        while(temp_hash->next != NULL){
+            temp_hash=temp_hash->next;
+        }
+        temp_hash->next=temp_entry;
+        
+    }
     
-
     if(head_scope_node == NULL){
-        head_scope_node = create_scope(oSymTable->hashtable[hashIndex],0,NULL,NULL);
-        length++;
+        head_scope_node = create_scope(temp_entry,0,NULL,NULL);
         head_scope_node->symbol->next_in_scope = NULL;
     }else{
         Scope_node *temp;
         Scope_node *temp_head;
         temp_head = head_scope_node;
-        if (yyscope > length)
-        {
-            temp = malloc(sizeof(Scope_node));
-            length_increase(yyscope);
-            temp_head = head_scope_node;
-            while(temp_head->next != NULL && temp_head->scope == yyscope){ //elegxos an exume null sto next null ,stamatame otan den paei allo h otan eimaste sto scope node pou mas noiazei
-                temp_head = temp_head->next;
+        flag=yyscope;
+        if(yyscope==head_scope_node->scope){
+            while(temp_head->symbol->next_in_scope!=NULL){
+                temp_head->symbol=temp_head->symbol->next_in_scope;
             }
-            temp_head->next = temp;
-            temp->previous = temp_head;
-            temp->symbol = oSymTable->hashtable[hashIndex];
-            temp->next = NULL;
-            temp->scope = yyscope;
-
-
-            //for loop (yyscope - length) fores gia na dhmiourghsoume tosa nodes kai megalwse to length 
-            //anagkastika yyscope++ ??
-            //An nai tote axreiasto to for loop
-            /*
-            int temp_length = length;
-            for(int i = 0; i < yyscope - length; i++)
-            {
-                temp_head->scope = temp_length - 1;
-                temp_length++; 
-                temp_head->next = NULL;
-                temp_head->previous = NULL;
-                temp_head->symbol = oSymTable->hashtable[hashIndex];
-                temp_head->symbol->next_in_scope = NULL;
-            }
-            length = length + (yyscope - length);
-            head_scope_node->scope = 0;
-            head_scope_node->next = NULL;
-            head_scope_node->previous = NULL;
-            head_scope_node->symbol = oSymTable->hashtable[hashIndex];
-            head_scope_node->symbol->next_in_scope = NULL;
-            */
-
-
+            temp_head->symbol->next_in_scope=temp_entry;
         }else{
-            while (temp_head->scope != yyscope && temp_head->next != NULL)
-            {
-                temp_head = temp_head->next;
-            }
-            while (temp_head->symbol->next_in_scope != NULL)
-            {
-                temp_head->symbol = temp_head->symbol->next_in_scope;
-        
-            }
-            temp_head->symbol->next_in_scope = temp_entry;
+            while(flag!=0){
+                if(temp_head->next==NULL){
+                    temp_head->next=create_scope(temp_entry,flag,NULL,temp_head);
+                    return 0;
+                }else{
+                   temp_head=temp_head->next;
+                }
+                 --flag;
+            }   
+              while(temp_head->symbol->next_in_scope!=NULL){
+                        temp_head->symbol=temp_head->symbol->next_in_scope;
+               }
+                    temp_head->symbol->next_in_scope=temp_entry;
+                    return 0;
+            
         }
     }
 
