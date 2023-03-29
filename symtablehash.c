@@ -336,29 +336,33 @@ unsigned int SymTable_getLength(SymTable_T *oSymTable){
 int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int scope){
     int hashIndex;
     SymbolTableEntry *temp;
+    //temp = malloc(sizeof(SymbolTableEntry*));
     assert(oSymTable);
     assert(pcKey);
 
 
     /*Generate the hash index*/
     hashIndex=SymTable_hash(pcKey,oSymTable->buckets);
+    //printf("hash index inside sym_cont: %d\n", hashIndex);
 
     /*Search if there is a cell with this key*/
     temp = oSymTable->hashtable[hashIndex];
+    if(temp == NULL){ printf("is null\n");}
     while (temp!=NULL)
     {
-        if(temp->type==GLOBAL|temp->type==LOCAL|temp->type==FORMAL){
-            if (strcmp(temp->value.varVal->name,pcKey) && temp->value.varVal->scope == scope)
+        //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
+        
+        if(temp->type==GLOBAL||temp->type==LOCAL||temp->type==FORMAL){
+            if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->value.varVal->scope == scope)
             {
                return 1;
             }
         }else{
-           if (strcmp(temp->value.funcVal->name,pcKey) && temp->value.funcVal->scope == scope)
-            {
-               return 1;
-            }
+            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){ printf("%s\n",pcKey); return 1;}
+
         }
         temp= temp->next;
     }
+    oSymTable->size++;
     return 0;
 }
