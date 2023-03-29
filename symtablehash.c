@@ -160,12 +160,10 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                     length++;
                     temp_head->next->symbol->next_in_scope=NULL;
                     return 0;
-                }else{
-                    temp=create_scope(temp_entry,yyscope,NULL,temp_head);
+                }else if(temp_head->next==NULL && flag!=1){
+                    temp=create_scope(NULL,yyscope-flag,NULL,temp_head);
                     temp_head->next=temp;
                     length++;
-                    temp_head->next->symbol->next_in_scope=NULL;
-                    return 0;
                 }else{
                    temp_head=temp_head->next;
                 }
