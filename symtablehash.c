@@ -268,6 +268,45 @@ SymTable_T* SymTable_new(void){
     return oSymTable;
 }
 
+void symtable_print(Scope_node *ptr){
+    SymbolTableEntry *temp;
+    assert(ptr);
+    while(ptr != NULL)
+    {
+        printf("--------- #%d --------- \n",ptr->scope);
+        temp = ptr->symbol;
+        while (temp != NULL)
+        {
+            if (temp->type == LIBFUNC || temp->type == USERFUNC)
+            {
+                printf("%s ",temp->value.funcVal->name);
+                if (temp->type == LIBFUNC)
+                {
+                   printf("[library function] ");
+                }else if(temp->type == USERFUNC){
+                    printf("[user function] ");
+                }
+                printf("(line %d) ",temp->value.funcVal->line);
+                printf("(scope %d)",temp->value.funcVal->scope);
+            }else{
+                if(temp->type == GLOBAL){
+                    printf("[global variable] ");
+                }else if(temp->type == LOCAL){
+                    printf("[local variable] ");
+                }else if(temp->type == FORMAL){
+                    printf("[formal variable] ");
+                }
+                printf("(line %d) ",temp->value.varVal->line);
+                printf("(scope %d)",temp->value.varVal->scope);
+            }
+            printf("\n");
+            temp = temp->next_in_scope;
+        }
+        ptr = ptr->next;
+    }
+    return;
+}
+
 
 
 
