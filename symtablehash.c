@@ -148,6 +148,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                 if(temp_head->next==NULL){
                     temp_head->next=create_scope(temp_entry,flag,NULL,temp_head);
                     length++;
+                    temp_head->symbol->next_in_scope=NULL;
                     return 0;
                 }else{
                    temp_head=temp_head->next;
@@ -158,6 +159,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                         temp_head->symbol=temp_head->symbol->next_in_scope;
                }
                     temp_head->symbol->next_in_scope=temp_entry;
+                    temp_entry->next_in_scope=NULL;
                     return 0;
             
         }
@@ -253,8 +255,12 @@ static void expand(SymTable_T *oSymTable){
 
 SymTable_T* SymTable_new(void){
     SymTable_T *oSymTable=malloc(sizeof(SymTable_T*));
+    int i;
     assert(oSymTable);
     oSymTable->hashtable=malloc(509 * sizeof(SymbolTableEntry*));
+    for(i=0;i<509;i++){
+        oSymTable->hashtable[i]=NULL;    
+    }
     oSymTable->buckets=509;
     oSymTable->size=0;
     SymTable_insert(oSymTable,"print",0,NULL,0,LIBFUNC);
@@ -406,6 +412,7 @@ int main()
     //SymTable_contains(hash, "input", 0);
     
     hash = SymTable_new();
+    symtable_print(head_scope_node);
     //SymTable_insert(hash, "abcd", 1, id, 0, GLOBAL);
     //SymTable_insert(hash, "expr", 1, id, 0, LOCAL);
     
