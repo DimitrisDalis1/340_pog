@@ -29,7 +29,7 @@ int insert(id_list *ptr,char *name){
 
 int id_list_contains(id_list *x, const char *name){
     struct id_list* temp;
-    assert(x);
+    assert(x); 
     assert(name);
 
     /*Go to each node and see if the keys match*/
