@@ -117,7 +117,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     }
     /*Generate the hash index*/
     hashIndex=SymTable_hash(name,oSymTable->buckets);
-
+    
     /*Put it in the hash table*/
    temp_hash=oSymTable->hashtable[hashIndex];
     if(temp_hash == NULL){
@@ -142,20 +142,26 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
         temp_head_entry= head_scope_node->symbol;
         flag=yyscope;
         if(yyscope==temp_head->scope){
-            while(temp_head_entry!=NULL){
-                temp_head_entry=temp_head_entry->next_in_scope;
-                //printf(" inside loop temp is %s \n",(temp_head)->symbol->value.funcVal->name);
-                //printf(" inside loop head is %s \n",(head_scope_node)->symbol->value.funcVal->name);
+            if(temp_head_entry->next_in_scope==NULL){
+                 temp_head_entry->next_in_scope=temp_entry;
+                temp_entry->next_in_scope=NULL;
+            }else{
+                while(temp_head_entry->next_in_scope!=NULL){
+                    temp_head_entry=temp_head_entry->next_in_scope;
+                }
             }
-            temp_head->symbol->next_in_scope=temp_entry;
+            temp_head_entry->next_in_scope=temp_entry;
             temp_entry->next_in_scope=NULL;
-            temp_head = head_scope_node;
-            //printf(" after loop temp is %s \n",(temp_head)->symbol->value.funcVal->name);
-            //printf(" after loop head is %s \n",(head_scope_node)->symbol->value.funcVal->name);
         }else{
             while(flag!=0){
-                if(temp_head->next==NULL){
-                    temp=create_scope(temp_entry,flag,NULL,temp_head);
+                if(temp_head->next==NULL && flag==1){
+                    temp=create_scope(temp_entry,yyscope,NULL,temp_head);
+                    temp_head->next=temp;
+                    length++;
+                    temp_head->next->symbol->next_in_scope=NULL;
+                    return 0;
+                }else{
+                    temp=create_scope(temp_entry,yyscope,NULL,temp_head);
                     temp_head->next=temp;
                     length++;
                     temp_head->next->symbol->next_in_scope=NULL;
@@ -174,8 +180,6 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                 
         }
     }
-    printf(" head is %s \n",(head_scope_node)->symbol->value.funcVal->name);
-
     /*Check if it should be expaned or not*/
     expand(oSymTable);
     return 1;
@@ -386,8 +390,7 @@ int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int sco
 
 int main()
 {
-    SymTable_T* hash;
-    
+    SymTable_T* hash ;
     hash = SymTable_new();
     symtable_print(head_scope_node);
     //SymTable_insert(hash, "abcd", 1, id, 0, GLOBAL);
@@ -397,4 +400,3 @@ int main()
 
     return 0;
 }
-
