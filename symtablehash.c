@@ -89,8 +89,10 @@ void length_increase(unsigned int yyscore){
 
 int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
     int hashIndex,flag;
-    SymbolTableEntry* temp_entry;
-    SymbolTableEntry* temp_hash;
+    SymbolTableEntry* temp_entry=NULL;
+    SymbolTableEntry* temp_hash=NULL;
+    Scope_node *temp_head=NULL;
+    Scope_node *temp=NULL;
     char *tempkey;
     temp_entry = (struct SymbolTableEntry*) malloc (sizeof(SymbolTableEntry));
     /*Initialize*/
@@ -133,22 +135,19 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     
     if(head_scope_node == NULL){
         head_scope_node = create_scope(temp_entry,0,NULL,NULL);
-        head_scope_node->symbol->next_in_scope = NULL;
+        (head_scope_node)->symbol->next_in_scope=NULL;
     }else{
-        Scope_node *temp_head;
-        Scope_node *temp;
+        
         temp_head = head_scope_node;
         flag=yyscope;
-        if(yyscope==head_scope_node->scope){
+        if(yyscope==temp_head->scope){
             while(temp_head->symbol->next_in_scope!=NULL){
                 temp_head->symbol=temp_head->symbol->next_in_scope;
             }
             temp_head->symbol->next_in_scope=temp_entry;
             
-            printf("%s",temp_entry->value.funcVal->name);
             temp_entry->next_in_scope=NULL;
         }else{
-            printf("%s",temp_entry->value.funcVal->name);
             while(flag!=0){
                 if(temp_head->next==NULL){
                     temp=create_scope(temp_entry,flag,NULL,temp_head);
@@ -159,6 +158,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                 }else{
                    temp_head=temp_head->next;
                 }
+                 
                  --flag;
             }   
                     while(temp_head->symbol->next_in_scope!=NULL){
@@ -169,12 +169,11 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                 
         }
     }
-   
+   printf(" this is %s ",(head_scope_node)->symbol->value.funcVal->name);
     /*Check if it should be expaned or not*/
     expand(oSymTable);
     return 1;
 }
-
 
 /* Return a hash code for name. */
 static unsigned int SymTable_hash(const char *name,unsigned int SIZE){
@@ -426,3 +425,5 @@ int main()
 
     return 0;
 }
+
+
