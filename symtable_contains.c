@@ -18,17 +18,13 @@ int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int sco
         //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
         
         if(temp->type==GLOBAL||temp->type==LOCAL||temp->type==FORMAL){
-            if (strcmp(temp->value.varVal->name,pcKey) && temp->value.varVal->scope == scope)
+            if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->value.varVal->scope == scope)
             {
                return 1;
             }
         }else{
-            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true) printf("%s\n",pcKey);
-            if (1)
-            {
-                
-               return 1;
-            }
+            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){ printf("%s\n",pcKey); return 1;}
+
         }
         temp= temp->next;
     }
