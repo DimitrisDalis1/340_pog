@@ -1,11 +1,15 @@
 %{
-    #include <stdio.h>
+    #include <stdio.h> 
+    #include "symtable.h"
     int yyerror (char* yaccProvidedMessage);
     int yylex(void);
 
     extern int yylineno;
     extern char* yytext;
+    extern SymTable_T *hash;
     extern FILE* yyin;
+    FILE* yyout_y; 
+    int current_scope=0;
 
 %}
 
@@ -16,8 +20,11 @@
     char* stringValue;
     int intValue;
     double doubleValue;
+    struct SymbolTableEntry* exprNode;
+    struct id_node* listNode;   
 }
 
+%expect 1
 
 %token<stringValue> ID
 %token<stringValue> STRING
@@ -41,468 +48,281 @@
 %left LEFTPAR RIGHTPAR
 
 %type stmt
-%type ifstmt
-%type whilestmt
-%type forstmt
-%type returnstmt
-%type block
-%type funcdef
-%type expr
-%type assignexpr
-%type term
-%type lvalue
-%type primary
-%type objectdef
-%type const
-%type member
-%type call
+%type<listNode> idlist
+%type<exprNode> lvalue
+%type<exprNode> call
+%type elist
 %type callsuffix
 %type normcall
-%type methodcall
-%type elist
-%type indexed
+%type funcdef
+%type<exprNode> expr
 %type indexedelem
-%type idlist
-
-
+%type indexed
+%type objectdef
+%type<exprNode> member
+%type block
+%type assignexpr
+%type temp
+%type methodcall
+%type term
+%type  primary
+%type const
+%type ifstmt whilestmt forstmt returnstmt
 
 
 %%
 
-program: stmt program
-        {
+program: stmt program  
+	| ;
 
-            printf("mphka");
-        }
-	|  
-        {
-            printf("mphka");
-        }
-        ;
-
-stmt:	expr SEMICOLON
-        {
-
-            printf("mphka");
-        }
-        |   ifstmt
-		{
-			printf("IF\n");
-		}
-        |   whilestmt
-        {
-
-            printf("mphka");
-        }
-        |   forstmt
-        {
-
-            printf("mphka");
-        }
-        |   returnstmt
-        {
-
-            printf("mphka");
-        }
-        |   BREAK SEMICOLON
-        {
-
-            printf("mphka");
-        }
-        |  CONTINUE SEMICOLON
-        {
-
-            printf("mphka");
-        }
-        |   block
-        {
-
-            printf("mphka");
-        }
-        |   funcdef
-        {
-
-            printf("mphka");
-        }
-        |   SEMICOLON
-        {
-
-            printf("mphka");
-        }
+stmt:	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); }
+	|ifstmt		{ fprintf(yyout_y,"stmt -> ifstmt\n"); }
+	|whilestmt	{ fprintf(yyout_y,"stmt -> whilestmt\n"); }
+	|forstmt	{ fprintf(yyout_y,"stmt -> forstmt\n"); }
+	|returnstmt	{ fprintf(yyout_y,"stmt -> returnstmt\n"); }
+	|BREAK SEMICOLON  { fprintf(yyout_y,"stmt -> break;\n"); }
+	|CONTINUE SEMICOLON { fprintf(yyout_y,"stmt -> continue;\n"); }
+	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
+	|funcdef	{ fprintf(yyout_y,"stmt -> funcdef\n"); }
+	|SEMICOLON 	{ fprintf(yyout_y,"stmt -> ;\n"); }
 	;
 
-expr:    assignexpr
-        {
+expr:	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
+	|expr PLUS expr { fprintf(yyout_y,"expr -> expr + expr\n"); }
+	|expr MINUS expr { fprintf(yyout_y,"expr -> expr - expr\n"); }
+	| expr MULT expr { fprintf(yyout_y,"expr -> expr * expr\n"); }
+	| expr DIV expr	 { fprintf(yyout_y,"expr -> expr / expr\n"); }
+	| expr PERC expr { fprintf(yyout_y,"expr -> expr % expr\n"); }
+	| expr BIGGER expr { fprintf(yyout_y,"expr -> expr > expr\n"); }
+	| expr BIGGER_EQUAL expr { fprintf(yyout_y,"expr -> expr >= expr\n"); }
+	| expr SMALLER expr  { fprintf(yyout_y,"expr -> expr < expr\n"); }
+	| expr SMALLER_EQUAL expr { fprintf(yyout_y,"expr -> expr <= expr\n"); }
+	| expr EQUAL expr { fprintf(yyout_y,"expr -> expr == expr\n"); }
+	| expr NOT_EQUAL expr { fprintf(yyout_y,"expr -> expr != expr\n"); }
+	| expr AND expr  { fprintf(yyout_y,"expr -> expr and expr\n"); }		
+	| expr OR expr	 { fprintf(yyout_y,"expr -> expr or expr\n"); }
+	|term  { fprintf(yyout_y,"expr -> term\n"); } 
+	;
+
+term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
+	|MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
+	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
+	|PLUS2 lvalue { 
+		if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
+        fprintf(stderr,"error"); // fix this error
+    }else if($2 == NULL){
+		return 0;
+	}
+	fprintf(yyout_y,"term -> ++lvalue\n");
+	}
+	|lvalue PLUS2 { 
+		if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
+        fprintf(stderr,"error"); // fix this error
+    }else if($2 == NULL){
+		return 0;
+	}
+	fprintf(yyout_y,"term -> lvalue++\n"); }
+	|MINUS2 lvalue {
+		 if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
+        fprintf(stderr,"error"); // fix this error
+    }else if($2 == NULL){
+		return 0;
+	}
+		fprintf(yyout_y,"term -> --lvalue\n"); 
+	}
+	|lvalue MINUS2 {
+		if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
+         fprintf(stderr,"error"); // fix this error
+    }else if($2 == NULL){
+		return 0;
+	}
+		fprintf(yyout_y,"term -> lvalue--\n");
+	}
+
+assignexpr: lvalue ASSIGN expr   { 
+	if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC){
+        fprintf(stderr,"error"); // fix this error
+    }else if($1 == NULL){
+		return 0;
+	}
+
+	fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
+
+	 }
+
+
+primary: lvalue { fprintf(yyout_y,"primary -> lvalue\n"); }
+	|call  { fprintf(yyout_y,"primary -> call\n"); }
+	|objectdef  { fprintf(yyout_y,"primary -> objectdef\n"); }
+	|LEFTPAR funcdef RIGHTPAR  { fprintf(yyout_y,"primary -> ( funcdef )\n"); }
+	|const  { fprintf(yyout_y,"primary -> const\n"); } 
+	;
+	
+lvalue:	ID  { 
+		fprintf(yyout_y,"lvalue -> id\n");  
+		}/****/
+	|LOCAL ID  { 
+		fprintf(yyout_y,"lvalue -> local id\n"); 
+	}/****/
+	|COLON2 ID  { 
+		fprintf(yyout_y,"lvalue -> ::id\n");
+		SymbolTableEntry* symEntry = lookup_inScope(&hash, $2, 0);
+		if(!symEntry){
+			printf("Global var not found");
+			$$=NULL;
+		}else $$=symEntry;
+	}
+	|member  { fprintf(yyout_y,"lvalue -> member\n"); } 
+	;
+	
+member: lvalue PERIOD ID {
+	if($1 != NULL && ($1 == USERFUNC || $1 == LIBFUNC))
+        {fprintf(stderr,"Cannot use function as a value");}
+    else if($1 == NULL){
+		fprintf(stderr,"lvalue not declared");
+    }else{
+		fprintf(yyout_y,"member -> lvalue.id\n");
+	};}
+	| lvalue LEFTBRACE expr RIGHTBRACE  { 
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> lvalue [ expr ]\n");
+		}
+	}
+	| call PERIOD ID  {
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> call.id\n");
+	}
+	}
+	| call LEFTBRACE expr RIGHTBRACE {
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> call [ expr ]\n");
+	}
+	}
+	;
+	
+call: call LEFTPAR elist RIGHTPAR   {fprintf(yyout_y,"call -> call ( elist )\n");}
+	|lvalue callsuffix  {
+		fprintf(yyout_y,"call -> lvalue callsuffix\n");
+		if(!$1){
+			printf("Function not declared");
+		}
+	}
+	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
+	 ;
+
+callsuffix: normcall  {fprintf(yyout_y,"callsuffix -> normcall\n");}
+	| methodcall  {fprintf(yyout_y,"callsuffix -> methodcall\n");}
+	;
+	
+normcall: LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"normcall -> ( elist )\n");}
+	;
+	
+methodcall: PERIOD2 ID LEFTPAR elist RIGHTPAR {fprintf(yyout_y,"methodcall -> ..id ( elist )\n");}
+	;
+	
+elist: expr  {fprintf(yyout_y,"elist -> expr\n");}
+	|elist COMMA expr  
+	| {};
+ 
+const: INT {fprintf(yyout_y,"const -> number\n");}
+	| REAL {fprintf(yyout_y,"const -> number\n");}
+	| STRING  {fprintf(yyout_y,"const -> string\n");}
+	|NIL  {fprintf(yyout_y,"const -> nil\n");}
+	|TRUE  {fprintf(yyout_y,"const -> true\n");}
+	|FALSE  {fprintf(yyout_y,"const -> false\n");}
+	;
+
+
+objectdef: LEFTBRACE elist RIGHTBRACE {fprintf(yyout_y,"objectdef -> { elist }\n");} 
+	|LEFTBRACE indexed RIGHTBRACE {fprintf(yyout_y,"objectdef -> { indexed }\n");} ;
+
+indexed: indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");} 
+	|indexed COMMA indexedelem {fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  ;
+
+indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
+
+temp_id: ID {fprintf(yyout_y,"temp_id -> id\n");} /*****/
+	| {};
+
+funcdef: FUNCTION temp_id LEFTPAR idlist RIGHTPAR block {fprintf(yyout_y,"funcdef -> function_return temp_id ( idlist ) {}\n");}   ; /*****/
 
-            printf("mphka");
-        }
-        |   expr PLUS expr
-        {
-
-            printf("mphka");
-        }
-        |   expr MINUS expr
-        {
-
-            printf("mphka");
-        }
-        |   expr MULT expr
-        {
-
-            printf("mphka");
-        }
-        |   expr DIV expr
-        {
-
-            printf("mphka");
-        }
-        |   expr PERC expr
-        {
-
-            printf("mphka");
-        }
-        |   expr EQUAL expr
-        {
-
-            printf("mphka");
-        }
-        |   expr NOT_EQUAL expr
-        {
-
-            printf("mphka");
-        }
-        |   expr BIGGER expr
-        {
-
-            printf("mphka");
-        }
-        |   expr BIGGER_EQUAL expr
-        {
-
-            printf("mphka");
-        }
-        |   expr SMALLER expr
-        {
-
-            printf("mphka");
-        }
-        |   expr SMALLER_EQUAL expr
-        {
-
-            printf("mphka");
-        }
-        |   expr AND expr
-        {
-
-            printf("mphka");
-        }
-        |   expr OR expr
-        {
-
-            printf("mphka");
-        }
-        |   term
-        {
-
-            printf("mphka");
-        }
-        ;
-
-term: LEFTPAR expr RIGHTPAR 
-        {
-
-            printf("mphka");
-        }
-        | MINUS expr %prec UMINUS
-        {
-
-            printf("mphka");
-        }
-        | NOT expr
-        {
-
-            printf("mphka");
-        }
-        |   PLUS2 lvalue
-        {
-
-            printf("mphka");
-        }
-        |   lvalue PLUS2
-        {
-
-            printf("mphka");
-        }
-        |   MINUS2 lvalue
-        {
-
-            printf("mphka");
-        }
-        |   lvalue MINUS2
-        {
-
-            printf("mphka");
-        }
-        |   primary
-        {
-            printf("mphka");
-
-        }
-    ;
-
-assignexpr: lvalue ASSIGN expr
-            {
-
-            printf("mphka");
-            }
-            ;
-
-primary: lvalue
-            {
-
-            printf("mphka");
-            }
-            | call
-            {
-
-            printf("mphka");
-            }
-            | objectdef
-            {
-
-            printf("mphka");
-            }
-            | LEFTPAR funcdef RIGHTPAR
-            {
-
-            printf("mphka");
-            }
-            |const
-            {
-
-            printf("mphka");
-            }
-        ;
-
-lvalue: ID
-        {
-
-            printf("mphka");
-        }
-        | LOCAL ID
-        {
-
-            printf("mphka");
-        }
-        | COLON2 ID
-        {
-
-            printf("mphka");
-        }
-        | member
-        {
-
-            printf("mphka");
-        }
-        ;
-
-member: lvalue PERIOD ID
-        {
-
-            printf("mphka");
-        }
-        | lvalue LEFTBRACE expr RIGHTBRACE
-        {
-
-            printf("mphka");
-        }
-        | call PERIOD ID
-        {
-
-            printf("mphka");
-        }
-        | call LEFTBRACE expr RIGHTBRACE
-        {
-
-            printf("mphka");
-        }
-        ;
-call:   call LEFTPAR elist RIGHTPAR
-        {
-
-            printf("mphka");
-        }
-        | lvalue callsuffix
-        {
-
-            printf("mphka");
-        }
-        | LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR
-        {
-
-            printf("mphka");
-        }
-        ;
-callsuffix: normcall
-            {
-
-            printf("mphka");
-            }
-            | methodcall
-            {
-
-            printf("mphka");
-            }
-            ;
-normcall: LEFTPAR elist RIGHTPAR
-            {
-
-            printf("mphka");
-            }
-            ;
-methodcall : PERIOD2 ID LEFTPAR elist RIGHTPAR
-            {
-
-            }
-            
-            ;
-
-elist :    expr
-            {
-
-            }
-            | elist COMMA expr
-            {
-
-            }
-            |
-            {
-
-            }
-            ;
-
-objectdef: LEFTBRACE elist RIGHTBRACE
-            {
-
-            }
-            | LEFTBRACE indexed RIGHTBRACE
-            {
-
-            }
-            ;
-indexed:  indexedelem
-            {
-
-            }
-            |indexed COMMA indexedelem
-            {
-
-            }
-            ; 
-indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY
-            {
-
-            }
-            ;
-stmt_inf: stmt_inf stmt
-        {
-
-        }
-        |
-        {
-
-        }
-        ;
-block: LEFTCURLY stmt_inf RIGHTCURLY 
-        {
-
-        }
-        |
-        {
-
-        }
-        ;
-
-funcdef: FUNCTION  ID  LEFTPAR idlist RIGHTPAR block
-        {
-
-        }
-        | FUNCTION LEFTPAR idlist RIGHTPAR block
-        {
-
-        }
-        ;
-const : INT | REAL |STRING | NIL |TRUE | FALSE
-        {
-
-        }
-        ;
 idlist: ID
-        {
-
-        }
-        |idlist COMMA ID
-        {
-
-        }
-        |
-        {
-		;
-        }
-        ;
-ifstmt: IF LEFTPAR expr RIGHTPAR stmt ELSE stmt
-        {
-
-        }
-        | IF LEFTPAR expr RIGHTPAR stmt
-        {
-
-        }
-        ;
-whilestmt: WHILE {} LEFTPAR expr RIGHTPAR {} stmt
-            {
-
-            }
-            ;
-forstmt: FOR
-      	{
-	}
-	 LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR 
-	{
-	}
-	stmt
-        {
-
-        };
-returnstmt: RETURN SEMICOLON
-            {
-
-            }   
-            |RETURN expr SEMICOLON
-            {
-
-            }
-            ;
-
-
-
-%%
-
-int yyerror(char* yaccProvideMessage){
-    fprintf(stderr,"%s: at ;ine %d, before token: %s\n",yaccProvideMessage,yylineno,yytext);
-    fprintf(stderr,"INPUT NOT VALID\n");
-    return 0;
-}
-
-int main(int argc,char** argv)
 {
-    if(argc >1){
-        if(!(yyin = fopen(argv[1],"r"))){
-            fprintf(stderr,"Cannot read file: %s\n",argv[1]);
-            return 1;
-        }
-    }else yyin = stdin;
+    //check if it's a gloabal lib function
+    if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
+    {
+        printf("This formal argument shadows function from libary");
+        return 0;
+    }
+    //check if it is in the same scope we are in
+    if (lookup_inScope(hash,$1,current_scope)!=NULL)
+    {
+        printf("this formal argument already exists in given scope");        
+        return 0;
+    }
+    
+    //insertion in the idlist and saving the idlist
 
-    yyparse();
-    return 0;
-}
+    $$ = create_id_list();
+    insert($$,$1);
+
+    //insertion in the symtable/scopelist
+	SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+	fprintf(yyout_y,"idlist -> id\n");
+
+	}
+	| idlist COMMA ID {
+	//check if it's a gloabal lib function
+    if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
+    {
+        printf("This formal argument shadows function from libary");
+        return 0;
+    }
+    //check if it is in the same scope we are in
+    if (lookup_inScope(hash,$1,current_scope)!=NULL)
+    {
+        printf("this formal argument already exists in given scope");        
+        return 0;
+    }
+    
+    //insertion in the idlist and saving the idlist
+    insert($1,$3);
+    $$ = &$1; //not sure if this is functional 
+
+	//insertion in the symtable/scopelist
+	SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+
+    fprintf(yyout_y,"idlist -> idlist , id\n");
+	}
+	|  {    $$ = create_id_list();
+ 			fprintf(yyout_y,"idlist -> ε\n"); 
+	};
+
+temp: temp stmt {fprintf(yyout_y,"temp -> temp stmt\n");}
+	| {}; 
+
+block: LEFTCURLY{increase_scope();} temp RIGHTCURLY{decrease_scope();} {fprintf(yyout_y,"block -> { temp }\n");}; /*******/
+
+ifstmt: IF LEFTPAR expr RIGHTPAR stmt ELSE stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt else stmt\n");}
+	|IF LEFTPAR expr RIGHTPAR stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt\n");}
+	;
+
+whilestmt: WHILE LEFTPAR expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
+
+forstmt: FOR LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
+
+returnstmt: RETURN SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
+	| RETURN expr SEMICOLON {fprintf(yyout_y,"returnstmt -> return expr ;\n");}
+	;
