@@ -6,6 +6,12 @@
 #define HASH_MULTIPLIER 65599
 #define MAX_SIZE 65521
 
+extern int yylineno;
+extern char* yytext;
+extern FILE* yyin;
+extern FILE* yystdin;
+extern int current_scope;
+
 typedef struct symtable_s SymTable_T;
 typedef struct id_list id_list;
 typedef struct SymbolTableEntry SymbolTableEntry;
