@@ -256,8 +256,52 @@ indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem 
 temp_id: ID {fprintf(yyout_y,"temp_id -> id\n");} /*****/
 	| {};
 
-funcdef: FUNCTION temp_id LEFTPAR idlist RIGHTPAR block {fprintf(yyout_y,"funcdef -> function_return temp_id ( idlist ) {}\n");}   ; /*****/
+funcdef: FUNCTION {increase_scope();} temp_id LEFTPAR idlist RIGHTPAR {
+				if((char *)$3!=NULL){
+						fprintf(yyout_y,"funcdef -> function id ( idlist ) block\n");
+						SymbolTableEntry* func_name = lookup_inScope(&hash,(char *)$3,0);
+						if (func_name!=NULL){
+							if(func_name->type==LIBFUNC){
+								printf("Userfunc shadows libfunc");
+								return;
+							}else if(scope == 1){
+								printf("found symbol with same name");
+								return;
+							}
+						}
+						if (scope>1){
+							//search in previus scope because u are one scope inside 
+							//and u need to check the name if given like this 
+							//function f(x){
+							//     function x(){}
+							//}
+							func_name = lookup_inScope(&hash,(char *)$3,current_scope-1);
+							if (func_name !=NULL)
+							{
+								printf("Variable already exists");
+								return;
+						}
+		
+					//if it already exists in the same scope print error
+					if ((func_name = lookup_inScope(&hash,(char *)$3,current_scope)) != NULL)
+					{
+						if(func_name->type==LIBFUNC||func_name->type==USERFUNC)
+							printf("Function redefinition");
+						else
+							printf("Funtion declared with same name as variable");
+						return ;
+					}
 
+					SymbolTableEntry* func_name =SymTable_insert(&hash,(char *)$3, (idList *)$5,  current_scope-1, yylineno, USERFUNC);
+				}else{
+					fprintf(yyout_y,"funcdef -> function ( idlist ) block\n");
+					char* my_name= malloc(50*(sizeof(char)));
+					sprintf(my_name,"_myfync%d",unnamed_counter++);
+					SymbolTableEntry* func_name =SymTable_insert(&hash,my_name, (idList *)$5,  current_scope, yylineno, USERFUNC);
+		        }
+				}
+			block
+   ;
 idlist: ID
 {
     //check if it's a gloabal lib function
