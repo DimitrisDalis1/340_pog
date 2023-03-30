@@ -7,10 +7,11 @@
     extern int yylineno;
     extern char* yytext;
     extern SymTable_T *hash;
+    extern Scope_node* head_scope_node;
     extern FILE* yyin;
     FILE* yyout_y; 
     int unnamed_counter=0;
-    int current_scope=0;
+    extern int current_scope;
 
 %}
 
@@ -69,7 +70,7 @@
 %type  primary
 %type const
 %type ifstmt whilestmt forstmt returnstmt
-
+%type<stringValue> temp_id
 
 %%
 
@@ -159,40 +160,40 @@ primary: lvalue { fprintf(yyout_y,"primary -> lvalue\n"); }
 	|const  { fprintf(yyout_y,"primary -> const\n"); } 
 	;
 	
-lvalue:	ID  { 
+lvalue:		ID  { 
 		fprintf(yyout_y,"lvalue -> id\n");  
 
     int stemp;
-	SymTableEntry* entry;
+	SymbolTableEntry* entry;
 	stemp=current_scope;
     entry = lookup_inScope(hash, (char *)$1, stemp);
     while(entry == NULL && stemp > 0){
         stemp--;
-		entry = lookup_inScope(&scpArr, (char *)$1, stemp);
+		entry = lookup_inScope(hash, (char *)$1, stemp);
     }
 
     if(entry == NULL) {
-        stemp = scope;
-        entry = lookup_inScope(&scpArr, (char *)$1, stemp);
+        stemp = current_scope;
+        entry = lookup_inScope(hash, (char *)$1, stemp);
         while(entry == NULL && stemp > 0){
-            entry = lookup_inScope(&scpArr, (char *)$1, stemp);
+            entry = lookup_inScope(hash, (char *)$1, stemp);
             stemp--;
         }
 		//if you did not findsomething
         if(entry == NULL){   
             // lookup for a global matching symbol
-            entry = lookup_inScope(&scpArr, (char *)$1, 0);
+            entry = lookup_inScope(hash, (char *)$1, 0);
             // if you didn't find anything then create new symbol
             if(entry != NULL){
 				$$ = entry;
                 return 0;
             }else{
                 if(current_scope != 0){
-					entry = SymTable_insert(hash,(char *)$1,NULL,current_scope,LOCAL)
+					entry = SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,LOCALV);
 				}else{
-					entry = SymTable_insert(hash,(char *)$1,NULL,current_scope,GLOBAL)
+					entry = SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,GLOBAL);
 				}
-                $$ = entry;
+                $$ =(SymbolTableEntry*) entry;
                 return 0;
             }
         }
@@ -214,78 +215,78 @@ lvalue:	ID  {
 	|LOCAL ID  { 
 		fprintf(yyout_y,"lvalue -> local id\n"); 
 
-		 SymTableEntry* symEntry = lookup_inScope(&hash, scope, $2);
+		 SymbolTableEntry* symEntry = lookup_inScope(hash, (char*)$2,current_scope);
     if(symEntry == NULL){
-        symEntry =lookup_inBucket(hash, $2, isActive);
+        symEntry =lookup_inBucket(hash, (char*)$2, current_scope);
 
-        if(symEntry != NULL && symEntry->type == LIBFUNC && scope != 0) {
+        if(symEntry != NULL && symEntry->type == LIBFUNC && current_scope != 0) {
             printf("Cannot shadow a library function");
             $$ = NULL;
-            return;
+            return 0;
         }
         else {
-            if(scope == 0)
-                symEntry = SymTable_insert(&hash,$2, NULL,  current_scope, yylineno, GLOBAL);
+            if(current_scope == 0)
+                symEntry = SymTable_insert(hash,(char*)$2, yylineno,NULL,  current_scope,  GLOBAL);
             else
-                symEntry = SymTable_insert(&hash,$2, NULL,  current_scope, yylineno, LOCALV);
+                symEntry = SymTable_insert(hash,(char*)$2, yylineno, NULL,  current_scope, LOCALV);
 
             $$ = symEntry;
-            return;
+            return 0;
         }
     }
     else {
         $$ = symEntry;
-        return;
+        return 0;
     }
 	}/****/
 	|COLON2 ID  { 
 		fprintf(yyout_y,"lvalue -> ::id\n");
-		SymbolTableEntry* symEntry = lookup_inScope(&hash, $2, 0);
+		SymbolTableEntry* symEntry = lookup_inScope(hash, (char*)$2, 0);
 		if(!symEntry){
 			printf("Global var not found");
 			$$=NULL;
 		}else $$=symEntry;
 	}
 	|member  { fprintf(yyout_y,"lvalue -> member\n"); } 
-	;
-	
+	;	
 member: lvalue PERIOD ID {
 	if(((SymbolTableEntry*)$1)!= NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
-        {fprintf(stderr,"Cannot use function as a value");}
+        {
+            fprintf(stderr,"Cannot use function as a value");
+    }
     else if(((SymbolTableEntry*)$1) == NULL){
 		fprintf(stderr,"lvalue not declared");
-    }else{
+    }
 		fprintf(yyout_y,"member -> lvalue.id\n");
-	};}
+	}
 	| lvalue LEFTBRACE expr RIGHTBRACE  { 
 	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
         fprintf(stderr,"error cannot use function as a value"); // fix this error
     }else if(((SymbolTableEntry*)$1) == NULL){
 		fprintf(stderr,"error cannot use nothing as a value");
-	}else{
+	}
 		fprintf(yyout_y,"member -> lvalue [ expr ]\n");
-		}
+		
 	}
 	| call PERIOD ID  {
-	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
+	if(((SymbolTableEntry*)$1)!= NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
         fprintf(stderr,"error cannot use function as a value"); // fix this error
     }else if(((SymbolTableEntry*)$1) == NULL){
 		fprintf(stderr,"error cannot use nothing as a value");
-	}else{
-		fprintf(yyout_y,"member -> call.id\n");
 	}
+		fprintf(yyout_y,"member -> call.id\n");
+	
 	}
 	| call LEFTBRACE expr RIGHTBRACE {
 	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
         fprintf(stderr,"error cannot use function as a value"); // fix this error
     }else if(((SymbolTableEntry*)$1)== NULL){
 		fprintf(stderr,"error cannot use nothing as a value");
-	}else{
+	}
 		fprintf(yyout_y,"member -> call [ expr ]\n");
-	}
-	}
-	;
 	
+	}
+	;	
 call: call LEFTPAR elist RIGHTPAR   {fprintf(yyout_y,"call -> call ( elist )\n");}
 	|lvalue callsuffix  {
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
@@ -328,55 +329,58 @@ indexed: indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");}
 indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
 temp_id: ID {
-	$$=strdup($1);
+	$$=$1;
 	fprintf(yyout_y,"temp_id -> id\n");
 	} /*****/
-	| { $$=NULL;}
+	| { $$=NULL;
+	}
 	;
 funcdef: FUNCTION {increase_scope();} temp_id LEFTPAR idlist RIGHTPAR {
-				if((char *)$3!=NULL){
+				if($3!=NULL){
 						fprintf(yyout_y,"funcdef -> function id ( idlist ) block\n");
-						SymbolTableEntry* func_name = lookup_inScope(&hash,(char *)$3,0);
+						SymbolTableEntry* func_name = lookup_inScope(hash,(char *)$3,0);
 						if (func_name!=NULL){
 							if(func_name->type==LIBFUNC){
 								printf("Userfunc shadows libfunc");
-								return;
-							}else if(scope == 1){
+								return 0;
+							}else if(current_scope == 1){
 								printf("found symbol with same name");
-								return;
+								return 0;
 							}
 						}
-						if (scope>1){
+						if (current_scope>1){
 							//search in previus scope because u are one scope inside 
 							//and u need to check the name if given like this 
 							//function f(x){
 							//     function x(){}
 							//}
-							func_name = lookup_inScope(&hash,(char *)$3,current_scope-1);
+							func_name = lookup_inScope(hash,(char *)$3,current_scope-1);
 							if (func_name !=NULL)
 							{
 								printf("Variable already exists");
-								return;
+								return 0;
 						}
+					}
+					
 		
 					//if it already exists in the same scope print error
-					if ((func_name = lookup_inScope(&hash,(char *)$3,current_scope)) != NULL)
+					if ((func_name = lookup_inScope(hash,(char *)$3,current_scope)) != NULL)
 					{
 						if(func_name->type==LIBFUNC||func_name->type==USERFUNC)
 							printf("Function redefinition");
 						else
 							printf("Funtion declared with same name as variable");
-						return ;
+						return 0;
 					}
 
-					SymbolTableEntry* func_name =SymTable_insert(&hash,(char *)$3, (idList *)$5,  current_scope-1, yylineno, USERFUNC);
+					SymbolTableEntry* func_name2 =SymTable_insert(hash,(char *)$3,  yylineno,(id_list *)$5, current_scope-1 , USERFUNC);
 				}else{
 					fprintf(yyout_y,"funcdef -> function ( idlist ) block\n");
 					char* my_name= malloc(50*(sizeof(char)));
 					sprintf(my_name,"_myfync%d",unnamed_counter++);
-					SymbolTableEntry* func_name =SymTable_insert(&hash,my_name, (idList *)$5,  current_scope, yylineno, USERFUNC);
-		        }
-				}
+					SymbolTableEntry* func_name =SymTable_insert(hash,my_name,  yylineno,(id_list *)$5, current_scope,  USERFUNC);
+		        		}				}
+
 			block
 			   ;
 idlist: ID
@@ -447,3 +451,26 @@ forstmt: FOR LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf
 returnstmt: RETURN SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
 	| RETURN expr SEMICOLON {fprintf(yyout_y,"returnstmt -> return expr ;\n");}
 	;
+
+%%
+int main(int argc, char** argv)
+{
+
+    yyout_y = fopen("yacc_output.txt", "w");
+    hash = SymTable_new();
+    symtable_print(head_scope_node,hash);
+    if(argc > 1 ){
+        if(!(yyin = fopen(argv[1], "r"))) {
+            fprintf(stderr, "cannot read file: %s\n", argv[1]);
+            return 1;
+        }
+    }
+    else
+        yyin= stdin;
+    yyparse();
+    return 0;
+
+    
+    
+    return 0;
+}
