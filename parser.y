@@ -103,6 +103,51 @@ expr:	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
 	| expr OR expr	 { fprintf(yyout_y,"expr -> expr or expr\n"); }
 	|term  { fprintf(yyout_y,"expr -> term\n"); } 
 	;
+	
+funcdef: FUNCTION {increase_scope();} ID LEFTPAR idlist RIGHTPAR {
+    SymbolTableEntry* search =lookup_inScope(hash,(char *)$3,0);
+    if (search!=NULL)
+    {
+        if(search->type==LIBFUNC){
+            printf("Userfunc shadows libraryfunn");
+        
+        }else if(current_scope-1 == 0){
+            printf("found symbol with same name");
+           
+        }
+        
+        
+    }
+    if (current_scope>1)
+    {
+        search =lookup_inScope_wA(hash,$3,current_scope-1);
+        if (search !=NULL)
+        {
+            printf("Variable exists");
+            
+        }
+        
+    }
+    if ((search = lookup_inScope(hash,(char *)$3,current_scope)) != NULL)
+    {
+        if(search->type==USERFUNC || search->type==LIBFUNC)
+            printf("function redefinition");
+        else
+            printf("Funtion declared with same name as variable");
+        return 0;
+    }
+    
+    //insertion in the symtable and in the scopelist
+    SymbolTableEntry* entry =entry=SymTable_insert(hash,(char *)$3,yylineno,(id_list*)$5,current_scope-1,USERFUNC);
+
+	} block { fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
+	| FUNCTION {increase_scope();}LEFTPAR idlist RIGHTPAR block {
+		char* my_name= malloc(50*(sizeof(char)));
+		sprintf(my_name,"_myfync%d",unnamed_counter++);
+		  SymbolTableEntry* entry = SymTable_insert(hash,my_name,yylineno,(id_list*)$4,current_scope,USERFUNC);
+                	fprintf(yyout_y,"funcdef -> function ( idlist ) {}\n");}   
+	
+	;
 
 term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	| MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
