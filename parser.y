@@ -9,6 +9,7 @@
     extern SymTable_T *hash;
     extern FILE* yyin;
     FILE* yyout_y; 
+    int unnamed_counter=0;
     int current_scope=0;
 
 %}
@@ -108,32 +109,32 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	|MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
 	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
 	|PLUS2 lvalue { 
-		if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
         fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
+    }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
 	fprintf(yyout_y,"term -> ++lvalue\n");
 	}
 	|lvalue PLUS2 { 
-		if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
         fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
+    }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
 	fprintf(yyout_y,"term -> lvalue++\n"); }
 	|MINUS2 lvalue {
-		 if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		 if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
         fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
+    }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
 		fprintf(yyout_y,"term -> --lvalue\n"); 
 	}
 	|lvalue MINUS2 {
-		if($2 != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
          fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
+    }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
 		fprintf(yyout_y,"term -> lvalue--\n");
@@ -176,35 +177,35 @@ lvalue:	ID  {
 	;
 	
 member: lvalue PERIOD ID {
-	if($1 != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
+	if(((SymbolTableEntry*)$1)!= NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
         {fprintf(stderr,"Cannot use function as a value");}
-    else if($1 == NULL){
+    else if(((SymbolTableEntry*)$1) == NULL){
 		fprintf(stderr,"lvalue not declared");
     }else{
 		fprintf(yyout_y,"member -> lvalue.id\n");
 	};}
 	| lvalue LEFTBRACE expr RIGHTBRACE  { 
-	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
         fprintf(stderr,"error cannot use function as a value"); // fix this error
-    }else if($1 == NULL){
+    }else if(((SymbolTableEntry*)$1) == NULL){
 		fprintf(stderr,"error cannot use nothing as a value");
 	}else{
 		fprintf(yyout_y,"member -> lvalue [ expr ]\n");
 		}
 	}
 	| call PERIOD ID  {
-	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
         fprintf(stderr,"error cannot use function as a value"); // fix this error
-    }else if($1 == NULL){
+    }else if(((SymbolTableEntry*)$1) == NULL){
 		fprintf(stderr,"error cannot use nothing as a value");
 	}else{
 		fprintf(yyout_y,"member -> call.id\n");
 	}
 	}
 	| call LEFTBRACE expr RIGHTBRACE {
-	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
         fprintf(stderr,"error cannot use function as a value"); // fix this error
-    }else if($1 == NULL){
+    }else if(((SymbolTableEntry*)$1)== NULL){
 		fprintf(stderr,"error cannot use nothing as a value");
 	}else{
 		fprintf(yyout_y,"member -> call [ expr ]\n");
@@ -253,11 +254,58 @@ indexed: indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");}
 
 indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
-temp_id: ID {fprintf(yyout_y,"temp_id -> id\n");} /*****/
-	| {};
+temp_id: ID {
+	$$=strdup($1);
+	fprintf(yyout_y,"temp_id -> id\n");
+	} /*****/
+	| { $$=NULL;}
+	;
+funcdef: FUNCTION {increase_scope();} temp_id LEFTPAR idlist RIGHTPAR {
+				if((char *)$3!=NULL){
+						fprintf(yyout_y,"funcdef -> function id ( idlist ) block\n");
+						SymbolTableEntry* func_name = lookup_inScope(&hash,(char *)$3,0);
+						if (func_name!=NULL){
+							if(func_name->type==LIBFUNC){
+								printf("Userfunc shadows libfunc");
+								return;
+							}else if(scope == 1){
+								printf("found symbol with same name");
+								return;
+							}
+						}
+						if (scope>1){
+							//search in previus scope because u are one scope inside 
+							//and u need to check the name if given like this 
+							//function f(x){
+							//     function x(){}
+							//}
+							func_name = lookup_inScope(&hash,(char *)$3,current_scope-1);
+							if (func_name !=NULL)
+							{
+								printf("Variable already exists");
+								return;
+						}
+		
+					//if it already exists in the same scope print error
+					if ((func_name = lookup_inScope(&hash,(char *)$3,current_scope)) != NULL)
+					{
+						if(func_name->type==LIBFUNC||func_name->type==USERFUNC)
+							printf("Function redefinition");
+						else
+							printf("Funtion declared with same name as variable");
+						return ;
+					}
 
-funcdef: FUNCTION temp_id LEFTPAR idlist RIGHTPAR block {fprintf(yyout_y,"funcdef -> function_return temp_id ( idlist ) {}\n");}   ; /*****/
-
+					SymbolTableEntry* func_name =SymTable_insert(&hash,(char *)$3, (idList *)$5,  current_scope-1, yylineno, USERFUNC);
+				}else{
+					fprintf(yyout_y,"funcdef -> function ( idlist ) block\n");
+					char* my_name= malloc(50*(sizeof(char)));
+					sprintf(my_name,"_myfync%d",unnamed_counter++);
+					SymbolTableEntry* func_name =SymTable_insert(&hash,my_name, (idList *)$5,  current_scope, yylineno, USERFUNC);
+		        }
+				}
+			block
+			   ;
 idlist: ID
 {
     //check if it's a gloabal lib function
