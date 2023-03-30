@@ -29,7 +29,7 @@ int insert(id_list *ptr,char *name){
 
 int id_list_contains(id_list *x, const char *name){
     struct id_list* temp;
-    assert(x); 
+    assert(x);
     assert(name);
 
     /*Go to each node and see if the keys match*/
@@ -57,10 +57,6 @@ void id_list_free(id_list *ptr){
     free(ptr);
 }
 
-
-
-
-
 Scope_node *create_scope(SymbolTableEntry *symbol,unsigned int scope,Scope_node *next,Scope_node *previous){
     Scope_node *new_scope =  malloc(sizeof(Scope_node));
     assert(new_scope);
@@ -69,22 +65,6 @@ Scope_node *create_scope(SymbolTableEntry *symbol,unsigned int scope,Scope_node 
     new_scope->next = next;
     new_scope->previous = previous;
     return new_scope;
-}
-
-void length_increase(unsigned int yyscore){
-    Scope_node *temp_head  = head_scope_node;
-    Scope_node *temp;
-    int additional_nodes = yyscore - length;
-    while(temp_head->next != NULL){
-        temp_head = temp_head->next; //ftanei sto telos
-    }
-    while(additional_nodes>0){ //oso scope > tou length aujanei to length kai dimiourgei scope nodes "adeia"
-        temp = create_scope(NULL,length++,NULL,temp_head); 
-        temp_head->next = temp;
-        temp_head = temp;
-        additional_nodes--;
-        length++;
-    }
 }
 
 int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
@@ -298,41 +278,16 @@ SymTable_T* SymTable_new(void){
     SymTable_insert(oSymTable,"argument",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"typeof",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"strtonum",0,NULL,1,LIBFUNC);
-    SymTable_insert(oSymTable,"sqrt",0,NULL,1,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,2,LIBFUNC);
     SymTable_insert(oSymTable,"cos",0,NULL,3,LOCAL);
     SymTable_insert(oSymTable,"sin",0,NULL,7,LIBFUNC);
     return oSymTable;
-}
-
-int getMaxNameLength(SymTable_T* hashTable) {
-    int maxLen = 0;
-    int len,i;
-    // Iterate over each bucket in the hash table
-    for (i = 0; i < hashTable->buckets; i++) {
-        SymbolTableEntry* node = hashTable->hashtable[i];
-
-        // Iterate over each node in the linked list
-        while (node != NULL) {
-            if(node->type==LIBFUNC||node->type==USERFUNC){
-              len = strlen(node->value.funcVal->name);
-            }else{
-                len = strlen(node->value.varVal->name);
-            }
-            if (len > maxLen) {
-                maxLen = len;
-            }
-            node = node->next;
-        }
-    }
-
-    return maxLen;
 }
 
 void symtable_print(Scope_node *head,SymTable_T*  hashtable){
     SymbolTableEntry *temp;
     int length;
     Scope_node *ptr=head;
-    length=getMaxNameLength(hashtable);
     assert(ptr);
     printf("                        SYNTAX ANALYSIS                             \n");
     while(ptr != NULL)
@@ -343,7 +298,7 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
         {
             if (temp->type == LIBFUNC || temp->type == USERFUNC)
             {
-                printf("%-*s \t",length,temp->value.funcVal->name);
+                printf("%-*s \t",20,temp->value.funcVal->name);
                 if (temp->type == LIBFUNC)
                 {
                    printf(" [library function] ");
@@ -353,7 +308,7 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
                 printf(" (line %d) ",temp->value.funcVal->line);
                 printf(" (scope %d)",temp->value.funcVal->scope);
             }else{
-                printf("%-*s \t",length,temp->value.varVal->name);
+                printf("%-*s \t",20,temp->value.varVal->name);
                 if(temp->type == GLOBAL){
                    printf(" [global  variable] ");
                 }else if(temp->type == LOCAL){
@@ -378,16 +333,15 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
 
 void scope_deactivate(Scope_node *ScopeTable){
     struct Scope_node *temp;
-    SymbolTableEntry *temp_entry;
     temp = ScopeTable;
-    temp_entry = temp->symbol;
-    if (temp) return; /*if it is null do not  do anything*/
-    while(temp_entry != NULL){
-        temp_entry->isActive = false;
-        temp_entry = temp_entry->next_in_scope;
+    if (ScopeTable) return; /*if it is null do not  do anything*/
+    while(temp->symbol->next_in_scope != NULL){
+        temp->symbol->isActive = false;
+        temp->symbol->next_in_scope = temp->next->symbol->next_in_scope;
     }
     return;
 }
+
 
 /*Get the length of the Hash Table*/
 unsigned int SymTable_getLength(SymTable_T *oSymTable){
