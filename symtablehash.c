@@ -35,12 +35,12 @@ int yyerror(char* yaccProvideMessage){
     return 0;
 }
 
-id_list *create_id_list(char* func_name){
+id_list *create_id_list(){
     id_list *x = malloc(sizeof(id_list));
     assert(x);
     x->length = 0;
     x->head = NULL;
-    insert(x,func_name);
+    //insert(x,func_name);
     return x;
 }
 
