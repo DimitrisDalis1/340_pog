@@ -85,3 +85,4 @@ int id_list_contains(id_list *, const char *);
 static unsigned int SymTable_hash(const char*, unsigned int);
 static void expand(SymTable_T*);
 SymbolTableEntry* lookup_inScope(SymTable_T* , const char* , unsigned int );
+SymbolTableEntry* lookup_inBucket_without_isActive(SymTable_T *, const char *, unsigned int );
