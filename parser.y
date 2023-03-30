@@ -260,7 +260,7 @@ lvalue:	ID  {
     		if(entry == NULL){
   		      entry = lookup_inBucket(hash,(char *)$1,current_scope);
 
-      		  if(entry != NULL && entry->type == LIBFUNC && scope != 0) {
+      		  if(entry != NULL && entry->type == LIBFUNC && current_scope != 0) {
       		      printf("shadow libfunc");
           		  $$= NULL;
           		  
@@ -334,7 +334,7 @@ call: call LEFTPAR elist RIGHTPAR   {fprintf(yyout_y,"call -> call ( elist )\n")
 	|lvalue callsuffix  {
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 		if(!$1){
-			fprintf(stderr,"Function not declared in line %d and scope %d \n",yylineno,cureent_scope);
+			fprintf(stderr,"Function not declared in line %d and scope %d \n",yylineno,current_scope);
 		}
 	}
 	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
