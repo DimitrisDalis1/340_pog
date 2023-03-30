@@ -11,6 +11,9 @@ extern char* yytext;
 extern FILE* yyin;
 extern FILE* yystdin;
 extern int current_scope;
+extern int yyerror(char* );
+
+//extern struct SymTable_T* hash;
 
 typedef struct symtable_s SymTable_T;
 typedef struct id_list id_list;
@@ -57,6 +60,8 @@ typedef struct symtable_s
 SymTable_T* SymTable_new(void);
 
 void SymTable_free(SymTable_T* oSymTable);
+
+void symtable_print(Scope_node*, SymTable_T*);
 
 unsigned int SymTable_getLength(SymTable_T* oSymTable);
 
