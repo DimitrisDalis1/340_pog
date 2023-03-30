@@ -399,13 +399,13 @@ SymbolTableEntry* lookup_inBucket(SymTable_T *oSymTable, const char *pcKey, unsi
 
     /*Search if there is a cell with this key*/
     temp = oSymTable->hashtable[hashIndex];
-    if(temp == NULL){ printf("is null\n");}
+    if(temp == NULL){ return NULL;}
     while (temp!=NULL)
     {
         //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
         
         if(temp->type==GLOBAL||temp->type==LOCALV||temp->type==FORMAL){
-            if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->value.varVal->scope == scope && temp->isActive == true)
+            if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->isActive == true)
             {
                return temp;
             }
@@ -434,7 +434,7 @@ SymbolTableEntry* lookup_inScope(SymTable_T* sym, const char* key, unsigned int 
 
     /*Search if there is a cell with this key*/
     temp = sym->hashtable[hashIndex];
-    if(temp == NULL){ printf("is null\n");}
+    if(temp == NULL){ return NULL;}
     while (temp!=NULL)
     {
         //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
@@ -445,7 +445,42 @@ SymbolTableEntry* lookup_inScope(SymTable_T* sym, const char* key, unsigned int 
                return temp;
             }
         }else {
-            if (strcmp(temp->value.funcVal->name, key) == 0 && (temp->isActive == true) && (temp->value.funcVal->scope = scope)){
+            if (strcmp(temp->value.funcVal->name, key) == 0 && (temp->isActive == true) && (temp->value.funcVal->scope == scope)){
+                return temp;
+            }
+        }
+        temp= temp->next_in_scope;
+    }
+    return NULL;
+}
+
+SymbolTableEntry* lookup_inScope_wA(SymTable_T* sym, const char* key, unsigned int scope)
+{
+    int hashIndex;
+    SymbolTableEntry *temp;
+    //temp = malloc(sizeof(SymbolTableEntry*));
+    assert(sym);
+    assert(key);
+
+
+    /*Generate the hash index*/
+    hashIndex=SymTable_hash(key,sym->buckets);
+    //printf("hash index inside sym_cont: %d\n", hashIndex);
+
+    /*Search if there is a cell with this key*/
+    temp = sym->hashtable[hashIndex];
+    if(temp == NULL){return NULL;}
+    while (temp!=NULL)
+    {
+        //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
+        
+        if(temp->type==GLOBAL||temp->type==LOCALV||temp->type==FORMAL){
+            if (strcmp(temp->value.varVal->name,key) == 0 && temp->value.varVal->scope == scope)
+            {
+               return temp;
+            }
+        }else {
+            if (strcmp(temp->value.funcVal->name, key) == 0  && (temp->value.funcVal->scope == scope)){
                 return temp;
             }
         }
@@ -468,7 +503,7 @@ SymbolTableEntry* lookup_inBucket_without_isActive(SymTable_T *oSymTable, const 
 
     /*Search if there is a cell with this key*/
     temp = oSymTable->hashtable[hashIndex];
-    if(temp == NULL){ printf("is null\n");}
+    if(temp == NULL){ return NULL;}
     while (temp!=NULL)
     {
         //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
