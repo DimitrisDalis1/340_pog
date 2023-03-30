@@ -58,7 +58,7 @@ int SymTable_insert(SymTable_T* , const char *, const unsigned, id_list* , const
 
 int SymTable_remove(SymTable_T* oSymTable, const char *pcKey);
 
-int SymTable_contains(SymTable_T* oSymTable, const char *pcKey, unsigned int);
+SymbolTableEntry* lookup_inBucket(SymTable_T *oSymTable, const char *pcKey, unsigned int scope);
 
 int SymTable_get(SymTable_T* oSymTable, const char *pcKey);
 
