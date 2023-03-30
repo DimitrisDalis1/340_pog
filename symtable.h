@@ -25,7 +25,7 @@ typedef struct Function{
 }Function;
 
 enum SymbolType{
-    GLOBAL,LOCAL,FORMAL,USERFUNC,LIBFUNC
+    GLOBAL,LOCALV,FORMAL,USERFUNC,LIBFUNC
 };
 
 struct SymbolTableEntry{
@@ -58,7 +58,7 @@ int SymTable_insert(SymTable_T* , const char *, const unsigned, id_list* , const
 
 int SymTable_remove(SymTable_T* oSymTable, const char *pcKey);
 
-int SymTable_contains(SymTable_T* oSymTable, const char *pcKey, unsigned int);
+SymbolTableEntry* lookup_inBucket(SymTable_T *, const char *, unsigned int );
 
 int SymTable_get(SymTable_T* oSymTable, const char *pcKey);
 
@@ -84,3 +84,4 @@ struct Scope_node{
 int id_list_contains(id_list *, const char *);
 static unsigned int SymTable_hash(const char*, unsigned int);
 static void expand(SymTable_T*);
+SymbolTableEntry* lookup_inScope(SymTable_T* , const char* , unsigned int );
