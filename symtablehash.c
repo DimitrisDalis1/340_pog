@@ -2,6 +2,7 @@
 
 unsigned int length=0;
 Scope_node *head_scope_node=NULL;
+SymTable_T* hash ;
 
 int insert(id_list *ptr,char *name){
     assert(ptr);
@@ -186,7 +187,6 @@ static unsigned int SymTable_hash(const char *name,unsigned int SIZE){
   return uiHash % SIZE;
 } 
 
-
 static void expand(SymTable_T *oSymTable){
     unsigned int SIZE,BUCKETS;
     struct SymbolTableEntry *temp,*prev,*next,*list;
@@ -258,7 +258,6 @@ static void expand(SymTable_T *oSymTable){
     }
 }
 
-
 SymTable_T* SymTable_new(void){
     SymTable_T *oSymTable=malloc(sizeof(SymTable_T*));
     int i;
@@ -270,17 +269,17 @@ SymTable_T* SymTable_new(void){
     oSymTable->buckets=509;
     oSymTable->size=0;
     SymTable_insert(oSymTable,"print",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"input",0,NULL,0,GLOBAL);
-    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,USERFUNC);
-    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,7,LIBFUNC);
+    SymTable_insert(oSymTable,"input",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"objectcopy",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"totalarguments",0,NULL,8,USERFUNC);
+    SymTable_insert(oSymTable,"totalarguments",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"argument",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"typeof",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"strtonum",0,NULL,1,LIBFUNC);
-    SymTable_insert(oSymTable,"strtonum",0,NULL,2,LIBFUNC);
-    SymTable_insert(oSymTable,"cos",0,NULL,3,LOCAL);
-    SymTable_insert(oSymTable,"sin",0,NULL,7,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"cos",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"sin",0,NULL,0,LIBFUNC);
     return oSymTable;
 }
 
@@ -333,13 +332,11 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
 
 void scope_deactivate(Scope_node *ScopeTable){
     struct Scope_node *temp;
-    SymbolTableEntry *temp_entry;
     temp = ScopeTable;
-    temp_entry = temp->symbol;
-    if (!temp) return; /*if it is null do not  do anything*/
-    while(temp_entry != NULL){
-        temp_entry->isActive = false;
-        temp_entry = temp_entry->next_in_scope;
+    if (ScopeTable) return; /*if it is null do not  do anything*/
+    while(temp->symbol->next_in_scope != NULL){
+        temp->symbol->isActive = false;
+        temp->symbol->next_in_scope = temp->next->symbol->next_in_scope;
     }
     return;
 }
@@ -388,13 +385,8 @@ int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int sco
 
 int main()
 {
-    SymTable_T* hash ;
     hash = SymTable_new();
     symtable_print(head_scope_node,hash);
-    //SymTable_insert(hash, "abcd", 1, id, 0, GLOBAL);
-    //SymTable_insert(hash, "expr", 1, id, 0, LOCAL);
     
-//printf("%d", SymTable_getLength(hash));
-
     return 0;
 }
