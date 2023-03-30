@@ -71,7 +71,7 @@ void symtable_print(Scope_node*, SymTable_T*);
 
 unsigned int SymTable_getLength(SymTable_T* oSymTable);
 
-int SymTable_insert(SymTable_T* , const char *, const unsigned, id_list* , const unsigned, enum SymbolType);
+SymbolTableEntry* SymTable_insert(SymTable_T* , const char *, const unsigned, id_list* , const unsigned, enum SymbolType);
 
 int SymTable_remove(SymTable_T* oSymTable, const char *pcKey);
 
@@ -103,3 +103,4 @@ static unsigned int SymTable_hash(const char*, unsigned int);
 static void expand(SymTable_T*);
 SymbolTableEntry* lookup_inScope(SymTable_T* , const char* , unsigned int );
 SymbolTableEntry* lookup_inBucket_without_isActive(SymTable_T *, const char *, unsigned int );
+void scope_deactivate(Scope_node *ScopeTable);
