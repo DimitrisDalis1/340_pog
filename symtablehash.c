@@ -2,34 +2,44 @@
 
 unsigned int length=0;
 Scope_node *head_scope_node=NULL;
-SymTable_T* hash ;
+
 
 int insert(id_list *ptr,char *name){
+    id_node *tmp;
+    char* tempkey;
     assert(ptr);
-    id_list *x = malloc(sizeof(id_list));
-    x = ptr->head;
+    assert(name);
+
+    /* Check if the table contains the same key*/
     if (id_list_contains(ptr,name))
     {
         return 0;
     }
-    if(ptr->head == NULL){
-        ptr->head = x;
-    }else{
-        x = ptr-> head;
-    }
-    while(x->next != NULL){
-        x=x->next;
-    }
-    x->id = malloc(sizeof(strlen(name)+1));
-    x->id = strdup(name);
-    assert(x);
-    x->next=NULL;
+
+    /*Add the new node and make it the head*/
+    tempkey=malloc(sizeof(strlen(name)+1));
+    assert(tempkey);
+    tmp=malloc(sizeof(id_node));
+    assert(tmp);
+    strcpy(tempkey,name);
+    tmp->id=tempkey;
+    tmp->next=ptr->head;
+    ptr->head=tmp;
     ptr->length++;
     return 1;
 }
 
+id_list *create_id_list(char* func_name){
+    id_list *x = malloc(sizeof(id_list));
+    assert(x);
+    x->length = 0;
+    x->head = NULL;
+    insert(x,func_name);
+    return x;
+}
+
 int id_list_contains(id_list *x, const char *name){
-    struct id_list* temp;
+    struct id_node* temp;
     assert(x);
     assert(name);
 
@@ -44,7 +54,7 @@ int id_list_contains(id_list *x, const char *name){
 }
 
 void id_list_free(id_list *ptr){ 
-    struct id_list* tmp;
+    struct id_node* tmp;
     if (ptr) return; /*if it is null do not  do anything*/
 
    /*Free each node of the list*/
@@ -187,40 +197,6 @@ static unsigned int SymTable_hash(const char *name,unsigned int SIZE){
   return uiHash % SIZE;
 } 
 
-SymbolTableEntry* lookup_inScope(SymTable_T* sym, const char* key, unsigned int scope)
-{
-    int hashIndex;
-    SymbolTableEntry *temp;
-    //temp = malloc(sizeof(SymbolTableEntry*));
-    assert(sym);
-    assert(key);
-
-
-    /*Generate the hash index*/
-    hashIndex=SymTable_hash(key,sym->buckets);
-    //printf("hash index inside sym_cont: %d\n", hashIndex);
-
-    /*Search if there is a cell with this key*/
-    temp = sym->hashtable[hashIndex];
-    if(temp == NULL){ printf("is null\n");}
-    while (temp!=NULL)
-    {
-        //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
-        
-        if(temp->type==GLOBAL||temp->type==LOCAL||temp->type==FORMAL){
-            if (strcmp(temp->value.varVal->name,key) == 0 && temp->value.varVal->scope == scope)
-            {
-               return temp;
-            }
-        }else {
-            if (strcmp(temp->value.funcVal->name, key) == 0 && (temp->isActive == true) && (temp->value.funcVal->scope = scope)){
-                return temp;
-            }
-        }
-        temp= temp->next_in_scope;
-    }
-    return NULL;
-}
 
 static void expand(SymTable_T *oSymTable){
     unsigned int SIZE,BUCKETS;
@@ -293,6 +269,7 @@ static void expand(SymTable_T *oSymTable){
     }
 }
 
+
 SymTable_T* SymTable_new(void){
     SymTable_T *oSymTable=malloc(sizeof(SymTable_T*));
     int i;
@@ -304,17 +281,17 @@ SymTable_T* SymTable_new(void){
     oSymTable->buckets=509;
     oSymTable->size=0;
     SymTable_insert(oSymTable,"print",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"input",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"input",0,NULL,0,GLOBAL);
+    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,USERFUNC);
+    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,7,LIBFUNC);
     SymTable_insert(oSymTable,"objectcopy",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"totalarguments",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"totalarguments",0,NULL,8,USERFUNC);
     SymTable_insert(oSymTable,"argument",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"typeof",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"cos",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"sin",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,1,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,2,LIBFUNC);
+    SymTable_insert(oSymTable,"cos",0,NULL,3,LOCAL);
+    SymTable_insert(oSymTable,"sin",0,NULL,7,LIBFUNC);
     return oSymTable;
 }
 
@@ -362,20 +339,18 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
     return;
 }
 
-
-
-
 void scope_deactivate(Scope_node *ScopeTable){
     struct Scope_node *temp;
+    SymbolTableEntry *temp_entry;
     temp = ScopeTable;
-    if (ScopeTable) return; /*if it is null do not  do anything*/
-    while(temp->symbol->next_in_scope != NULL){
-        temp->symbol->isActive = false;
-        temp->symbol->next_in_scope = temp->next->symbol->next_in_scope;
+    temp_entry = temp->symbol;
+    if (temp) return; /*if it is null do not  do anything*/
+    while(temp_entry != NULL){
+        temp_entry->isActive = false;
+        temp_entry = temp_entry->next_in_scope;
     }
     return;
 }
-
 
 /*Get the length of the Hash Table*/
 unsigned int SymTable_getLength(SymTable_T *oSymTable){
@@ -383,8 +358,7 @@ unsigned int SymTable_getLength(SymTable_T *oSymTable){
     return oSymTable->size;
 }
 
-
-SymbolTableEntry* lookup_inBucket(SymTable_T *oSymTable, const char *pcKey, unsigned int scope){
+int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int scope){
     int hashIndex;
     SymbolTableEntry *temp;
     //temp = malloc(sizeof(SymbolTableEntry*));
@@ -406,34 +380,31 @@ SymbolTableEntry* lookup_inBucket(SymTable_T *oSymTable, const char *pcKey, unsi
         if(temp->type==GLOBAL||temp->type==LOCAL||temp->type==FORMAL){
             if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->value.varVal->scope == scope)
             {
-               return temp;
+               return 1;
             }
         }else{
-            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){
-                return temp;
-            }
+            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){ printf("%s\n",pcKey); return 1;}
+
         }
         temp= temp->next;
     }
     oSymTable->size++;
-    return NULL;
+    return 0;
 }
 
-int main(int argc, char** argv)
+int main()
 {
-    if(argc > 1 ){
-        if(!(yyin = fopen(argv[1], "r"))) {
-            fprintf(stderr, "cannot read file: %s\n", argv[1]);
-            return 1;
-        }
+    id_list *p = create_id_list("hello");
+    insert(p,"bye2");
+    insert(p,"bye");
+    while (p->head != NULL)
+    {
+        printf(" %s \n",p->head->id);
+        p->head = p->head->next;
     }
-    else
-        yystdin = stdin;
-    yyparse();
-    return 0;
-
-    hash = SymTable_new();
-    symtable_print(head_scope_node,hash);
+    free(p);
     
+    //printf("%d", SymTable_getLength(hash));
+
     return 0;
 }
