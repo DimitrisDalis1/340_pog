@@ -97,7 +97,7 @@ struct Scope_node{
     Scope_node *next;
     Scope_node *previous;
 };
-
+SymbolTableEntry* lookup_inScope_wA(SymTable_T* sym, const char* key, unsigned int scope);
 int id_list_contains(id_list *, const char *);
 static unsigned int SymTable_hash(const char*, unsigned int);
 static void expand(SymTable_T*);
