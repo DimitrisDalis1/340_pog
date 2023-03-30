@@ -419,8 +419,19 @@ SymbolTableEntry* lookup_inBucket(SymTable_T *oSymTable, const char *pcKey, unsi
     return NULL;
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    if(argc > 1 ){
+        if(!(yyin = fopen(argv[1], "r"))) {
+            fprintf(stderr, "cannot read file: %s\n", argv[1]);
+            return 1;
+        }
+    }
+    else
+        yystdin = stdin;
+    yyparse();
+    return 0;
+}
     hash = SymTable_new();
     symtable_print(head_scope_node,hash);
     
