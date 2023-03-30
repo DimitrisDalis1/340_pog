@@ -12,6 +12,8 @@
     FILE* yyout_y; 
     int scope=0;
     int block_count = 0;
+    int unnamed_counter=0;
+
     int function_scope_count = 0;
     
 
