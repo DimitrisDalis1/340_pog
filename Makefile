@@ -12,7 +12,7 @@ run:
 	calc example.alpha
 
 clean:
-	rm -rf calc scanner.c scanner.l lex.yy.c yacc_output.txt parser.c parser.h
+	rm -rf calc scanner.c lex.yy.c yacc_output.txt parser.c parser.h
 
 
  
