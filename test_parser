@@ -101,49 +101,23 @@ expr:	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
 term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	|MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
 	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
-	|PLUS2 lvalue { 
-		if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
-        fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
-		return;
-	}
-	fprintf(yyout_y,"term -> ++lvalue\n");
-	}
-	|lvalue PLUS2 { 
-		if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
-        fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
-		return;
-	}
-	fprintf(yyout_y,"term -> lvalue++\n"); }
-	|MINUS2 lvalue {
-		 if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
-        fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
-		return;
-	}
-		fprintf(yyout_y,"term -> --lvalue\n"); 
-	}
-	|lvalue MINUS2 {
-		if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
-         fprintf(stderr,"error"); // fix this error
-    }else if($2 == NULL){
-		return;
-	}
-		fprintf(yyout_y,"term -> lvalue--\n");
-	}
+	|PLUS2 lvalue { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> ++lvalue\n");}; }
+	|lvalue PLUS2 { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> lvalue++\n");}; }
+	|MINUS2 lvalue { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> --lvalue\n");}; }
+	|lvalue MINUS2 { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> lvalue--\n");}; }
 	|primary   { fprintf(yyout_y,"term -> primary\n"); };
 
-assignexpr: lvalue ASSIGN expr   { 
-	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
-        fprintf(stderr,"error"); // fix this error
-    }else if($1 == NULL){
-		return;
-	}
-	
-	fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
-		
-	 }
+assignexpr: lvalue ASSIGN expr   { if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($1 == NULL){return;}else{fprintf(yyout_y,"assignexpr -> lvalue = expr\n");}; }
 	;
 
 
@@ -154,67 +128,49 @@ primary: lvalue { fprintf(yyout_y,"primary -> lvalue\n"); }
 	|const  { fprintf(yyout_y,"primary -> const\n"); } 
 	;
 	
-lvalue:	ID  { 
-		fprintf(yyout_y,"lvalue -> id\n");  
-		}/****/
-	|LOCAL ID  { 
-		fprintf(yyout_y,"lvalue -> local id\n"); 
-	}/****/
-	|COLON2 ID  { 
-		fprintf(yyout_y,"lvalue -> ::id\n");
-		SymbolTableEntry* symEntry = lookup_active_with_scope(&hash, $2, 0);
-		if(!symEntry){
-			printf("Global var not found");
-			$$=NULL;
-		}else $$=symEntry;
-	}
-	|member  { fprintf(yyout_y,"lvalue -> member\n"); } 
-	;
+lvalue:	ID  { fprintf(yyout_y,"lvalue -> id\n");  }/****/
+	|LOCAL ID  { fprintf(yyout_y,"lvalue -> local id\n"); }/****/
+	|COLON2 ID  { fprintf(yyout_y,"lvalue -> ::id\n"); } /*******************/
+	|member  { fprintf(yyout_y,"lvalue -> member\n"); } ;
 	
-member: lvalue PERIOD ID {
-	if($1 != NULL && ($1 == USERFUNC || $1 == LIBFUNC))
+member: lvalue PERIOD ID {if($1 != NULL && ($1 == USERFUNC || $1 == LIBFUNC))
         {fprintf(stderr,"Cannot use function as a value");}
     else if($1 == NULL){
 		fprintf(stderr,"lvalue not declared");
-    }
+    }else{
 		fprintf(yyout_y,"member -> lvalue.id\n");
-	}
+	};}
 	| lvalue LEFTBRACE expr RIGHTBRACE  { 
-		if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
-			fprintf(stderr,"error cannot use function as a value"); // fix this error
-		}else if($1 == NULL){
-			fprintf(stderr,"error cannot use nothing as a value");
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> lvalue [ expr ]\n");
 		}
-			fprintf(yyout_y,"member -> lvalue [ expr ]\n");
-			
-		}
+	}
 	| call PERIOD ID  {
-		if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
-			fprintf(stderr,"error cannot use function as a value"); // fix this error
-		}else if($1 == NULL){
-			fprintf(stderr,"error cannot use nothing as a value");
-		}
-			fprintf(yyout_y,"member -> call.id\n");
-		
-		}
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> call.id\n");
+	}
+	}
 	| call LEFTBRACE expr RIGHTBRACE {
-		if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
-			fprintf(stderr,"error cannot use function as a value"); // fix this error
-		}else if($1 == NULL){
-			fprintf(stderr,"error cannot use nothing as a value");
-		}
-			fprintf(yyout_y,"member -> call [ expr ]\n");
-		
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> call [ expr ]\n");
+	}
 	}
 	;
 	
 call: call LEFTPAR elist RIGHTPAR   {fprintf(yyout_y,"call -> call ( elist )\n");}
-	|lvalue callsuffix  {
-		fprintf(yyout_y,"call -> lvalue callsuffix\n");
-		if(!$1){
-			printf("Function not declared");
-		}
-	}
+	|lvalue callsuffix  {fprintf(yyout_y,"call -> lvalue callsuffix\n");} ///***/
 	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
 	 ;
 
@@ -254,14 +210,62 @@ temp_id: ID {fprintf(yyout_y,"temp_id -> id\n");} /*****/
 
 funcdef: FUNCTION temp_id LEFTPAR idlist RIGHTPAR block {fprintf(yyout_y,"funcdef -> function_return temp_id ( idlist ) {}\n");}   ; /*****/
 
-idlist: ID {fprintf(yyout_y,"idlist -> id\n");} /***/
-	| idlist COMMA ID {fprintf(yyout_y,"idlist -> idlist , id\n");} /****/
-	|  {};
+idlist: ID
+{
+    //check if it's a gloabal lib function
+    if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
+    {
+        fprintf("This formal argument shadows function from libary");
+        return;
+    }
+    //check if it is in the same scope we are in
+    if (lookup_inScope(hash,current_scope,$1)!=NULL)
+    {
+        fprintf("this formal argument already exists in given scope");        
+        return ;
+    }
+    
+    //insertion in the idlist and saving the idlist
+
+    $$ = create_id_list();
+    insert($$,$1);
+
+    //insertion in the symtable/scopelist
+	SymTable_insert(hash, $1, yylineno , NULL , scope, FORMAL);
+	fprintf(yyout_y,"idlist -> id\n");
+
+	};
+	| idlist COMMA ID {
+	//check if it's a gloabal lib function
+    if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
+    {
+        fprintf("This formal argument shadows function from libary");
+        return;
+    }
+    //check if it is in the same scope we are in
+    if (lookup_inScope(hash,$1,current_scope)!=NULL)
+    {
+        fprintf("this formal argument already exists in given scope");        
+        return ;
+    }
+    
+    //insertion in the idlist and saving the idlist
+    insert($1,$3);
+    $$ = &$1; //not sure if this is functional 
+
+	//insertion in the symtable/scopelist
+	SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+
+    fprintf(yyout_y,"idlist -> idlist , id\n");
+	}
+	|  {    $$ = create_id_list();
+ 			fprintf(yacc_out,"idlist -> ε\n"); 
+	};
 
 temp: temp stmt {fprintf(yyout_y,"temp -> temp stmt\n");}
 	| {}; 
 
-block: LEFTCURLY{scope_up();} temp RIGHTCURLY{scope_down();} {fprintf(yyout_y,"block -> { temp }\n");}; /*******/
+block: LEFTCURLY{increase_scope();} temp RIGHTCURLY{decrease_scope();} {fprintf(yyout_y,"block -> { temp }\n");}; /*******/
 
 ifstmt: IF LEFTPAR expr RIGHTPAR stmt ELSE stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt else stmt\n");}
 	|IF LEFTPAR expr RIGHTPAR stmt {fprintf(yyout_y,"ifstmt -> if ( expr ) stmt\n");}
