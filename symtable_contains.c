@@ -58,12 +58,12 @@ SymbolTableEntry* SymTable_contains(SymTable_T *oSymTable, const char *pcKey, un
                return temp;
             }
         }else{
-            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){ printf("%s\n",pcKey); return temp;}
-
+            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){
+                return temp;
+            }
         }
         temp= temp->next;
     }
-    oSymTable->size++;
     return NULL;
 }
 
