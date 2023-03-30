@@ -115,9 +115,9 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
     }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> lvalue--\n");}; }
 	|primary   { fprintf(yyout_y,"term -> primary\n"); };
 
-assignexpr: lvalue ASSIGN expr   { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+assignexpr: lvalue ASSIGN expr   { if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
         fprintf(stderr,"error") // fix this error
-    }else if($2 == NULL){return;}else{fprintf(yyout_y,"assignexpr -> lvalue = expr\n");}; }
+    }else if($1 == NULL){return;}else{fprintf(yyout_y,"assignexpr -> lvalue = expr\n");}; }
 	;
 
 
