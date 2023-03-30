@@ -111,7 +111,7 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
 	|PLUS2 lvalue { 
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
-        fprintf(stderr,"error"); // fix this error
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
@@ -119,14 +119,14 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	}
 	|lvalue PLUS2 { 
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
-        fprintf(stderr,"error"); // fix this error
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
 	fprintf(yyout_y,"term -> lvalue++\n"); }
 	|MINUS2 lvalue {
 		 if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
-        fprintf(stderr,"error"); // fix this error
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
@@ -134,7 +134,7 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	}
 	|lvalue MINUS2 {
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
-         fprintf(stderr,"error"); // fix this error
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
@@ -143,7 +143,7 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 
 assignexpr: lvalue ASSIGN expr   { 
 	if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC){
-        fprintf(stderr,"error"); // fix this error
+       fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
     }else if($1 == NULL){
 		return 0;
 	}
@@ -200,9 +200,9 @@ lvalue:		ID  {
         else{
             if (entry->type == LIBFUNC || entry->type == USERFUNC)
             {
-                fprintf(stderr, "Cannot access local function declared in line %d with scope %d", entry->value.funcVal->line, entry->value.funcVal->scope);
+                fprintf(stderr, "Cannot access local function declared in line %d with scope %d \n", entry->value.funcVal->line, entry->value.funcVal->scope);
             }else{
-                fprintf(stderr, "Cannot access local variable declared in line %d with scope %d", entry->value.varVal->line, entry->value.varVal->scope);
+                fprintf(stderr, "Cannot access local variable declared in line %d with scope %d \n", entry->value.varVal->line, entry->value.varVal->scope);
             }
             $$ = NULL;
             return 0;
@@ -252,36 +252,36 @@ lvalue:		ID  {
 member: lvalue PERIOD ID {
 	if(((SymbolTableEntry*)$1)!= NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
         {
-            fprintf(stderr,"Cannot use function as a value");
+            fprintf(stderr,"Cannot use function as a value in line %d and scope %d \n",yylineno,current_scope);
     }
     else if(((SymbolTableEntry*)$1) == NULL){
-		fprintf(stderr,"lvalue not declared");
+		fprintf(stderr,"value not declared in line %d and scope %d \n",yylineno,current_scope);
     }
 		fprintf(yyout_y,"member -> lvalue.id\n");
 	}
 	| lvalue LEFTBRACE expr RIGHTBRACE  { 
 	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
-        fprintf(stderr,"error cannot use function as a value"); // fix this error
+        fprintf(stderr,"Cannot use function as a value in line %d and scope %d \n",yylineno,current_scope);
     }else if(((SymbolTableEntry*)$1) == NULL){
-		fprintf(stderr,"error cannot use nothing as a value");
+		fprintf(stderr,"value not declared in line %d and scope %d \n",yylineno,current_scope);
 	}
 		fprintf(yyout_y,"member -> lvalue [ expr ]\n");
 		
 	}
 	| call PERIOD ID  {
 	if(((SymbolTableEntry*)$1)!= NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
-        fprintf(stderr,"error cannot use function as a value"); // fix this error
+        fprintf(stderr,"Cannot use function as a value in line %d and scope %d \n",yylineno,current_scope);
     }else if(((SymbolTableEntry*)$1) == NULL){
-		fprintf(stderr,"error cannot use nothing as a value");
+		fprintf(stderr,"value not declared in line %d and scope %d \n",yylineno,current_scope);
 	}
 		fprintf(yyout_y,"member -> call.id\n");
 	
 	}
 	| call LEFTBRACE expr RIGHTBRACE {
 	if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)){
-        fprintf(stderr,"error cannot use function as a value"); // fix this error
+        fprintf(stderr,"Cannot use function as a value in line %d and scope %d \n",yylineno,current_scope);
     }else if(((SymbolTableEntry*)$1)== NULL){
-		fprintf(stderr,"error cannot use nothing as a value");
+		fprintf(stderr,"lvalue not declared in line %d and scope %d \n",yylineno,current_scope);
 	}
 		fprintf(yyout_y,"member -> call [ expr ]\n");
 	
