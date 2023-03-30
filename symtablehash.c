@@ -3,6 +3,7 @@
 unsigned int length=0;
 Scope_node *head_scope_node=NULL;
 SymTable_T* hash;
+int current_scope=0;
 
 int insert(id_list *ptr,char *name){
     id_node *tmp;
@@ -84,7 +85,27 @@ Scope_node *create_scope(SymbolTableEntry *symbol,unsigned int scope,Scope_node 
     return new_scope;
 }
 
-int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
+void decrease_scope(){
+	int temp;
+	Scope_node *temp_h;
+	temp=current_scope;
+	temp_h=head_scope_node;
+	while(temp>0){
+		if(temp_h->next!=NULL){
+			temp_h=temp_h->next;
+		}
+		temp--;
+	}
+	
+	scope_deactivate(temp_h);
+	current_scope--;
+}
+
+void increase_scope(){
+	current_scope++;
+}
+
+SymbolTableEntry* SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
     int hashIndex,flag,scope_counter=0;
     SymbolTableEntry* temp_entry=NULL;
     SymbolTableEntry* temp_hash=NULL;
@@ -144,7 +165,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             if(temp_head_entry->next_in_scope==NULL){
                 temp_head_entry->next_in_scope=temp_entry;
                 temp_entry->next_in_scope=NULL;
-                return 0;
+                return temp_entry;
             }else{
                 while(temp_head_entry->next_in_scope!=NULL){
                     temp_head_entry=temp_head_entry->next_in_scope;
@@ -152,7 +173,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             }
             temp_head_entry->next_in_scope=temp_entry;
             temp_entry->next_in_scope=NULL;
-            return 0;
+            return temp_entry;
         }else{
             temp_index=temp_head;
             while(flag>0){
@@ -166,7 +187,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                         temp_index->next=temp;
                         ++length;
                         temp_index->next->symbol->next_in_scope=NULL;
-                        return 0;
+                        return temp_entry;
                     }else{
                         temp_index=temp_index->next;
                     }
@@ -178,7 +199,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             if(temp_index->symbol==NULL){
                 temp_index->symbol=temp_entry;
                 temp_entry->next_in_scope=NULL;
-                return 0;
+                return temp_entry;
             }else{
                 while(temp_index->symbol->next_in_scope!=NULL){
                     temp_index->symbol=temp_index->symbol->next_in_scope;
@@ -186,12 +207,12 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             }            
             temp_index->symbol->next_in_scope=temp_entry;
             temp_entry->next_in_scope=NULL;
-            return 0;
+            return temp_entry;
         }
     }
     /*Check if it should be expaned or not*/
     expand(oSymTable);
-    return 1;
+    return NULL;
 }
 
 /* Return a hash code for name. */
@@ -287,17 +308,17 @@ SymTable_T* SymTable_new(void){
     oSymTable->buckets=509;
     oSymTable->size=0;
     SymTable_insert(oSymTable,"print",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"input",0,NULL,0,GLOBAL);
-    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,USERFUNC);
-    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,7,LIBFUNC);
+    SymTable_insert(oSymTable,"input",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"objectmemberkeys",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"objecttotalmembers",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"objectcopy",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"totalarguments",0,NULL,8,USERFUNC);
+    SymTable_insert(oSymTable,"totalarguments",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"argument",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"typeof",0,NULL,0,LIBFUNC);
-    SymTable_insert(oSymTable,"strtonum",0,NULL,1,LIBFUNC);
-    SymTable_insert(oSymTable,"strtonum",0,NULL,2,LIBFUNC);
-    SymTable_insert(oSymTable,"cos",0,NULL,3,LOCALV);
-    SymTable_insert(oSymTable,"sin",0,NULL,7,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"cos",0,NULL,0,LIBFUNC);
+    SymTable_insert(oSymTable,"sin",0,NULL,0,LIBFUNC);
     return oSymTable;
 }
 
