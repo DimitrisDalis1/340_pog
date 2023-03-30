@@ -61,6 +61,12 @@ SymTable_T* SymTable_new(void);
 
 void SymTable_free(SymTable_T* oSymTable);
 
+id_list* create_id_list(char*);
+void decrease_scope();
+
+void increase_scope();
+
+int insert(id_list* , char*);
 void symtable_print(Scope_node*, SymTable_T*);
 
 unsigned int SymTable_getLength(SymTable_T* oSymTable);
