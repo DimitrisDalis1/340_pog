@@ -6,9 +6,6 @@
 #define HASH_MULTIPLIER 65599
 #define MAX_SIZE 65521
 
-extern int yylineno;
-extern char* yytext;
-
 typedef struct symtable_s SymTable_T;
 typedef struct id_list id_list;
 typedef struct SymbolTableEntry SymbolTableEntry;
@@ -28,7 +25,7 @@ typedef struct Function{
 }Function;
 
 enum SymbolType{
-    GLOBAL,LOCALV,FORMAL,USERFUNC,LIBFUNC
+    GLOBAL,LOCAL,FORMAL,USERFUNC,LIBFUNC
 };
 
 struct SymbolTableEntry{
@@ -65,12 +62,17 @@ int SymTable_contains(SymTable_T* oSymTable, const char *pcKey, unsigned int);
 
 int SymTable_get(SymTable_T* oSymTable, const char *pcKey);
 
-struct id_list{
+typedef struct id_node{
     char *id;
-    struct id_list *head;
-    struct id_list *next;
-    int length;
-};
+    struct id_node *next;
+}id_node;
+
+typedef struct id_list{
+    unsigned int length;
+    struct id_node *head;
+}id_list;
+
+
 
 struct Scope_node{
     SymbolTableEntry *symbol;
@@ -82,5 +84,3 @@ struct Scope_node{
 int id_list_contains(id_list *, const char *);
 static unsigned int SymTable_hash(const char*, unsigned int);
 static void expand(SymTable_T*);
-SymbolTableEntry* lookup_inScope(SymTable_T*, const char*, unsigned int);
-SymbolTableEntry* lookup_inBucket(SymTable_T *oSymTable, const char *pcKey, unsigned int scope);
