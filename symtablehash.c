@@ -427,6 +427,40 @@ SymbolTableEntry* lookup_inScope(SymTable_T* sym, const char* key, unsigned int 
     return NULL;
 }
 
+SymbolTableEntry* lookup_inBucket_without_isActive(SymTable_T *oSymTable, const char *pcKey, unsigned int scope){
+    int hashIndex;
+    SymbolTableEntry *temp;
+    //temp = malloc(sizeof(SymbolTableEntry*));
+    assert(oSymTable);
+    assert(pcKey);
+
+
+    /*Generate the hash index*/
+    hashIndex=SymTable_hash(pcKey,oSymTable->buckets);
+    //printf("hash index inside sym_cont: %d\n", hashIndex);
+
+    /*Search if there is a cell with this key*/
+    temp = oSymTable->hashtable[hashIndex];
+    if(temp == NULL){ printf("is null\n");}
+    while (temp!=NULL)
+    {
+        //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
+        
+        if(temp->type==GLOBAL||temp->type==LOCALV||temp->type==FORMAL){
+            if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->value.varVal->scope == scope)
+            {
+               return temp;
+            }
+        }else{
+            if (strcmp(temp->value.funcVal->name, pcKey) == 0){
+                return temp;
+            }
+        }
+        temp= temp->next;
+    }
+    return NULL;
+}
+
 int main()
 {
     id_list *p = create_id_list("hello");
