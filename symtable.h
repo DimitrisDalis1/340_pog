@@ -61,7 +61,7 @@ SymTable_T* SymTable_new(void);
 
 void SymTable_free(SymTable_T* oSymTable);
 
-id_list* create_id_list(char*);
+id_list* create_id_list();
 void decrease_scope();
 
 void increase_scope();
