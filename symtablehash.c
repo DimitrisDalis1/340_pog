@@ -431,7 +431,7 @@ int main(int argc, char** argv)
         yystdin = stdin;
     yyparse();
     return 0;
-}
+
     hash = SymTable_new();
     symtable_print(head_scope_node,hash);
     
