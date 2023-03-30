@@ -187,6 +187,41 @@ static unsigned int SymTable_hash(const char *name,unsigned int SIZE){
   return uiHash % SIZE;
 } 
 
+SymbolTableEntry* lookup_inScope(SymTable_T* sym, const char* key, unsigned int scope)
+{
+    int hashIndex;
+    SymbolTableEntry *temp;
+    //temp = malloc(sizeof(SymbolTableEntry*));
+    assert(sym);
+    assert(key);
+
+
+    /*Generate the hash index*/
+    hashIndex=SymTable_hash(key,sym->buckets);
+    //printf("hash index inside sym_cont: %d\n", hashIndex);
+
+    /*Search if there is a cell with this key*/
+    temp = sym->hashtable[hashIndex];
+    if(temp == NULL){ printf("is null\n");}
+    while (temp!=NULL)
+    {
+        //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
+        
+        if(temp->type==GLOBAL||temp->type==LOCAL||temp->type==FORMAL){
+            if (strcmp(temp->value.varVal->name,key) == 0 && temp->value.varVal->scope == scope)
+            {
+               return temp;
+            }
+        }else {
+            if (strcmp(temp->value.funcVal->name, key) == 0 && (temp->isActive == true) && (temp->value.funcVal->scope = scope)){
+                return temp;
+            }
+        }
+        temp= temp->next_in_scope;
+    }
+    return NULL;
+}
+
 static void expand(SymTable_T *oSymTable){
     unsigned int SIZE,BUCKETS;
     struct SymbolTableEntry *temp,*prev,*next,*list;
