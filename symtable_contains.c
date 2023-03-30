@@ -24,12 +24,12 @@ SymbolTableEntry* lookup_Scope(SymTable_T* sym, const char* key, unsigned int sc
                return temp;
             }
         }else {
-            if (strcmp(temp->value.funcVal->name, key) == 0 && temp->isActive == true){ printf("%s\n",key); return temp;}
-
+            if (strcmp(temp->value.funcVal->name, key) == 0 && (temp->isActive == true) && (temp->value.funcVal->scope = scope)){
+                return temp;
+            }
         }
         temp= temp->next_in_scope;
     }
-    sym->size++;
     return NULL;
 }
 
