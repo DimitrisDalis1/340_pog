@@ -10,10 +10,8 @@
     extern char* yytext;
     extern FILE* yyin;
     FILE* yyout_y; 
-    int scope=0;
     int block_count = 0;
     int unnamed_counter=0;
-
     int function_scope_count = 0;
     
 
@@ -27,6 +25,8 @@
     int intValue;
     double doubleValue;
     struct SymbolTableEntry* exprNode;
+    struct id_list* listId;
+
 }
 
 %expect 1
@@ -54,14 +54,17 @@
 
 %type stmt
 %type<exprNode> lvalue
-%type call
+%type<listId> idlist
+%type<exprNode> call
 %type elist
 %type callsuffix
 %type normcall
 %type funcdef
-%type expr
+%type<exprNode> expr
+%type indexedelem
+%type indexed
 %type objectdef
-%type member
+%type<exprNode> member
 %type block
 %type assignexpr
 %type temp
@@ -75,7 +78,7 @@
 %%
 
 program: stmt program{fprintf(yyout_y,"program -> stmt(asteraki)\n");}  
-	| ;
+	| {fprintf(yyout_y,"program -> \n");} ;
 
 stmt:	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); }
 	|ifstmt		{ fprintf(yyout_y,"stmt -> ifstmt\n"); }
@@ -189,9 +192,7 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 assignexpr: lvalue ASSIGN expr   { 
 	if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC){
        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    }else if($1 == NULL){
-		return 0;
-	}
+    }
 
 	fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
 }
@@ -369,15 +370,6 @@ indexed: indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");}
 	|indexed COMMA indexedelem {fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  ;
 
 indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
-
-temp_id: ID {
-	$$=$1;
-	fprintf(yyout_y,"temp_id -> id\n");
-	} 
-	| { $$=NULL;}
-	;
-
-funcdef: FUNCTION temp_id LEFTPAR {} idlist RIGHTPAR {} block {function_scope_count++; fprintf(yyout_y,"funcdef -> function_return temp_id ( idlist ) {}\n");}   ; /*****/
 
 idlist: ID
 {
