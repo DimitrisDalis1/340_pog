@@ -21,7 +21,7 @@
     int intValue;
     double doubleValue;
     struct SymbolTableEntry* exprNode;
-    struct id_node* listNode;   
+    struct id_list* listNode;   
 }
 
 %expect 1
@@ -166,7 +166,7 @@ lvalue:	ID  {
 	}/****/
 	|COLON2 ID  { 
 		fprintf(yyout_y,"lvalue -> ::id\n");
-		SymbolTableEntry* symEntry = lookup_inScope(&hash, $2, 0);
+		SymbolTableEntry* symEntry = lookup_inScope(hash,(char*) $2, 0);
 		if(!symEntry){
 			printf("Global var not found");
 			$$=NULL;
@@ -176,7 +176,7 @@ lvalue:	ID  {
 	;
 	
 member: lvalue PERIOD ID {
-	if($1 != NULL && ($1 == USERFUNC || $1 == LIBFUNC))
+	if($1 != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
         {fprintf(stderr,"Cannot use function as a value");}
     else if($1 == NULL){
 		fprintf(stderr,"lvalue not declared");
@@ -256,62 +256,18 @@ indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem 
 temp_id: ID {fprintf(yyout_y,"temp_id -> id\n");} /*****/
 	| {};
 
-funcdef: FUNCTION {increase_scope();} temp_id LEFTPAR idlist RIGHTPAR {
-				if((char *)$3!=NULL){
-						fprintf(yyout_y,"funcdef -> function id ( idlist ) block\n");
-						SymbolTableEntry* func_name = lookup_inScope(&hash,(char *)$3,0);
-						if (func_name!=NULL){
-							if(func_name->type==LIBFUNC){
-								printf("Userfunc shadows libfunc");
-								return;
-							}else if(scope == 1){
-								printf("found symbol with same name");
-								return;
-							}
-						}
-						if (scope>1){
-							//search in previus scope because u are one scope inside 
-							//and u need to check the name if given like this 
-							//function f(x){
-							//     function x(){}
-							//}
-							func_name = lookup_inScope(&hash,(char *)$3,current_scope-1);
-							if (func_name !=NULL)
-							{
-								printf("Variable already exists");
-								return;
-						}
-		
-					//if it already exists in the same scope print error
-					if ((func_name = lookup_inScope(&hash,(char *)$3,current_scope)) != NULL)
-					{
-						if(func_name->type==LIBFUNC||func_name->type==USERFUNC)
-							printf("Function redefinition");
-						else
-							printf("Funtion declared with same name as variable");
-						return ;
-					}
+funcdef: FUNCTION temp_id LEFTPAR idlist RIGHTPAR block {fprintf(yyout_y,"funcdef -> function_return temp_id ( idlist ) {}\n");}   ; /*****/
 
-					SymbolTableEntry* func_name =SymTable_insert(&hash,(char *)$3, (idList *)$5,  current_scope-1, yylineno, USERFUNC);
-				}else{
-					fprintf(yyout_y,"funcdef -> function ( idlist ) block\n");
-					char* my_name= malloc(50*(sizeof(char)));
-					sprintf(my_name,"_myfync%d",unnamed_counter++);
-					SymbolTableEntry* func_name =SymTable_insert(&hash,my_name, (idList *)$5,  current_scope, yylineno, USERFUNC);
-		        }
-				}
-			block
-   ;
 idlist: ID
 {
     //check if it's a gloabal lib function
-    if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
+    if (lookup_inScope(hash,(char*)$1,0) != NULL && lookup_inScope(hash,(char*)$1,0)->type == LIBFUNC)
     {
         printf("This formal argument shadows function from libary");
         return 0;
     }
     //check if it is in the same scope we are in
-    if (lookup_inScope(hash,$1,current_scope)!=NULL)
+    if (lookup_inScope(hash,(char*)$1,current_scope)!=NULL)
     {
         printf("this formal argument already exists in given scope");        
         return 0;
@@ -320,33 +276,33 @@ idlist: ID
     //insertion in the idlist and saving the idlist
 
     $$ = create_id_list();
-    insert($$,$1);
+    insert((id_list*)$$,(char*)$1);
 
     //insertion in the symtable/scopelist
-	SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+	SymTable_insert(hash, (char*)$1, yylineno , NULL , current_scope, FORMAL);
 	fprintf(yyout_y,"idlist -> id\n");
 
 	}
 	| idlist COMMA ID {
 	//check if it's a gloabal lib function
-    if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
+    if (lookup_inScope(hash,(char*)$1,0) != NULL && lookup_inScope(hash,(char*)$1,0)->type == LIBFUNC)
     {
         printf("This formal argument shadows function from libary");
         return 0;
     }
     //check if it is in the same scope we are in
-    if (lookup_inScope(hash,$1,current_scope)!=NULL)
+    if (lookup_inScope(hash,(char*)$1,current_scope)!=NULL)
     {
         printf("this formal argument already exists in given scope");        
         return 0;
     }
     
     //insertion in the idlist and saving the idlist
-    insert($1,$3);
-    $$ = &$1; //not sure if this is functional 
+    insert((id_list*)$1,(char*)$3);
+    $$ = $1; //not sure if this is functional 
 
 	//insertion in the symtable/scopelist
-	SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+	SymTable_insert(hash,(char*)$1, yylineno , NULL , current_scope, FORMAL);
 
     fprintf(yyout_y,"idlist -> idlist , id\n");
 	}
