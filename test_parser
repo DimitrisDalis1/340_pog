@@ -101,13 +101,23 @@ expr:	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
 term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	|MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
 	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
-	|PLUS2 lvalue { fprintf(yyout_y,"term -> ++lvalue\n"); }
-	|lvalue PLUS2 { fprintf(yyout_y,"term -> lvalue++\n"); }
-	|MINUS2 lvalue { fprintf(yyout_y,"term -> --lvalue\n"); }
-	|lvalue MINUS2 { fprintf(yyout_y,"term -> lvalue--\n"); }
+	|PLUS2 lvalue { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> ++lvalue\n");}; }
+	|lvalue PLUS2 { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> lvalue++\n");}; }
+	|MINUS2 lvalue { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> --lvalue\n");}; }
+	|lvalue MINUS2 { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"term -> lvalue--\n");}; }
 	|primary   { fprintf(yyout_y,"term -> primary\n"); };
 
-assignexpr: lvalue ASSIGN expr   { fprintf(yyout_y,"assignexpr -> lvalue = expr\n"); }
+assignexpr: lvalue ASSIGN expr   { if($2 != NULL && ($2->type == USERFUNC || $2->type == LIBFUNC)){
+        fprintf(stderr,"error") // fix this error
+    }else if($2 == NULL){return;}else{fprintf(yyout_y,"assignexpr -> lvalue = expr\n");}; }
 	;
 
 
@@ -123,10 +133,40 @@ lvalue:	ID  { fprintf(yyout_y,"lvalue -> id\n");  }/****/
 	|COLON2 ID  { fprintf(yyout_y,"lvalue -> ::id\n"); } /*******************/
 	|member  { fprintf(yyout_y,"lvalue -> member\n"); } ;
 	
-member: lvalue PERIOD ID {fprintf(yyout_y,"member -> lvalue.id\n");}/////**/
-	| lvalue LEFTBRACE expr RIGHTBRACE  {fprintf(yyout_y,"member -> lvalue [ expr ]\n");}//////////****/
-	| call PERIOD ID  {fprintf(yyout_y,"member -> call.id\n");}
-	| call LEFTBRACE expr RIGHTBRACE {fprintf(yyout_y,"member -> call [ expr ]\n");}
+member: lvalue PERIOD ID {if($1 != NULL && ($1 == USERFUNC || $1 == LIBFUNC))
+        {fprintf(stderr,"Cannot use function as a value");}
+    else if($1 == NULL){
+		fprintf(stderr,"lvalue not declared");
+    }else{
+		fprintf(yyout_y,"member -> lvalue.id\n");
+	};}
+	| lvalue LEFTBRACE expr RIGHTBRACE  { 
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> lvalue [ expr ]\n");
+		}
+	}
+	| call PERIOD ID  {
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> call.id\n");
+	}
+	}
+	| call LEFTBRACE expr RIGHTBRACE {
+	if($1 != NULL && ($1->type == USERFUNC || $1->type == LIBFUNC)){
+        fprintf(stderr,"error cannot use function as a value"); // fix this error
+    }else if($1 == NULL){
+		fprintf(stderr,"error cannot use nothing as a value");
+	}else{
+		fprintf(yyout_y,"member -> call [ expr ]\n");
+	}
+	}
 	;
 	
 call: call LEFTPAR elist RIGHTPAR   {fprintf(yyout_y,"call -> call ( elist )\n");}
@@ -190,4 +230,3 @@ forstmt: FOR LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf
 returnstmt: RETURN SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
 	| RETURN expr SEMICOLON {fprintf(yyout_y,"returnstmt -> return expr ;\n");}
 	;
-
