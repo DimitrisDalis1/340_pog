@@ -84,7 +84,7 @@ Scope_node *create_scope(SymbolTableEntry *symbol,unsigned int scope,Scope_node 
     return new_scope;
 }
 
-int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
+SymbolTableEntry* SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yyline ,id_list* args, const unsigned yyscope,enum SymbolType type){
     int hashIndex,flag,scope_counter=0;
     SymbolTableEntry* temp_entry=NULL;
     SymbolTableEntry* temp_hash=NULL;
@@ -144,7 +144,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             if(temp_head_entry->next_in_scope==NULL){
                 temp_head_entry->next_in_scope=temp_entry;
                 temp_entry->next_in_scope=NULL;
-                return 0;
+                return temp_entry;
             }else{
                 while(temp_head_entry->next_in_scope!=NULL){
                     temp_head_entry=temp_head_entry->next_in_scope;
@@ -152,7 +152,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             }
             temp_head_entry->next_in_scope=temp_entry;
             temp_entry->next_in_scope=NULL;
-            return 0;
+            return temp_entry;
         }else{
             temp_index=temp_head;
             while(flag>0){
@@ -166,7 +166,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
                         temp_index->next=temp;
                         ++length;
                         temp_index->next->symbol->next_in_scope=NULL;
-                        return 0;
+                        return temp_entry;
                     }else{
                         temp_index=temp_index->next;
                     }
@@ -178,7 +178,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             if(temp_index->symbol==NULL){
                 temp_index->symbol=temp_entry;
                 temp_entry->next_in_scope=NULL;
-                return 0;
+                return temp_entry;
             }else{
                 while(temp_index->symbol->next_in_scope!=NULL){
                     temp_index->symbol=temp_index->symbol->next_in_scope;
@@ -186,7 +186,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
             }            
             temp_index->symbol->next_in_scope=temp_entry;
             temp_entry->next_in_scope=NULL;
-            return 0;
+            return temp_entry;
         }
     }
     /*Check if it should be expaned or not*/
