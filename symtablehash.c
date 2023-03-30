@@ -336,7 +336,7 @@ void scope_deactivate(Scope_node *ScopeTable){
     SymbolTableEntry *temp_entry;
     temp = ScopeTable;
     temp_entry = temp->symbol;
-    if (temp) return; /*if it is null do not  do anything*/
+    if (!temp) return; /*if it is null do not  do anything*/
     while(temp_entry != NULL){
         temp_entry->isActive = false;
         temp_entry = temp_entry->next_in_scope;
