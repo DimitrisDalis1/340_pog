@@ -89,7 +89,7 @@ int SymTable_insert(SymTable_T* oSymTable,const char *name, const unsigned yylin
     char *tempkey;
     temp_entry = (struct SymbolTableEntry*) malloc (sizeof(SymbolTableEntry));
     /*Initialize*/
-    if(type==GLOBAL || type==LOCAL || type==FORMAL){
+    if(type==GLOBAL || type==LOCALV || type==FORMAL){
         temp_entry->value.varVal=(struct Variable*)malloc(sizeof(Variable));
         temp_entry->isActive=true;
         temp_entry->type=type;
@@ -258,7 +258,7 @@ static void expand(SymTable_T *oSymTable){
     while (temp)
     {
         next=temp->next;
-        if(temp->type==GLOBAL|temp->type==LOCAL|temp->type==FORMAL){
+        if(temp->type==GLOBAL|temp->type==LOCALV|temp->type==FORMAL){
                hashkey=SymTable_hash(temp->value.varVal->name,oSymTable->buckets);
         }else{
                hashkey=SymTable_hash(temp->value.funcVal->name,oSymTable->buckets);
@@ -290,7 +290,7 @@ SymTable_T* SymTable_new(void){
     SymTable_insert(oSymTable,"typeof",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"strtonum",0,NULL,1,LIBFUNC);
     SymTable_insert(oSymTable,"strtonum",0,NULL,2,LIBFUNC);
-    SymTable_insert(oSymTable,"cos",0,NULL,3,LOCAL);
+    SymTable_insert(oSymTable,"cos",0,NULL,3,LOCALV);
     SymTable_insert(oSymTable,"sin",0,NULL,7,LIBFUNC);
     return oSymTable;
 }
@@ -322,7 +322,7 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
                 printf("%-*s \t",20,temp->value.varVal->name);
                 if(temp->type == GLOBAL){
                    printf(" [global  variable] ");
-                }else if(temp->type == LOCAL){
+                }else if(temp->type == LOCALV){
                    printf(" [local   variable] ");
                 }else if(temp->type == FORMAL){
                    printf(" [formal  variable] ");
@@ -358,7 +358,7 @@ unsigned int SymTable_getLength(SymTable_T *oSymTable){
     return oSymTable->size;
 }
 
-int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int scope){
+SymbolTableEntry* lookup_inBucket(SymTable_T *oSymTable, const char *pcKey, unsigned int scope){
     int hashIndex;
     SymbolTableEntry *temp;
     //temp = malloc(sizeof(SymbolTableEntry*));
@@ -377,19 +377,54 @@ int SymTable_contains(SymTable_T *oSymTable, const char *pcKey, unsigned int sco
     {
         //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
         
-        if(temp->type==GLOBAL||temp->type==LOCAL||temp->type==FORMAL){
-            if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->value.varVal->scope == scope)
+        if(temp->type==GLOBAL||temp->type==LOCALV||temp->type==FORMAL){
+            if (strcmp(temp->value.varVal->name,pcKey) == 0 && temp->value.varVal->scope == scope && temp->isActive == true)
             {
-               return 1;
+               return temp;
             }
         }else{
-            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){ printf("%s\n",pcKey); return 1;}
-
+            if (strcmp(temp->value.funcVal->name, pcKey) == 0 && temp->isActive == true){
+                return temp;
+            }
         }
         temp= temp->next;
     }
-    oSymTable->size++;
-    return 0;
+    return NULL;
+}
+
+SymbolTableEntry* lookup_inScope(SymTable_T* sym, const char* key, unsigned int scope)
+{
+    int hashIndex;
+    SymbolTableEntry *temp;
+    //temp = malloc(sizeof(SymbolTableEntry*));
+    assert(sym);
+    assert(key);
+
+
+    /*Generate the hash index*/
+    hashIndex=SymTable_hash(key,sym->buckets);
+    //printf("hash index inside sym_cont: %d\n", hashIndex);
+
+    /*Search if there is a cell with this key*/
+    temp = sym->hashtable[hashIndex];
+    if(temp == NULL){ printf("is null\n");}
+    while (temp!=NULL)
+    {
+        //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
+        
+        if(temp->type==GLOBAL||temp->type==LOCALV||temp->type==FORMAL){
+            if (strcmp(temp->value.varVal->name,key) == 0 && temp->value.varVal->scope == scope && temp->isActive == true)
+            {
+               return temp;
+            }
+        }else {
+            if (strcmp(temp->value.funcVal->name, key) == 0 && (temp->isActive == true) && (temp->value.funcVal->scope = scope)){
+                return temp;
+            }
+        }
+        temp= temp->next_in_scope;
+    }
+    return NULL;
 }
 
 int main()
