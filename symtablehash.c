@@ -333,11 +333,13 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
 
 void scope_deactivate(Scope_node *ScopeTable){
     struct Scope_node *temp;
+    SymbolTableEntry *temp_entry;
     temp = ScopeTable;
-    if (ScopeTable) return; /*if it is null do not  do anything*/
-    while(temp->symbol->next_in_scope != NULL){
-        temp->symbol->isActive = false;
-        temp->symbol->next_in_scope = temp->next->symbol->next_in_scope;
+    temp_entry = temp->symbol;
+    if (temp) return; /*if it is null do not  do anything*/
+    while(temp_entry != NULL){
+        temp_entry->isActive = false;
+        temp_entry = temp_entry->next_in_scope;
     }
     return;
 }
