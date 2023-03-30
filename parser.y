@@ -111,7 +111,7 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
 	|PLUS2 lvalue { 
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
-        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
@@ -119,14 +119,14 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	}
 	|lvalue PLUS2 { 
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
-        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
 	fprintf(yyout_y,"term -> lvalue++\n"); }
 	|MINUS2 lvalue {
 		 if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
-        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
@@ -134,7 +134,7 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 	}
 	|lvalue MINUS2 {
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
-        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
+        fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     }else if(((SymbolTableEntry*)$2) == NULL){
 		return 0;
 	}
@@ -143,7 +143,7 @@ term: LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
 
 assignexpr: lvalue ASSIGN expr   { 
 	if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC){
-       fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,currrent_scope);
+       fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     }else if($1 == NULL){
 		return 0;
 	}
