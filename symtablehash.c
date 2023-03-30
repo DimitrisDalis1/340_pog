@@ -2,7 +2,7 @@
 
 unsigned int length=0;
 Scope_node *head_scope_node=NULL;
-
+SymTable_T* hash;
 
 int insert(id_list *ptr,char *name){
     id_node *tmp;
@@ -27,6 +27,12 @@ int insert(id_list *ptr,char *name){
     ptr->head=tmp;
     ptr->length++;
     return 1;
+}
+
+int yyerror(char* yaccProvideMessage){
+    fprintf(stderr,"%s: at ;ine %d, before token: %s\n",yaccProvideMessage,yylineno,yytext);
+    fprintf(stderr,"INPUT NOT VALID\n");
+    return 0;
 }
 
 id_list *create_id_list(char* func_name){
@@ -461,6 +467,7 @@ SymbolTableEntry* lookup_inBucket_without_isActive(SymTable_T *oSymTable, const 
     return NULL;
 }
 
+/*
 int main()
 {
     id_list *p = create_id_list("hello");
@@ -477,3 +484,4 @@ int main()
 
     return 0;
 }
+*/
