@@ -128,10 +128,22 @@ primary: lvalue { fprintf(yyout_y,"primary -> lvalue\n"); }
 	|const  { fprintf(yyout_y,"primary -> const\n"); } 
 	;
 	
-lvalue:	ID  { fprintf(yyout_y,"lvalue -> id\n");  }/****/
-	|LOCAL ID  { fprintf(yyout_y,"lvalue -> local id\n"); }/****/
-	|COLON2 ID  { fprintf(yyout_y,"lvalue -> ::id\n"); } /*******************/
-	|member  { fprintf(yyout_y,"lvalue -> member\n"); } ;
+lvalue:	ID  { 
+		fprintf(yyout_y,"lvalue -> id\n");  
+		}/****/
+	|LOCAL ID  { 
+		fprintf(yyout_y,"lvalue -> local id\n"); 
+	}/****/
+	|COLON2 ID  { 
+		fprintf(yyout_y,"lvalue -> ::id\n");
+		SymbolTableEntry* symEntry = lookup_active_with_scope(&hash, $2, 0);
+		if(!symEntry){
+			printf("Global var not found");
+			$$=NULL;
+		}else $$=symEntry;
+	}
+	|member  { fprintf(yyout_y,"lvalue -> member\n"); } 
+	;
 	
 member: lvalue PERIOD ID {if($1 != NULL && ($1 == USERFUNC || $1 == LIBFUNC))
         {fprintf(stderr,"Cannot use function as a value");}
@@ -170,7 +182,12 @@ member: lvalue PERIOD ID {if($1 != NULL && ($1 == USERFUNC || $1 == LIBFUNC))
 	;
 	
 call: call LEFTPAR elist RIGHTPAR   {fprintf(yyout_y,"call -> call ( elist )\n");}
-	|lvalue callsuffix  {fprintf(yyout_y,"call -> lvalue callsuffix\n");} ///***/
+	|lvalue callsuffix  {
+		fprintf(yyout_y,"call -> lvalue callsuffix\n");
+		if(!$1){
+			printf("Function not declared");
+		}
+	}
 	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
 	 ;
 
