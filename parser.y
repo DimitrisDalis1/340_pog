@@ -161,13 +161,86 @@ primary: lvalue { fprintf(yyout_y,"primary -> lvalue\n"); }
 	
 lvalue:	ID  { 
 		fprintf(yyout_y,"lvalue -> id\n");  
-		}/****/
+
+    int stemp;
+	SymTableEntry* entry;
+	stemp=current_scope;
+    entry = lookup_inScope(hash, (char *)$1, stemp);
+    while(entry == NULL && stemp > 0){
+        stemp--;
+		entry = lookup_inScope(&scpArr, (char *)$1, stemp);
+    }
+
+    if(entry == NULL) {
+        stemp = scope;
+        entry = lookup_inScope(&scpArr, (char *)$1, stemp);
+        while(entry == NULL && stemp > 0){
+            entry = lookup_inScope(&scpArr, (char *)$1, stemp);
+            stemp--;
+        }
+		//if you did not findsomething
+        if(entry == NULL){   
+            // lookup for a global matching symbol
+            entry = lookup_inScope(&scpArr, (char *)$1, 0);
+            // if you didn't find anything then create new symbol
+            if(entry != NULL){
+				$$ = entry;
+                return 0;
+            }else{
+                if(current_scope != 0){
+					entry = SymTable_insert(hash,(char *)$1,NULL,current_scope,LOCAL)
+				}else{
+					entry = SymTable_insert(hash,(char *)$1,NULL,current_scope,GLOBAL)
+				}
+                $$ = entry;
+                return 0;
+            }
+        }
+        else{
+            if (entry->type == LIBFUNC || entry->type == USERFUNC)
+            {
+                fprintf(stderr, "Cannot access local function declared in line %d with scope %d", entry->value.funcVal->line, entry->value.funcVal->scope);
+            }else{
+                fprintf(stderr, "Cannot access local variable declared in line %d with scope %d", entry->value.varVal->line, entry->value.varVal->scope);
+            }
+            $$ = NULL;
+            return 0;
+        }
+    }else {
+        $$ = entry; 
+        return 0;
+    }
+		}
 	|LOCAL ID  { 
 		fprintf(yyout_y,"lvalue -> local id\n"); 
+
+		 SymTableEntry* symEntry = lookup_inScope(&hash, scope, $2);
+    if(symEntry == NULL){
+        symEntry =lookup_inBucket(hash, $2, isActive);
+
+        if(symEntry != NULL && symEntry->type == LIBFUNC && scope != 0) {
+            printf("Cannot shadow a library function");
+            $$ = NULL;
+            return;
+        }
+        else {
+            if(scope == 0)
+                symEntry = SymTable_insert(&hash,$2, NULL,  current_scope, yylineno, GLOBAL);
+            else
+                symEntry = SymTable_insert(&hash,$2, NULL,  current_scope, yylineno, LOCALV);
+
+            $$ = symEntry;
+            return;
+        }
+    }
+    else {
+        $$ = symEntry;
+        return;
+    }
 	}/****/
 	|COLON2 ID  { 
 		fprintf(yyout_y,"lvalue -> ::id\n");
-		SymbolTableEntry* symEntry = lookup_inScope(hash,(char*) $2, 0);
+		SymbolTableEntry* symEntry = lookup_inScope(&hash, $2, 0);
 		if(!symEntry){
 			printf("Global var not found");
 			$$=NULL;
