@@ -115,16 +115,19 @@ term:
 	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
 	|PLUS2 lvalue
 	{ 
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC))
+		{
         	fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    	}else if(((SymbolTableEntry*)$2) == NULL){
+    	}else if(((SymbolTableEntry*)$2) == NULL)
+		{
 			return 0;
 		}
 		fprintf(yyout_y,"term -> ++lvalue\n");
 	}
 	|lvalue PLUS2
 	{ 
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC))
+		{
         	fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     	}else if(((SymbolTableEntry*)$2) == NULL){
 			return 0;
@@ -133,7 +136,8 @@ term:
 	}
 	|MINUS2 lvalue
 	{
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC))
+		{
         	fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     	}else if(((SymbolTableEntry*)$2) == NULL){
 			return 0;
@@ -142,7 +146,8 @@ term:
 	}
 	|lvalue MINUS2
 	{
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC)){
+		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC))
+		{
         	fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     	}else if(((SymbolTableEntry*)$2) == NULL){
 			return 0;
@@ -155,11 +160,11 @@ term:
 assignexpr:
 	lvalue ASSIGN expr   
 	{ 
-		if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC){
+		if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
+		{
        		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
     	}
-
-	fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
+		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
 	}
 
 primary:
