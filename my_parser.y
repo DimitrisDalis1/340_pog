@@ -364,7 +364,7 @@ funcdef:
 		}
 		if(current_scope>1)
 		{
-			search =lookup_inScope_wA(hash,$2,current_scope-1); /*Douleuei me -2 gt to current scope leei oti brisketai sto 3 (einai gia thn epomenh periptwsh alla thele na to suzhthsoume*/
+			search =lookup_inScope_wA(hash,$2,current_scope-2); /*Douleuei me -2 gt to current scope leei oti brisketai sto 3 (einai gia thn epomenh periptwsh alla thele na to suzhthsoume*/
 			if (search !=NULL)
 			{
 				printf("Variable %s exists", $2);
@@ -372,12 +372,12 @@ funcdef:
 			}
 			
 		}
-		if ((search = lookup_inScope(hash,(char *)$2,current_scope - 2)) != NULL) /* suzhthste to*/
+		if ((search = lookup_inScope(hash,(char *)$2,current_scope - 1)) != NULL) /* suzhthste to, douleuei me -2 prin allaksw sto block to counter (go to block)*/
 		{
 			if(search->type==USERFUNC || search->type==LIBFUNC)
 				printf("function redefinition");
 			else
-				printf("Funtion %s declared with same name as variable", $2);
+				printf("Funtion %s declared with same name as variable\n", $2);
 			return 0;
 		}
 		
@@ -455,11 +455,13 @@ temp:
 	| {}; 
 
 block:
-	LEFTCURLY {increase_scope(); }
+	LEFTCURLY {/*increase_scope();*/ } /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  προσοχή (ειδική περίπτωση): το block της συνάρτησης δεν αυξάνει επιπλέον το scope κατά 
++1 άρα το κεντρικό block της συνάρτησης είναι +1 σε σύγκριση με το scope που περιέχει τη
+συνάρτηση*/
     	temp RIGHTCURLY
 	{
 		fprintf(yyout_y,"block -> { temp }\n");
-		decrease_scope();
+		decrease_scope(); /*opote care about this one as well*/
 	}; 
 
 ifstmt:
