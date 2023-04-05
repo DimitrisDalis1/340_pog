@@ -129,7 +129,7 @@ term:
     	}else if(((SymbolTableEntry*)$2) == NULL){
 			return 0;
 		}
-	fprintf(yyout_y,"term -> lvalue++\n");
+		fprintf(yyout_y,"term -> lvalue++\n");
 	}
 	|MINUS2 lvalue
 	{
