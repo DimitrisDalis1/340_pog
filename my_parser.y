@@ -349,9 +349,9 @@ indexedelem:
  	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
 funcdef:
- 	FUNCTION  ID LEFTPAR {increase_scope();} idlist RIGHTPAR
+ 	FUNCTION  ID LEFTPAR {increase_scope();} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
 	{
-		SymbolTableEntry* search =lookup_inScope(hash,(char *)$3,0);
+		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
 		if (search!=NULL)
 		{
 			if(search->type==LIBFUNC)
@@ -364,25 +364,25 @@ funcdef:
 		}
 		if(current_scope>1)
 		{
-			search =lookup_inScope_wA(hash,$3,current_scope-1);
+			search =lookup_inScope_wA(hash,$2,current_scope-1); /*Douleuei me -2 gt to current scope leei oti brisketai sto 3 (einai gia thn epomenh periptwsh alla thele na to suzhthsoume*/
 			if (search !=NULL)
 			{
-				printf("Variable exists");
+				printf("Variable %s exists", $2);
 				
 			}
 			
 		}
-		if ((search = lookup_inScope(hash,(char *)$3,current_scope)) != NULL)
+		if ((search = lookup_inScope(hash,(char *)$2,current_scope - 2)) != NULL) /* suzhthste to*/
 		{
 			if(search->type==USERFUNC || search->type==LIBFUNC)
 				printf("function redefinition");
 			else
-				printf("Funtion declared with same name as variable");
+				printf("Funtion %s declared with same name as variable", $2);
 			return 0;
 		}
 		
 		//insertion in the symtable and in the scopelist
-		SymbolTableEntry* entry =entry=SymTable_insert(hash,(char *)$3,yylineno,(id_list*)$5,current_scope-1,USERFUNC);
+		SymbolTableEntry* entry = SymTable_insert(hash,(char *)$2,yylineno,(id_list*)$5,current_scope-1,USERFUNC);
 
 	}
 	block{fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
@@ -448,7 +448,7 @@ idlist:
 	| 
 	{    
 		$$ = create_id_list();
- 		fprintf(yyout_y,"idlist -> �\n"); 
+ 		fprintf(yyout_y,"idlist ->  \n"); 
 	};
 temp:
  	temp stmt {fprintf(yyout_y,"temp -> temp stmt\n");}
