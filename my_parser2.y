@@ -12,7 +12,7 @@
     FILE* yyout_y; 
     int scope=0;
     int block_count = 0;
-    bool isBlock = false;
+    bool isFunct = false;
     int function_scope_count = 0;
     int unnamed_counter=0;
 
@@ -155,7 +155,7 @@ term:
 		}
 		fprintf(yyout_y,"term -> lvalue--\n");
 	}
-	|primary { fprintf(yyout_y,"term -> primary\n"); };
+	|primary {fprintf(yyout_y,"term -> primary\n"); };
 ;
 
 assignexpr:
@@ -187,6 +187,7 @@ lvalue:
 			temp_scope--;
 	
 		}
+
 		if(entry==NULL)
 		{
 			temp_scope=current_scope;
@@ -234,16 +235,21 @@ lvalue:
     		if(entry == NULL)
 		{
   		    	entry = lookup_inBucket(hash,(char *)$1,current_scope);
-      			if(entry != NULL && entry->type == LIBFUNC && scope != 0)
+      			if(entry != NULL && entry->type == LIBFUNC && current_scope != 0) /*htan sketo scope*/
 			{
       		    		printf("shadow libfunc");
           			$$= NULL;  
        			}else
 			{
          			if(current_scope == 0)
+				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,GLOBAL);
+				}
            			else
+				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,LOCALV);
+
+				}
             			$$= entry;
       			}
   		}else
@@ -350,13 +356,8 @@ indexedelem:
  	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
 funcdef:
- 	FUNCTION  ID LEFTPAR {increase_scope();} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
+ 	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
 	{
-		if(isBlock == false)
-		{
-			block_count++;
-			isBlock = true;
-		}
 		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
 		if (search!=NULL)
 		{
@@ -424,7 +425,6 @@ idlist:
 		insert($$,$1);
 
 		//insertion in the symtable/scopelist
-		printf("The formal is %s \n, DELETE ME ON THE idlist", $1);
 		SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
 		fprintf(yyout_y,"idlist -> id\n");
 	}
@@ -463,9 +463,10 @@ temp:
 
 block:
 	LEFTCURLY
- 	{	if(block_count == current_scope)
+ 	{	
+		if(isFunct == true)
 		{
-			isBlock = false; /*not really sure, i put it randomly*/	
+			isFunct = false;
 		}
 		else
 		{
@@ -478,7 +479,6 @@ block:
 	{
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
-		block_count--;
 	}; 
 
 ifstmt:
