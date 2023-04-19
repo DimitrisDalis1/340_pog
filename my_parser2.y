@@ -415,7 +415,7 @@ idlist:
 		//check if it is in the same scope we are in
 		if (lookup_inScope(hash,$1,current_scope)!=NULL)
 		{
-			printf("this formal argument already exists in given scope");        
+			printf("this formal argument already exists in given scope %s", $1);        
 			return 0;
 		}
 		
@@ -426,20 +426,21 @@ idlist:
 
 		//insertion in the symtable/scopelist
 		SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+		printf("Variable inserted %s current scope: %d\n", $1, current_scope);
 		fprintf(yyout_y,"idlist -> id\n");
 	}
 	|idlist COMMA ID 
 	{
 	//check if it's a gloabal lib function
-    if (lookup_inScope(hash,(const char *)$1,0) != NULL && lookup_inScope(hash,(const char*)$1,0)->type == LIBFUNC)
+    if (lookup_inScope(hash,(const char *)$3,0) != NULL && lookup_inScope(hash,(const char*)$3,0)->type == LIBFUNC)
     {
         printf("This formal argument shadows function from libary");
         return 0;
     }
     //check if it is in the same scope we are in
-    if (lookup_inScope(hash,(const char*)$1,current_scope)!=NULL)
+    if (lookup_inScope(hash,(const char*)$3,current_scope)!=NULL)
     {
-        printf("this formal argument already exists in given scope");        
+        printf("this formal argument already exists in given scope john gmieasi\n");        
         return 0;
     }
     
@@ -448,7 +449,7 @@ idlist:
     $$ = $1; //not sure if this is functional 
 
 	//insertion in the symtable/scopelist
-	SymTable_insert(hash, (const char*)$1, yylineno , NULL , current_scope, FORMAL);
+	SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
 
     fprintf(yyout_y,"idlist -> idlist , id\n");
 	}
@@ -472,6 +473,7 @@ block:
 		{
 			increase_scope();
 		}
+		//increase_scope();
  	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  προσοχή (ειδική περίπτωση): το block της συνάρτησης δεν αυξάνει επιπλέον το scope κατά 
 +1 άρα το κεντρικό block της συνάρτησης είναι +1 σε σύγκριση με το scope που περιέχει τη
 συνάρτηση*/
