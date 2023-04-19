@@ -163,7 +163,7 @@ assignexpr:
 	{ 
 		if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
 		{
-       			fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
+       			fprintf(stderr,"Error,value cannot be a function in line %d and scope %d \n",yylineno,current_scope);
     		}
 		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
 	}
@@ -217,9 +217,9 @@ lvalue:
 			{
 				if(entry->type== USERFUNC ||	entry->type== LIBFUNC)
 				{
-					fprintf("Cannot access local function in line %d and scope %d \n",yylineno,current_scope);
+					fprintf(stderr,"Cannot access local function in line %d and scope %d \n",yylineno,current_scope);
 				}else
-					fprintf("Cannot access local variable in line %d and scope %d \n",yylineno,current_scope);
+					fprintf(stderr,"Cannot access local variable in line %d and scope %d \n",yylineno,current_scope);
 				$$=NULL;
 			}
 		}else
@@ -374,16 +374,16 @@ funcdef:
 			search =lookup_inScope_wA(hash,$2,current_scope-2); /*Douleuei me -2 gt to current scope leei oti brisketai sto 3 (einai gia thn epomenh periptwsh alla thele na to suzhthsoume*/
 			if (search !=NULL)
 			{
-				fprintf("Variable %s exists in line %d and scope %d \n", $2,yylineno,current_scope);
+				fprintf(stderr,"Variable %s exists in line %d and scope %d \n", $2,yylineno,current_scope);
 			}
 			
 		}
 		if ((search = lookup_inScope(hash,(char *)$2,current_scope - 1)) != NULL) /* suzhthste to, douleuei me -2 prin allaksw sto block to counter (go to block)*/
 		{
 			if(search->type==USERFUNC || search->type==LIBFUNC)
-				fprintf("Function redefinition in line %d and scope %d \n",yylineno,current_scope);
+				fprintf(stderr,"Function redefinition in line %d and scope %d \n",yylineno,current_scope);
 			else
-				fprintf("Funtion %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);
+				fprintf(stderr,"Funtion %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);
 			return 0;
 		}
 		
