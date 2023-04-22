@@ -234,11 +234,20 @@ lvalue:
 					fprintf(stderr, "Cannot access local variable in line %d and scope %d \n",yylineno,current_scope);
 				$$=NULL;
 			}
-		}else if(entry->type!= USERFUNC)
+		}
+		else if(entry->type!= USERFUNC && entry->type != FORMAL)
 		{
 			printf("Cannot access %s in line %d\n", $1, yylineno);	
 			$$=entry;
 		}
+		else if(entry->type == FORMAL) 	//an einai formal h dothesa
+		{
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL) //psakse ena panw
+			{
+				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
+			}
+		}
+
 
     	}
 	|LOCAL ID
