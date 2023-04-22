@@ -237,8 +237,10 @@ lvalue:
 		}
 		else if(entry->type!= USERFUNC && entry->type != FORMAL)
 		{
-			printf("Cannot access %s in line %d\n", $1, yylineno);	
-			$$=entry;
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL){
+				printf("Cannot access %s in line %d\n", $1, yylineno);	
+				$$=entry;
+			}
 		}
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
 		{
