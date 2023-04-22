@@ -17,8 +17,8 @@
     int unnamed_counter=0;
     int global_check = 0;
     bool c_f = false;
-    bool isLoop = false;
     int sim_loops = 0; //simultaneous loops active
+    int sim_funcs = 0;
 
 %}
 
@@ -373,7 +373,7 @@ indexedelem:
  	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
 funcdef:
- 	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true; c_f=true;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
+ 	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true;c_f=true; sim_funcs++;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
 	{
 		//SymbolTableEntry* search;
 		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
@@ -388,7 +388,7 @@ funcdef:
 			}	
 		}
 
-		
+		/*
 		if(current_scope>1)
 		{
 			//ena while loop gia na mporesei na dei ola ta prohgoume scopes
@@ -399,6 +399,7 @@ funcdef:
 			}
 			
 		}
+		*/
 		/*check if it doesnt exist on the hash*/
 		//printf("1321\n");
 		int temp = current_scope - 1;
@@ -414,8 +415,8 @@ funcdef:
 				fprintf(stderr, "Function redefinition in line %d and scope %d \n",yylineno,current_scope);}
 			else{
 				fprintf(stderr, "Function %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);}
-			printf("RETURNING\n");
-			return 0;
+			//printf("RETURNING\n");
+			//return 0;
 	
 		}
 
@@ -424,7 +425,7 @@ funcdef:
 			if(search->type==USERFUNC || search->type==LIBFUNC)
 				fprintf(stderr, "Function redefinition in line %d and scope %d \n",yylineno,current_scope);
 			else
-				fprintf(stderr, "Function %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);
+				fprintf(stderr, "Function %s declared with same name as variable, in line %d and scope %d \n",$2,yylineno,current_scope);
 			return 0;
 		}*/
 		
@@ -523,6 +524,7 @@ block:
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
 		if(sim_loops > 0){sim_loops--;}
+		if(sim_funcs > 0){sim_funcs--;}
 	}; 
 
 ifstmt:
@@ -539,12 +541,12 @@ forstmt:
 returnstmt:
  	RETURN
 	{
-		if(c_f == false){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}	
+		if(sim_funcs == 0){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}	
 	}
 	SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
 	|RETURN
 	{
-		if(c_f == false){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}
+		if(sim_funcs == 0){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}
 	}
 	expr SEMICOLON {fprintf(yyout_y,"returnstmt -> return expr ;\n");}
 	;
