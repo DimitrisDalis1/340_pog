@@ -18,6 +18,7 @@
     int global_check = 0;
     int sim_loops = 0; //simultaneous loops active
     int sim_funcs = 0;
+    bool c_l = false;
 
 %}
 
@@ -93,6 +94,7 @@ stmt:
 				fprintf(yyout_y,"stmt -> break;\n"); }
 	|CONTINUE SEMICOLON {
 				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
+				printf("sim loops %d\n", sim_loops);
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 			    }
 	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
@@ -533,7 +535,9 @@ block:
 	{
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
-		if(sim_loops > 0){sim_loops--;}
+		if(c_l == true && sim_loops == 0){c_l = false;printf("1\n");}
+		else if(c_l == true && sim_loops > 0){c_l=true;sim_loops--;printf("2\n");}
+		else{sim_loops--;printf("3\n");}
 		if(sim_funcs > 0){sim_funcs--;}
 	}; 
 
@@ -543,10 +547,10 @@ ifstmt:
 	;
 
 whilestmt: 
-	WHILE LEFTPAR{sim_loops++;} expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
+	WHILE LEFTPAR{c_l = true; sim_loops++;} expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
 
 forstmt:
- 	FOR LEFTPAR{sim_loops++;} elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
+ 	FOR LEFTPAR{c_l = true;sim_loops++;} elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
 
 returnstmt:
  	RETURN
