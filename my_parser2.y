@@ -16,7 +16,6 @@
     int function_scope_count = 0;
     int unnamed_counter=0;
     int global_check = 0;
-    bool c_f = false;
     int sim_loops = 0; //simultaneous loops active
     int sim_funcs = 0;
 
@@ -384,7 +383,7 @@ indexedelem:
  	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
 funcdef:
- 	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true;c_f=true; sim_funcs++;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
+ 	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true; sim_funcs++;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
 	{
 		//SymbolTableEntry* search;
 		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
@@ -445,7 +444,7 @@ funcdef:
 		
 
 	}
-	block{c_f = false;fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
+	block{fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
 	|FUNCTION LEFTPAR {increase_scope();} idlist RIGHTPAR block
 	{
 		char* my_name= malloc(50*(sizeof(char)));
@@ -463,13 +462,13 @@ idlist:
 		if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
 		{
 			fprintf(stderr,"This formal argument shadows function from libary in line %d and scope %d \n",yylineno,current_scope);
-			return 0;
+			
 		}
 		//check if it is in the same scope we are in
 		if (lookup_inScope(hash,$1,current_scope)!=NULL)
 		{
 			fprintf(stderr,"This formal argument already exists in given scope %s  in line %d", $1,current_scope,yylineno);        
-			return 0;
+			
 		}
 		
 		//insertion in the idlist and saving the idlist
@@ -488,13 +487,13 @@ idlist:
     if (lookup_inScope(hash,(const char *)$3,0) != NULL && lookup_inScope(hash,(const char*)$3,0)->type == LIBFUNC)
     {
         fprintf(stderr,"This formal argument shadows function from libary in line %d and scope %d \n",yylineno,current_scope);
-        return 0;
+        
     }
     //check if it is in the same scope we are in
     if (lookup_inScope(hash,(const char*)$3,current_scope)!=NULL)
     {
         fprintf(stderr,"This formal argument already exists in given scope in line %d and scope %d \n",yylineno,current_scope);       
-        return 0;
+        
     }
     
     //insertion in the idlist and saving the idlist
