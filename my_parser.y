@@ -12,8 +12,16 @@
     FILE* yyout_y; 
     int scope=0;
     int block_count = 0;
+    bool isFunct = false;
     int function_scope_count = 0;
     int unnamed_counter=0;
+    int global_check = 0;
+    int sim_loops = 0; //simultaneous loops active
+    int sim_funcs = 0;
+    
+    int b_n_b = 0; //before loop
+    int b_a = 0;   //after loop
+    bool c_l = false;
 
 %}
 
@@ -84,8 +92,13 @@ stmt:
 	|whilestmt	{ fprintf(yyout_y,"stmt -> whilestmt\n"); }
 	|forstmt	{ fprintf(yyout_y,"stmt -> forstmt\n"); }
 	|returnstmt	{ fprintf(yyout_y,"stmt -> returnstmt\n"); }
-	|BREAK SEMICOLON  { fprintf(yyout_y,"stmt -> break;\n"); }
-	|CONTINUE SEMICOLON { fprintf(yyout_y,"stmt -> continue;\n"); }
+	|BREAK SEMICOLON  {
+				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
+				fprintf(yyout_y,"stmt -> break;\n"); }
+	|CONTINUE SEMICOLON {
+				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
+	 			fprintf(yyout_y,"stmt -> continue;\n");
+			    }
 	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
 	|funcdef	{ fprintf(yyout_y,"stmt -> funcdef\n"); }
 	|SEMICOLON 	{ fprintf(yyout_y,"stmt -> ;\n"); }
@@ -154,7 +167,7 @@ term:
 		}
 		fprintf(yyout_y,"term -> lvalue--\n");
 	}
-	|primary { fprintf(yyout_y,"term -> primary\n"); };
+	|primary {fprintf(yyout_y,"term -> primary\n"); };
 ;
 
 assignexpr:
@@ -162,7 +175,7 @@ assignexpr:
 	{ 
 		if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
 		{
-       			fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
+       			fprintf(stderr,"Error,value cannot be a function in line %d and scope %d \n",yylineno,current_scope);
     		}
 		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
 	}
@@ -180,15 +193,18 @@ lvalue:
 	{ 
         	fprintf(yyout_y,"lvalue -> id\n");
 		int temp_scope=current_scope;
+		//printf("\nID: %s, temp_scope: %d, curr_scope: %d___I am the first print\n", $1, temp_scope, current_scope);
 		SymbolTableEntry* entry = lookup_inScope(hash,(char *)$1,current_scope);
 		while(entry==NULL&&temp_scope!=0){
 			entry=lookup_inScope(hash,(char *)$1,temp_scope);
 			temp_scope--;
 	
 		}
+
 		if(entry==NULL)
 		{
 			temp_scope=current_scope;
+			//printf("ID: %s, temp_scope: %d, curr_scope: %d\n", $1, temp_scope, current_scope);
 			while(entry==NULL&&temp_scope!=0){
 				entry=lookup_inScope_wA(hash,(char *)$1,temp_scope);
 				temp_scope--;
@@ -213,50 +229,72 @@ lvalue:
 
 			}else
 			{
+				printf("is not null\n");
 				if(entry->type== USERFUNC ||	entry->type== LIBFUNC)
 				{
-					printf("cant access local function ");
+					fprintf(stderr, "Cannot access local function in line %d and scope %d \n",yylineno,current_scope);
 				}else
-					printf("cant access local variable ");
+					fprintf(stderr, "Cannot access local variable in line %d and scope %d \n",yylineno,current_scope);
 				$$=NULL;
 			}
-		}else
-		{	
-			$$=entry;
 		}
+		else if(entry->type!= USERFUNC && entry->type != FORMAL)
+		{
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL){
+				printf("Cannot access %s in line %d\n", $1, yylineno);	
+				$$=entry;
+			}
+		}
+		else if(entry->type == FORMAL) 	//an einai formal h dothesa
+		{
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL) //psakse ena panw
+			{
+				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
+			}
+		}
+
 
     	}
 	|LOCAL ID
 	{
+//edw tha psaksw an exoume sto IDIO SCOPE ksanaorismenh me to idio onoma mia metablhth
 		fprintf(yyout_y,"lvalue -> local id\n");
-		SymbolTableEntry* entry = lookup_inScope(hash,(char *)$1,current_scope);
+		SymbolTableEntry* entry = lookup_inScope(hash,(char *)$2,current_scope); //htan 1
+
     		if(entry == NULL)
 		{
-  		    	entry = lookup_inBucket(hash,(char *)$1,current_scope);
-      			if(entry != NULL && entry->type == LIBFUNC && scope != 0)
+  		    	entry = lookup_inBucket(hash,(char *)$2,current_scope); //htan 1
+			
+      			if(entry != NULL && entry->type == LIBFUNC && current_scope != 0) /*htan sketo scope*/
 			{
-      		    		printf("shadow libfunc");
+      		    		fprintf(stderr,"Shadow libfunc in line %d and scope %d \n",yylineno,current_scope);
           			$$= NULL;  
        			}else
 			{
          			if(current_scope == 0)
+				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,GLOBAL);
+				}
            			else
+				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,LOCALV);
+
+				}
             			$$= entry;
       			}
   		}else
 		{
+		printf("Error: In line %d variable %s is already defined\n", yylineno, $2);
       		$$ = entry;
 		}
 	}
 	|COLON2 ID
 	{ 
-		SymbolTableEntry* entry = lookup_inScope(hash,(char *)$1,0);
+		SymbolTableEntry* entry = lookup_inScope(hash,(char *)$2,0);
 		if(entry==NULL)
 		{
-			printf("Global not found\n");
-			$$=NULL;
+			fprintf(stderr,"Global not found in line %d and scope %d \n",yylineno,current_scope);
+			//$$=NULL; //petaei seg
 		}else
 			$$=entry;
 		fprintf(yyout_y,"lvalue -> ::id\n"); 
@@ -270,11 +308,11 @@ member:
 		fprintf(yyout_y,"member -> lvalue.id\n");
 		if($1 == NULL)
         	{
-			printf("lvalue not declared");
+			fprintf(stderr,"lvalue not declared in line %d and scope %d \n",yylineno,current_scope);
 		}
     		else if(((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
 		{
-        		printf("Cant use function name as an lvalue.id");
+        		fprintf(stderr,"Cant use function name as an lvalue.id in line %d and scope %d \n",yylineno,current_scope);
     		}
 	}
 	|lvalue LEFTBRACE expr RIGHTBRACE
@@ -282,11 +320,11 @@ member:
 		fprintf(yyout_y,"member -> lvalue [ expr ]\n");
 		if($1 == NULL)
         	{
-			printf("lvalue not declared");
+			fprintf(stderr,"lvalue not declared in line %d and scope %d \n",yylineno,current_scope);
 		}
     		else if(((SymbolTableEntry*)$1)->type == USERFUNC ||((SymbolTableEntry*)$1)->type== LIBFUNC)
 		{
-        	printf("Cant use function name as an lvalue[]");
+        	fprintf(stderr,"Cannot use function name as an lvalue[] in line %d and scope %d \n",yylineno,current_scope);
     		}
 	}
 	| call PERIOD ID  {fprintf(yyout_y,"member -> call.id\n");}
@@ -302,7 +340,7 @@ call: call LEFTPAR elist RIGHTPAR
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 		if(!$1)
 		{
-			printf("Function not declared\n");
+			fprintf(stderr,"Function not declared in line %d and scope %d \n",yylineno,current_scope);
 		}
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 	} 
@@ -349,40 +387,65 @@ indexedelem:
  	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
 funcdef:
- 	FUNCTION  ID LEFTPAR {increase_scope();} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
+ 	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true; sim_funcs++;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
 	{
+		//SymbolTableEntry* search;
 		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
 		if (search!=NULL)
 		{
 			if(search->type==LIBFUNC)
 			{
-				printf("Userfunc shadows libraryfunn");
+				fprintf(stderr,"Userfunc shadows libraryfunn in line %d and scope %d \n",yylineno,current_scope);
 			}else if(current_scope-1 == 0)
 			{
-				printf("found symbol with same name");
+				fprintf(stderr,"Found symbol with same name in line %d and scope %d \n",yylineno,current_scope);
 			}	
 		}
+
+		/*
 		if(current_scope>1)
 		{
-			search =lookup_inScope_wA(hash,$2,current_scope-2); /*Douleuei me -2 gt to current scope leei oti brisketai sto 3 (einai gia thn epomenh periptwsh alla thele na to suzhthsoume*/
+			//ena while loop gia na mporesei na dei ola ta prohgoume scopes
+			search =lookup_inScope_wA(hash,$2,current_scope-1); 
 			if (search !=NULL)
 			{
-				printf("Variable %s exists", $2);
-				
+				fprintf(stderr, "Variable %s exists in line %d and scope %d \n", $2,yylineno,current_scope);
 			}
 			
 		}
-		if ((search = lookup_inScope(hash,(char *)$2,current_scope - 1)) != NULL) /* suzhthste to, douleuei me -2 prin allaksw sto block to counter (go to block)*/
+		*/
+		/*check if it doesnt exist on the hash*/
+		//printf("1321\n");
+		int temp = current_scope - 1;
+		search = lookup_inScope(hash,(char *)$2,current_scope-1);
+		if (search == NULL)
+		{
+			//printf("This function %s did not exist so we are free to add it to the hash\n", $2);
+			SymTable_insert(hash,(char *)$2,yylineno,(id_list*)$5,temp,USERFUNC);
+		}
+		else
+		{
+			if(search->type==USERFUNC || search->type==LIBFUNC){
+				fprintf(stderr, "Function redefinition in line %d and scope %d \n",yylineno,current_scope);}
+			else{
+				fprintf(stderr, "Function %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);}
+			//printf("RETURNING\n");
+			//return 0;
+	
+		}
+
+		/*if ((search = lookup_inScope(hash,(char *)$2,current_scope-1)) != NULL) 
 		{
 			if(search->type==USERFUNC || search->type==LIBFUNC)
-				printf("function redefinition");
+				fprintf(stderr, "Function redefinition in line %d and scope %d \n",yylineno,current_scope);
 			else
-				printf("Funtion %s declared with same name as variable\n", $2);
+				fprintf(stderr, "Function %s declared with same name as variable, in line %d and scope %d \n",$2,yylineno,current_scope);
 			return 0;
-		}
+		}*/
 		
 		//insertion in the symtable and in the scopelist
-		SymbolTableEntry* entry = SymTable_insert(hash,(char *)$2,yylineno,(id_list*)$5,current_scope-1,USERFUNC);
+		//SymbolTableEntry* entry = SymTable_insert(hash,(char *)$2,yylineno,(id_list*)$5,current_scope-1,USERFUNC);
+		
 
 	}
 	block{fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
@@ -402,14 +465,14 @@ idlist:
 		//check if it's a gloabal lib function
 		if (lookup_inScope(hash,$1,0) != NULL && lookup_inScope(hash,$1,0)->type == LIBFUNC)
 		{
-			printf("This formal argument shadows function from libary");
-			return 0;
+			fprintf(stderr,"This formal argument shadows function from libary in line %d and scope %d \n",yylineno,current_scope);
+			
 		}
 		//check if it is in the same scope we are in
 		if (lookup_inScope(hash,$1,current_scope)!=NULL)
 		{
-			printf("this formal argument already exists in given scope");        
-			return 0;
+			fprintf(stderr,"This formal argument already exists in given scope %s  in line %d", $1,current_scope,yylineno);        
+			
 		}
 		
 		//insertion in the idlist and saving the idlist
@@ -419,21 +482,22 @@ idlist:
 
 		//insertion in the symtable/scopelist
 		SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+		//fprintf(stderr,"Variable inserted %s current scope: %d in line %d \n", $1, current_scope,yylineno);
 		fprintf(yyout_y,"idlist -> id\n");
 	}
 	|idlist COMMA ID 
 	{
 	//check if it's a gloabal lib function
-    if (lookup_inScope(hash,(const char *)$1,0) != NULL && lookup_inScope(hash,(const char*)$1,0)->type == LIBFUNC)
+    if (lookup_inScope(hash,(const char *)$3,0) != NULL && lookup_inScope(hash,(const char*)$3,0)->type == LIBFUNC)
     {
-        printf("This formal argument shadows function from libary");
-        return 0;
+        fprintf(stderr,"This formal argument shadows function from libary in line %d and scope %d \n",yylineno,current_scope);
+        
     }
     //check if it is in the same scope we are in
-    if (lookup_inScope(hash,(const char*)$1,current_scope)!=NULL)
+    if (lookup_inScope(hash,(const char*)$3,current_scope)!=NULL)
     {
-        printf("this formal argument already exists in given scope");        
-        return 0;
+        fprintf(stderr,"This formal argument already exists in given scope in line %d and scope %d \n",yylineno,current_scope);       
+        
     }
     
     //insertion in the idlist and saving the idlist
@@ -441,7 +505,7 @@ idlist:
     $$ = $1; //not sure if this is functional 
 
 	//insertion in the symtable/scopelist
-	SymTable_insert(hash, (const char*)$1, yylineno , NULL , current_scope, FORMAL);
+	SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
 
     fprintf(yyout_y,"idlist -> idlist , id\n");
 	}
@@ -455,13 +519,50 @@ temp:
 	| {}; 
 
 block:
-	LEFTCURLY {/*increase_scope();*/ } /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  προσοχή (ειδική περίπτωση): το block της συνάρτησης δεν αυξάνει επιπλέον το scope κατά 
+	LEFTCURLY
+ 	{
+		//b_a == after loop
+		//b_n_b == before loop
+		//checkarisma an anoikse block enw den uparxei active loop
+		if(sim_loops == 0)
+		{
+			b_n_b++;
+		}
+		else
+		{
+			b_a++;
+		}	
+		if(isFunct == true)
+		{
+			isFunct = false;
+		}
+		else
+		{
+			increase_scope();
+		}
+		//increase_scope();
+ 	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  προσοχή (ειδική περίπτωση): το block της συνάρτησης δεν αυξάνει επιπλέον το scope κατά 
 +1 άρα το κεντρικό block της συνάρτησης είναι +1 σε σύγκριση με το scope που περιέχει τη
 συνάρτηση*/
     	temp RIGHTCURLY
 	{
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
+		//an loopes ises me blocks tote sigoura apo loopa to block
+		if(sim_loops == b_a && sim_loops > 0)
+		{
+			sim_loops--; b_a--;
+		}
+		else if(sim_loops < b_a) //An loopes ligoteres apo active blocks meta apo autes tote meiwnw ena block
+		{
+			b_a--;
+		}
+		else if(sim_loops == 0) //An den exw energes loopes meiwnw apo tis before loopes
+		{
+			b_n_b--;	
+		}
+		
+		if(sim_funcs > 0){sim_funcs--;}
 	}; 
 
 ifstmt:
@@ -470,14 +571,22 @@ ifstmt:
 	;
 
 whilestmt: 
-	WHILE LEFTPAR expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
+	WHILE LEFTPAR{c_l = true; sim_loops++;} expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
 
 forstmt:
- 	FOR LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
+ 	FOR LEFTPAR{c_l = true;sim_loops++;} elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
 
 returnstmt:
- 	RETURN SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
-	|RETURN expr SEMICOLON {fprintf(yyout_y,"returnstmt -> return expr ;\n");}
+ 	RETURN
+	{
+		if(sim_funcs == 0){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}	
+	}
+	SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
+	|RETURN
+	{
+		if(sim_funcs == 0){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}
+	}
+	expr SEMICOLON {fprintf(yyout_y,"returnstmt -> return expr ;\n");}
 	;
 
 %%
