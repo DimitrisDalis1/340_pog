@@ -90,13 +90,14 @@ void scope_deactivate(Scope_node *ScopeTable){
     SymbolTableEntry *temp_entry;
     temp = ScopeTable;
     temp_entry = temp->symbol;
-    if (temp != NULL){ /*if it is null do not  do anything*/
+    assert(temp);
+    //assert(temp_entry);
+	
     while(temp_entry != NULL){
-	//printf("scope deactiavation %d \n", temp->scope);
+	//printf("scope deactivation %d \n", temp->scope);
         temp_entry->isActive = false;
         temp_entry = temp_entry->next_in_scope;
-    }
-}
+	}
     return;
 }
 
@@ -106,6 +107,7 @@ void decrease_scope(){
 	Scope_node *temp_h;
 	temp=current_scope;
 	temp_h=head_scope_node;
+	assert(temp_h);
 	while(temp_h->next!=NULL){
 	//printf("scope in decrease %d %d\n", temp_h->scope,temp);
 		if(temp_h->scope == temp){
