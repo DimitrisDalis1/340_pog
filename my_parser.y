@@ -127,27 +127,26 @@ expr:
 
 term: 
 	LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
-	| MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
-	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
+	| MINUS expr { 
+		fprintf(yyout_y,"term -> -expr\n"); 
+	}
+	|NOT expr { 
+		fprintf(yyout_y,"term -> not expr\n"); 
+	}
 	|PLUS2 lvalue
 	{ 
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC))
 		{
         		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL)
-		{
-			return 0;
-		}
+    		}
 		fprintf(yyout_y,"term -> ++lvalue\n");
 	}
 	|lvalue PLUS2
 	{ 
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC))
+		if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
 		{
         		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL){
-			return 0;
-		}
+    		}
 		fprintf(yyout_y,"term -> lvalue++\n");
 	}
 	|MINUS2 lvalue
@@ -155,19 +154,15 @@ term:
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC))
 		{
         		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL){
-			return 0;
-		}
+    		}
 		fprintf(yyout_y,"term -> --lvalue\n"); 
 	}
 	|lvalue MINUS2
 	{
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC))
+		if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC ||((SymbolTableEntry*)$1)->type == LIBFUNC))
 		{
         		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL){
-			return 0;
-		}
+    		}		
 		fprintf(yyout_y,"term -> lvalue--\n");
 	}
 	|primary {fprintf(yyout_y,"term -> primary\n"); };
@@ -178,7 +173,7 @@ assignexpr:
 	{ 
 		if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
 		{
-       			fprintf(stderr,"Error,value cannot be a function in line %d and scope %d \n",yylineno,current_scope);
+       			fprintf(stderr,"Error,value cannot be assigned to a function in line %d and scope %d \n",yylineno,current_scope);
     		}
 		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
 	}
@@ -214,7 +209,7 @@ lvalue:
 			}
 			if(entry==NULL)
 			{
-				entry=lookup_inScope_wA(hash,(char *)$1,0);
+				entry=lookup_inScope(hash,(char *)$1,0);
 				if(entry==NULL)
 				{
 					if(current_scope==0)
@@ -245,8 +240,9 @@ lvalue:
 		{				
 			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && (b_af <= sim_funcs)){
 				fprintf(stderr, "Cannot access %s in line %d\n", $1, yylineno);	
-				$$=entry;
+				
 			}
+			$$=entry;
 		}
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
 		{
@@ -255,7 +251,8 @@ lvalue:
 			{
 				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
 			}
-		}
+			$$=entry;
+		}else $$=entry;
 
 
     	}
