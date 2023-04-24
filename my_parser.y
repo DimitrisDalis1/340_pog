@@ -24,6 +24,7 @@
     int b_n_bf = 0; //before func
     int b_af = 0; //after func
     bool c_f = false;
+    bool isFunct1=false;
 
 %}
 
@@ -242,14 +243,14 @@ lvalue:
 		}
 		else if(entry->type!= USERFUNC && entry->type != FORMAL) //
 		{				
-			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL){
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && (b_af <= sim_funcs)){
 				fprintf(stderr, "Cannot access %s in line %d\n", $1, yylineno);	
 				$$=entry;
 			}
 		}
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
 		{
-			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL) //psakse ena panw
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && b_af <= sim_funcs) //psakse ena panw
 			{
 				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
 			}
@@ -389,7 +390,7 @@ indexedelem:
  	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
 
 funcdef:
- 	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true; sim_funcs++;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
+ 	FUNCTION  ID LEFTPAR {increase_scope();isFunct1 = true; isFunct = true; sim_funcs++;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
 	{
 		//SymbolTableEntry* search;
 		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
@@ -546,7 +547,7 @@ block:
 		}
 
 			
-		if(isFunct == true)
+		if(isFunct == true) //Auto elegxei an kaleitai apo func to block opote na mh megalwnoume peraiterw to scope
 		{
 			isFunct = false;
 		}
@@ -580,7 +581,7 @@ block:
 
 		if(sim_funcs == b_af && sim_funcs > 0)
 		{
-			sim_funcs--; b_af--;
+			sim_funcs--; b_af--; if(sim_funcs == 0){ isFunct1 = false;}
 		}
 		else if(sim_funcs < b_af) //An loopes ligoteres apo active blocks meta apo autes tote meiwnw ena block
 		{
@@ -588,8 +589,9 @@ block:
 		}
 		else if(sim_funcs == 0) //An den exw energes loopes meiwnw apo tis before loopes
 		{
-			b_n_bf--;	
+			b_n_bf--; isFunct1 = false;	
 		}
+		
 
 		
 		
