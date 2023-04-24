@@ -250,6 +250,7 @@ lvalue:
 		}
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
 		{
+			//printf("Entry: %d\n", entry->value.varVal->scope);
 			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && b_af <= sim_funcs) //psakse ena panw
 			{
 				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
@@ -452,7 +453,7 @@ funcdef:
 
 	}
 	block{fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
-	|FUNCTION LEFTPAR {increase_scope();} idlist RIGHTPAR block
+	|FUNCTION LEFTPAR {increase_scope(); sim_funcs++;} idlist RIGHTPAR block
 	{
 		char* my_name= malloc(50*(sizeof(char)));
 		sprintf(my_name,"_myfync%d",unnamed_counter++);
