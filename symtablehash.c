@@ -85,18 +85,35 @@ Scope_node *create_scope(SymbolTableEntry *symbol,unsigned int scope,Scope_node 
     return new_scope;
 }
 
+void scope_deactivate(Scope_node *ScopeTable){
+    struct Scope_node *temp;
+    SymbolTableEntry *temp_entry;
+    temp = ScopeTable;
+    temp_entry = temp->symbol;
+    if (temp != NULL){ /*if it is null do not  do anything*/
+    while(temp_entry != NULL){
+	//printf("scope deactiavation %d \n", temp->scope);
+        temp_entry->isActive = false;
+        temp_entry = temp_entry->next_in_scope;
+    }
+}
+    return;
+}
+
+
 void decrease_scope(){
 	int temp;
 	Scope_node *temp_h;
 	temp=current_scope;
 	temp_h=head_scope_node;
-	while(temp>0){
-		if(temp_h->next!=NULL){
-			temp_h=temp_h->next;
+	while(temp_h->next!=NULL){
+	//printf("scope in decrease %d %d\n", temp_h->scope,temp);
+		if(temp_h->scope == temp){
+			break;
 		}
-		temp--;
+		temp_h=temp_h->next;
 	}
-	
+	//printf("after scope in decrease %d %d\n", temp_h->scope,temp);
 	scope_deactivate(temp_h);
 	current_scope--;
 }
@@ -365,19 +382,6 @@ void symtable_print(Scope_node *head,SymTable_T*  hashtable){
     return;
 }
 
-void scope_deactivate(Scope_node *ScopeTable){
-    struct Scope_node *temp;
-    SymbolTableEntry *temp_entry;
-    temp = ScopeTable;
-    temp_entry = temp->symbol;
-    if (temp) return; /*if it is null do not  do anything*/
-    while(temp_entry != NULL){
-        temp_entry->isActive = false;
-        temp_entry = temp_entry->next_in_scope;
-    }
-    return;
-}
-
 /*Get the length of the Hash Table*/
 unsigned int SymTable_getLength(SymTable_T *oSymTable){
     assert(oSymTable);
@@ -448,7 +452,7 @@ SymbolTableEntry* lookup_inScope(SymTable_T* sym, const char* key, unsigned int 
                 return temp;
             }
         }
-        temp= temp->next_in_scope;
+        temp= temp->next;
     }
     return NULL;
 }
@@ -468,7 +472,7 @@ SymbolTableEntry* lookup_inScope_wA(SymTable_T* sym, const char* key, unsigned i
 
     /*Search if there is a cell with this key*/
     temp = sym->hashtable[hashIndex];
-    if(temp == NULL){printf("is null0\n");return NULL;}
+    if(temp == NULL){return NULL;}
     while (temp!=NULL)
     {
         //Kanoume mesa sto bucket traverse mexri na broume to idio onoma entolhs
@@ -483,7 +487,7 @@ SymbolTableEntry* lookup_inScope_wA(SymTable_T* sym, const char* key, unsigned i
                 return temp;
             }
         }
-        temp= temp->next_in_scope;
+        temp= temp->next;
     }
     return NULL;
 }
