@@ -21,7 +21,9 @@
     
     int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
-    bool c_l = false;
+    int b_n_bf = 0; //before func
+    int b_af = 0; //after func
+    bool c_f = false;
 
 %}
 
@@ -238,10 +240,10 @@ lvalue:
 				$$=NULL;
 			}
 		}
-		else if(entry->type!= USERFUNC && entry->type != FORMAL)
-		{
+		else if(entry->type!= USERFUNC && entry->type != FORMAL) //
+		{				
 			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL){
-				printf("Cannot access %s in line %d\n", $1, yylineno);	
+				fprintf(stderr, "Cannot access %s in line %d\n", $1, yylineno);	
 				$$=entry;
 			}
 		}
@@ -531,7 +533,19 @@ block:
 		else
 		{
 			b_a++;
-		}	
+		}
+		
+		//same logic for functions
+		if(sim_funcs == 0)
+		{
+			b_n_bf++;
+		}
+		else
+		{
+			b_af++;
+		}
+
+			
 		if(isFunct == true)
 		{
 			isFunct = false;
@@ -540,6 +554,7 @@ block:
 		{
 			increase_scope();
 		}
+
 		//increase_scope();
  	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  προσοχή (ειδική περίπτωση): το block της συνάρτησης δεν αυξάνει επιπλέον το scope κατά 
 +1 άρα το κεντρικό block της συνάρτησης είναι +1 σε σύγκριση με το scope που περιέχει τη
@@ -561,8 +576,23 @@ block:
 		{
 			b_n_b--;	
 		}
+
+
+		if(sim_funcs == b_af && sim_funcs > 0)
+		{
+			sim_funcs--; b_af--;
+		}
+		else if(sim_funcs < b_af) //An loopes ligoteres apo active blocks meta apo autes tote meiwnw ena block
+		{
+			b_af--;
+		}
+		else if(sim_funcs == 0) //An den exw energes loopes meiwnw apo tis before loopes
+		{
+			b_n_bf--;	
+		}
+
 		
-		if(sim_funcs > 0){sim_funcs--;}
+		
 	}; 
 
 ifstmt:
@@ -571,14 +601,14 @@ ifstmt:
 	;
 
 whilestmt: 
-	WHILE LEFTPAR{c_l = true; sim_loops++;} expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
+	WHILE LEFTPAR{sim_loops++;} expr RIGHTPAR stmt {fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");};
 
 forstmt:
- 	FOR LEFTPAR{c_l = true;sim_loops++;} elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
+ 	FOR LEFTPAR{sim_loops++;} elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
 
 returnstmt:
  	RETURN
-	{
+	{		
 		if(sim_funcs == 0){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}	
 	}
 	SEMICOLON {fprintf(yyout_y,"returnstmt -> return ;\n");}
