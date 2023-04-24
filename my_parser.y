@@ -25,6 +25,7 @@
     int b_af = 0; //after func
     bool c_f = false;
     bool isFunct1=false;
+    bool call_flag = false;
 
 %}
 
@@ -171,10 +172,12 @@ term:
 assignexpr:
 	lvalue ASSIGN expr   
 	{ 
-		if($1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
+		if(call_flag == false){ 
+		if( $1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
 		{
+			printf("call flag %d userfunc %d\n", call_flag, ((SymbolTableEntry*)$1)->type );
        			fprintf(stderr,"Error,value cannot be assigned to a function in line %d and scope %d \n",yylineno,current_scope);
-    		}
+    		}}
 		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
 	}
 
@@ -204,7 +207,7 @@ lvalue:
 			temp_scope=current_scope;
 			//printf("ID: %s, temp_scope: %d, curr_scope: %d\n", $1, temp_scope, current_scope);
 			while(entry==NULL&&temp_scope!=0){
-				entry=lookup_inScope_wA(hash,(char *)$1,temp_scope);
+				entry=lookup_inScope(hash,(char *)$1,temp_scope);
 				temp_scope--;
 			}
 			if(entry==NULL)
@@ -227,18 +230,18 @@ lvalue:
 
 			}else
 			{
-				printf("is not null\n");
 				if(entry->type== USERFUNC ||	entry->type== LIBFUNC)
 				{
 					fprintf(stderr, "Cannot access local function in line %d and scope %d \n",yylineno,current_scope);
 				}else
 					fprintf(stderr, "Cannot access local variable in line %d and scope %d \n",yylineno,current_scope);
-				$$=NULL;
+				//$$=NULL;
 			}
 		}
 		else if(entry->type!= USERFUNC && entry->type != FORMAL) //
 		{				
-			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && (b_af <= sim_funcs)){
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && (b_af <= sim_funcs) && b_af > 0){
+				printf("%d\n", b_af);
 				fprintf(stderr, "Cannot access %s in line %d\n", $1, yylineno);	
 				
 			}
@@ -247,7 +250,7 @@ lvalue:
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
 		{
 			//printf("Entry: %d\n", entry->value.varVal->scope);
-			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && b_af <= sim_funcs) //psakse ena panw
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && b_af <= sim_funcs && b_af > 0) //psakse ena panw
 			{
 				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
 			}
@@ -328,16 +331,18 @@ member:
         	fprintf(stderr,"Cannot use function name as an lvalue[] in line %d and scope %d \n",yylineno,current_scope);
     		}
 	}
-	| call PERIOD ID  {fprintf(yyout_y,"member -> call.id\n");}
+	| call PERIOD ID  {call_flag = true; fprintf(yyout_y,"member -> call.id\n");}
 	| call LEFTBRACE expr RIGHTBRACE {fprintf(yyout_y,"member -> call [ expr ]\n");}
 	;
 	
 call: call LEFTPAR elist RIGHTPAR
    	{
+		call_flag = false;
 		fprintf(yyout_y,"call -> call ( elist )\n");
 	}
 	|lvalue callsuffix
 	{
+		call_flag = false;
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 		if(!$1)
 		{
@@ -345,7 +350,7 @@ call: call LEFTPAR elist RIGHTPAR
 		}
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 	} 
-	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
+	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {call_flag = false;fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
 	;
 
 callsuffix:
@@ -418,7 +423,7 @@ funcdef:
 		/*check if it doesnt exist on the hash*/
 		//printf("1321\n");
 		int temp = current_scope - 1;
-		search = lookup_inScope(hash,(char *)$2,current_scope-1);
+		search = lookup_inScope_wA(hash,(char *)$2,current_scope-1);
 		if (search == NULL)
 		{
 			//printf("This function %s did not exist so we are free to add it to the hash\n", $2);
@@ -450,13 +455,13 @@ funcdef:
 
 	}
 	block{fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
-	|FUNCTION LEFTPAR {increase_scope(); sim_funcs++;} idlist RIGHTPAR block
+	|FUNCTION LEFTPAR {increase_scope(); sim_funcs++; isFunct = true;} idlist RIGHTPAR
 	{
 		char* my_name= malloc(50*(sizeof(char)));
 		sprintf(my_name,"_myfync%d",unnamed_counter++);
 		SymbolTableEntry* entry = SymTable_insert(hash,my_name,yylineno,(id_list*)$4,current_scope-1,USERFUNC);
-        fprintf(yyout_y,"funcdef -> function ( idlist ) {}\n");
-	}   
+        
+	} block {fprintf(yyout_y,"funcdef -> function ( idlist ) {}\n");} 
 	;
 
 
