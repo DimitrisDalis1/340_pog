@@ -19,6 +19,7 @@
     int sim_loops = 0; //simultaneous loops active
     int sim_funcs = 0;
     bool c_l = false;
+	int f_func=0;
 
 %}
 
@@ -103,7 +104,13 @@ stmt:
 	;
 
 expr:	
-	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
+	assignexpr  { 
+		fprintf(yyout_y,"expr -> assignexpr\n");
+		if(f_func==1){
+			f_func=0;
+        	fprintf(stderr,"Error,value cannnot be assigned to a function in line %d and scope %d \n",yylineno,current_scope);
+    	}
+	 }
 	| expr PLUS expr { fprintf(yyout_y,"expr -> expr + expr\n");}
 	| expr MINUS expr { fprintf(yyout_y,"expr -> expr - expr\n"); }
 	| expr MULT expr { fprintf(yyout_y,"expr -> expr * expr\n"); }
@@ -122,52 +129,54 @@ expr:
 
 term: 
 	LEFTPAR expr RIGHTPAR   { fprintf(yyout_y,"term -> ( expr )\n"); }
-	| MINUS expr { fprintf(yyout_y,"term -> -expr\n"); }
-	|NOT expr { fprintf(yyout_y,"term -> not expr\n"); }
+	| MINUS expr { 
+		if(f_func==1){
+				f_func=0;
+        		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
+    	}
+		fprintf(yyout_y,"term -> -expr\n"); 
+		}
+	|NOT expr { 
+		if(f_func==1){
+				f_func=0;
+        		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
+    	}
+		fprintf(yyout_y,"term -> not expr\n");
+		 }
 	|PLUS2 lvalue
 	{ 
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC))
-		{
-        		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL)
-		{
-			return 0;
-		}
+		if(f_func==1){
+        		f_func=0;
+				fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
+    	}
 		fprintf(yyout_y,"term -> ++lvalue\n");
 	}
 	|lvalue PLUS2
 	{ 
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC))
-		{
+		if(f_func==1){
+				f_func=0;
         		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL){
-			return 0;
-		}
+    	}
 		fprintf(yyout_y,"term -> lvalue++\n");
 	}
 	|MINUS2 lvalue
 	{
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC))
-		{
+		if(f_func==1){
+				f_func=0;
         		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL){
-			return 0;
-		}
+    	}
 		fprintf(yyout_y,"term -> --lvalue\n"); 
 	}
 	|lvalue MINUS2
 	{
-		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC))
-		{
+		if(f_func==1){
+				f_func=0;
         		fprintf(stderr,"Error,value cannnot be a function in line %d and scope %d \n",yylineno,current_scope);
-    		}else if(((SymbolTableEntry*)$2) == NULL){
-			return 0;
-		}
+    	}
 		fprintf(yyout_y,"term -> lvalue--\n");
 	}
 	|primary {fprintf(yyout_y,"term -> primary\n"); };
 ;
-
 assignexpr:
 	lvalue ASSIGN expr   
 	{ 
@@ -222,14 +231,19 @@ lvalue:
 				}
 				else
 				{
+					if(entry->type== USERFUNC ||	entry->type== LIBFUNC)
+				{	
+					f_func=1;
+				}
 					$$=entry;	
 				}
 
 			}else
 			{
-				printf("is not null\n");
+				//printf("is not null\n");
 				if(entry->type== USERFUNC ||	entry->type== LIBFUNC)
-				{
+				{	
+					f_func=1;
 					fprintf(stderr, "Cannot access local function in line %d and scope %d \n",yylineno,current_scope);
 				}else
 					fprintf(stderr, "Cannot access local variable in line %d and scope %d \n",yylineno,current_scope);
@@ -238,19 +252,18 @@ lvalue:
 		}
 		else if(entry->type!= USERFUNC && entry->type != FORMAL)
 		{
-			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL){
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && isFunct){
 				printf("Cannot access %s in line %d\n", $1, yylineno);	
 				$$=entry;
 			}
 		}
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
 		{
-			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL) //psakse ena panw
+			if(lookup_inScope(hash, (char *)$1, current_scope) == NULL && isFunct) //psakse ena panw
 			{
 				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
 			}
 		}
-
 
     	}
 	|LOCAL ID
@@ -265,6 +278,7 @@ lvalue:
 			
       			if(entry != NULL && entry->type == LIBFUNC && current_scope != 0) /*htan sketo scope*/
 			{
+						f_func=1;
       		    		fprintf(stderr,"Shadow libfunc in line %d and scope %d \n",yylineno,current_scope);
           			$$= NULL;  
        			}else
@@ -278,6 +292,10 @@ lvalue:
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,LOCALV);
 
 				}
+				if(entry->type== USERFUNC ||	entry->type== LIBFUNC)
+						{	
+							f_func=1;
+						}
             			$$= entry;
       			}
   		}else
@@ -293,8 +311,13 @@ lvalue:
 		{
 			fprintf(stderr,"Global not found in line %d and scope %d \n",yylineno,current_scope);
 			//$$=NULL; //petaei seg
-		}else
+		}else{
+			if(entry->type== USERFUNC ||	entry->type== LIBFUNC)
+				{	
+					f_func=1;
+				}
 			$$=entry;
+	}
 		fprintf(yyout_y,"lvalue -> ::id\n"); 
 	}
 	|member { fprintf(yyout_y,"lvalue -> member\n"); }
@@ -387,6 +410,7 @@ indexedelem:
 funcdef:
  	FUNCTION  ID LEFTPAR {increase_scope(); isFunct = true; sim_funcs++;} idlist RIGHTPAR /*exei kanei hdh increase to scope se 3 (sto paradeigma mou, ara de douleuei to -1)*/
 	{
+		f_func=1;
 		//SymbolTableEntry* search;
 		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
 		if (search!=NULL)
@@ -438,7 +462,7 @@ funcdef:
 				fprintf(stderr, "Function redefinition in line %d and scope %d \n",yylineno,current_scope);
 			else
 				fprintf(stderr, "Function %s declared with same name as variable, in line %d and scope %d \n",$2,yylineno,current_scope);
-			return 0;
+			//return 0;
 		}*/
 		
 		//insertion in the symtable and in the scopelist
@@ -447,12 +471,13 @@ funcdef:
 
 	}
 	block{fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");}   
-	|FUNCTION LEFTPAR {increase_scope();} idlist RIGHTPAR block
+	|FUNCTION LEFTPAR {increase_scope();isFunct = true; sim_funcs++;} idlist RIGHTPAR 
 	{
+		f_func=1;
 		char* my_name= malloc(50*(sizeof(char)));
 		sprintf(my_name,"_myfync%d",unnamed_counter++);
 		SymbolTableEntry* entry = SymTable_insert(hash,my_name,yylineno,(id_list*)$4,current_scope-1,USERFUNC);
-        fprintf(yyout_y,"funcdef -> function ( idlist ) {}\n");
+        }block{fprintf(yyout_y,"funcdef -> function ( idlist ) {}\n");
 	}   
 	;
 
@@ -469,7 +494,7 @@ idlist:
 		//check if it is in the same scope we are in
 		if (lookup_inScope(hash,$1,current_scope)!=NULL)
 		{
-			fprintf(stderr,"This formal argument already exists in given scope %s  in line %d", $1,current_scope,yylineno);        
+			fprintf(stderr,"This formal argument already exists in given scope %s  in line %d \n", $1,current_scope,yylineno);        
 			
 		}
 		
@@ -535,9 +560,9 @@ block:
 	{
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
-		if(c_l == true && sim_loops == 0){c_l = false;printf("1\n");}
-		else if(c_l == true && sim_loops > 0){c_l=true;sim_loops--;printf("2\n");}
-		else{sim_loops--;printf("3\n");}
+		if(c_l == true && sim_loops == 0){c_l = false;}
+		else if(c_l == true && sim_loops > 0){c_l=true;sim_loops--;}
+		else{sim_loops--;}
 		if(sim_funcs > 0){sim_funcs--;}
 	}; 
 
