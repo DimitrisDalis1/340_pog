@@ -27,6 +27,8 @@
     bool isFunct1=false;
     bool call_flag = false;
 
+    int isFunc_loop = 0; //exoume function call mesa se active loopa
+
     bool called_from_func = false;
 
 %}
@@ -99,9 +101,11 @@ stmt:
 	|forstmt	{ fprintf(yyout_y,"stmt -> forstmt\n"); }
 	|returnstmt	{ fprintf(yyout_y,"stmt -> returnstmt\n"); }
 	|BREAK SEMICOLON  {
+				if(isFunc_loop == 1){fprintf(stderr, "Error: Break used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
 				fprintf(yyout_y,"stmt -> break;\n"); }
 	|CONTINUE SEMICOLON {
+				if(isFunc_loop == 1){fprintf(stderr, "Error: Continue used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 			    }
@@ -518,7 +522,17 @@ block:
 			b_af++;
 		}
 
-			
+		if(sim_loops > 0 && isFunct == true) //An exoume active loopa ektos tou function
+		{
+			isFunc_loop = 1; //Tote exoume funct mesa se loop
+				
+		}
+		else
+		{
+			//printf("De mphka\n");
+			isFunc_loop = 0;
+		}
+	
 		if(isFunct == true) //Auto elegxei an kaleitai apo func to block opote na mh megalwnoume peraiterw to scope
 		{
 			isFunct = false;
@@ -529,11 +543,12 @@ block:
 		}
 
 		//increase_scope();
- 	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  προσοχή (ειδική περίπτωση): το block της συνάρτησης δεν αυξάνει επιπλέον το scope κατά 
-+1 άρα το κεντρικό block της συνάρτησης είναι +1 σε σύγκριση με το scope που περιέχει τη
-συνάρτηση*/
+ 	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  Ο€ΟΞΏΟƒΞΏΟ‡Ξ® (ΞµΞΉΞ΄ΞΉΞΊΞ® Ο€ΞµΟΞ―Ο€Ο„Ο‰ΟƒΞ·): Ο„ΞΏ block Ο„Ξ·Ο‚ ΟƒΟ…Ξ½Ξ¬ΟΟ„Ξ·ΟƒΞ·Ο‚ Ξ΄ΞµΞ½ Ξ±Ο…ΞΎΞ¬Ξ½ΞµΞΉ ΞµΟ€ΞΉΟ€Ξ»Ξ­ΞΏΞ½ Ο„ΞΏ scope ΞΊΞ±Ο„Ξ¬ 
++1 Ξ¬ΟΞ± Ο„ΞΏ ΞΊΞµΞ½Ο„ΟΞΉΞΊΟ block Ο„Ξ·Ο‚ ΟƒΟ…Ξ½Ξ¬ΟΟ„Ξ·ΟƒΞ·Ο‚ ΞµΞ―Ξ½Ξ±ΞΉ +1 ΟƒΞµ ΟƒΟΞ³ΞΊΟΞΉΟƒΞ· ΞΌΞµ Ο„ΞΏ scope Ο€ΞΏΟ… Ο€ΞµΟΞΉΞ­Ο‡ΞµΞΉ Ο„Ξ·
+ΟƒΟ…Ξ½Ξ¬ΟΟ„Ξ·ΟƒΞ·*/
     	temp RIGHTCURLY
 	{
+		//isFunc_loop
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
 		//an loopes ises me blocks tote sigoura apo loopa to block
@@ -549,8 +564,7 @@ block:
 		{
 			b_n_b--;	
 		}
-
-
+		
 		if(sim_funcs == b_af && sim_funcs > 0)
 		{
 			sim_funcs--; b_af--; if(sim_funcs == 0){ isFunct1 = false;}
@@ -563,6 +577,13 @@ block:
 		{
 			b_n_bf--; isFunct1 = false;	
 		}
+		//Tsekare an exoume allo active func afou kleisei to block
+		if(isFunc_loop == 1 && sim_funcs == 0)
+		{
+			isFunc_loop = 0;
+		}
+
+
 		
 
 		
