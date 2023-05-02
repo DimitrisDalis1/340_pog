@@ -42,7 +42,8 @@
     char* stringValue;
     int intValue;
     double doubleValue;
-    struct SymbolTableEntry* exprNode;
+    struct expr* exprNode;
+    struct call callNode;
     struct id_list* listId;
 }
 
@@ -69,24 +70,25 @@
 %left LEFTBRACE RIGHTBRACE
 %left LEFTPAR RIGHTPAR
 
+
 %type stmt
 %type<exprNode> lvalue
 %type<listId> idlist
-%type call
+%type<exprNode> call
 %type elist
-%type callsuffix
-%type normcall
+%type<callNode> callsuffix
+%type<callNode> normcall
 %type funcdef
 %type expr
-%type objectdef
-%type member
+%type<exprNode> objectdef
+%type<exprNode> member
 %type block
-%type assignexpr
+%type<exprNode> assignexpr
 %type temp
-%type methodcall
-%type term
-%type  primary
-%type const
+%type<callNode> methodcall
+%type<exprNode> term
+%type<exprNode>  primary
+%type<exprNode> const
 %type ifprefix whilestmt forstmt returnstmt elseprefix
 %type N M forprefix for
 %type while whilestart whilecond
