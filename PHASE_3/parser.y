@@ -42,8 +42,7 @@
     char* stringValue;
     int intValue;
     double doubleValue;
-    struct expr* exprNode;
-    struct call callNode;
+    struct SymbolTableEntry* exprNode;
     struct id_list* listId;
 }
 
@@ -70,25 +69,24 @@
 %left LEFTBRACE RIGHTBRACE
 %left LEFTPAR RIGHTPAR
 
-
 %type stmt
 %type<exprNode> lvalue
 %type<listId> idlist
-%type<exprNode> call
+%type call
 %type elist
-%type<callNode> callsuffix
-%type<callNode> normcall
+%type callsuffix
+%type normcall
 %type funcdef
 %type expr
-%type<exprNode> objectdef
-%type<exprNode> member
+%type objectdef
+%type member
 %type block
-%type<exprNode> assignexpr
+%type assignexpr
 %type temp
-%type<callNode> methodcall
-%type<exprNode> term
-%type<exprNode>  primary
-%type<exprNode> const
+%type methodcall
+%type term
+%type  primary
+%type const
 %type ifprefix whilestmt forstmt returnstmt elseprefix
 %type N M forprefix for
 %type while whilestart whilecond
@@ -157,14 +155,39 @@ expr:
 		$$->sym=newtemp();
 		emit($2, $1, $3, $$, -1,currQuad);
 	}
-	| expr BIGGER expr { fprintf(yyout_y,"expr -> expr > expr\n"); }
-	| expr BIGGER_EQUAL expr { fprintf(yyout_y,"expr -> expr >= expr\n"); }
-	| expr SMALLER expr  { fprintf(yyout_y,"expr -> expr < expr\n"); }
-	| expr SMALLER_EQUAL expr { fprintf(yyout_y,"expr -> expr <= expr\n"); }
-	| expr EQUAL expr { fprintf(yyout_y,"expr -> expr == expr\n"); }
-	| expr NOT_EQUAL expr { fprintf(yyout_y,"expr -> expr != expr\n"); }
-	| expr AND expr  { fprintf(yyout_y,"expr -> expr and expr\n"); }		
-	| expr OR expr	 { fprintf(yyout_y,"expr -> expr or expr\n"); }
+	| expr BIGGER expr { fprintf(yyout_y,"expr -> expr > expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr BIGGER_EQUAL expr { fprintf(yyout_y,"expr -> expr >= expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr SMALLER expr  { fprintf(yyout_y,"expr -> expr < expr\n");
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr SMALLER_EQUAL expr { fprintf(yyout_y,"expr -> expr <= expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr EQUAL expr { fprintf(yyout_y,"expr -> expr == expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr NOT_EQUAL expr { fprintf(yyout_y,"expr -> expr != expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n"); /*backpatch($1.falselist,M.quad);$$.truelist = $4.truelist; $$.falselist = merge($1.falselist,$4.falselist);*/}		
+	| expr OR M expr	 { fprintf(yyout_y,"expr -> expr or expr\n"); /*backpatch($1.falselist,M.quad);
+	$$.truelist = merge($1.truelist,$4.truelist); $$.falselist = $4.falselist;*/}
 	| term  { fprintf(yyout_y,"expr -> term\n"); } 
 	;
 
@@ -179,6 +202,8 @@ term:
 	}
 	|NOT expr { 
 		fprintf(yyout_y,"term -> not expr\n"); 
+		/*$$.truelist = $2.falselist;
+		$$.falselist = $2.truelist;*/
 	}
 	|PLUS2 lvalue
 	{ 
