@@ -76,7 +76,10 @@
 %left LEFTPAR RIGHTPAR
 
 %type<exprNode> arithop
+%type<exprNode> relop
+%type<exprNode> boolexpr
 %type<stmtNode> stmt
+%type<stmtNode> stmts
 %type<exprNode> lvalue
 %type<listId> idlist
 %type<exprNode> call
@@ -100,17 +103,14 @@
 %type<uns> whilecond
 %type<uns> M
 %type<uns> N
-%type<stmtNode> whilestmt
 %type<stmtNode> forstmt 
 %type<stmtNode>returnstmt
 %type<stmtNode>program
 %type<forNode>forprefix
-%type<forNode> for
-%type<stmtNode> while 
 %type<stmtNode> if
 %type loopstart loopend
 %type <stmtNode> loopstmt
-%type<stmtNode>stmts
+
 %type<exprNode>indexed
 %type<stringValue>funcname
 %type<exprNode>funcprefix
@@ -121,7 +121,7 @@
 %%
 
 program: 
-	stmt program{fprintf(yyout_y,"program -> stmt(asteraki)\n");}  
+	stmts{fprintf(yyout_y,"program -> stmt(asteraki)\n");}  
 	| {};
 
 stmt:	
@@ -158,56 +158,63 @@ stmts:
 	}
 
 arithop:
-	PLUS{$$=add;}
-	|MINUS{$$=sub;}
-	|MULT{$$=mul;}
-	|DIV{$$=div;}
-	|PERC{$$=mod;}
+	expr PLUS expr{$$=add;}
+	|expr MINUS expr{$$=sub;}
+	|expr MULT expr{$$=mul;}
+	|expr DIV expr{$$=div;}
+	|expr PERC expr{$$=mod;}
 	;
+
+relop:
+	expr BIGGER expr{ fprintf(yyout_y,"expr -> expr > expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr SMALLER expr { fprintf(yyout_y,"expr -> expr < expr\n");
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr SMALLER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr EQUAL expr{ fprintf(yyout_y,"expr -> expr == expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	| expr NOT_EQUAL expr{ fprintf(yyout_y,"expr -> expr != expr\n"); 
+						/*$$truelist = makelist(nextquad);
+						$$falselist = makelist(nexrquad+1);
+						emit(IF_RELOP,$1.val,$3.val,_);
+						emit(JUMP,_);*/}
+	
+		;
+
+boolexpr:
+	| expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n"); /*backpatch($1.falselist,M.quad);$$.truelist = $4.truelist; $$.falselist = merge($1.falselist,$4.falselist);*/}		
+	| expr OR M	expr { fprintf(yyout_y,"expr -> expr or expr\n"); /*backpatch($1.falselist,M.quad);
+	$$.truelist = merge($1.truelist,$4.truelist); $$.falselist = $4.falselist;*/}
 
 //Still stuff to do according to DIale3h 11, diafaneia 5
 //Gia ta upolipa leei gia olikh apotimhsh opote to suzhtame (11,6)
+
+    
 expr:	
 	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
-	| expr arithop expr{
+	| term  { fprintf(yyout_y,"expr -> term\n"); } 
+	| arithop {
 		$$=newexpr(arithexpr_e);
 		$$->sym=newtemp();
-		emit($2, $1, $3, $$, -1,currQuad);
+		//emit($2, $1, $3, $$, -1,currQuad);
 	}
-	| expr BIGGER expr { fprintf(yyout_y,"expr -> expr > expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
-	| expr BIGGER_EQUAL expr { fprintf(yyout_y,"expr -> expr >= expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
-	| expr SMALLER expr  { fprintf(yyout_y,"expr -> expr < expr\n");
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
-	| expr SMALLER_EQUAL expr { fprintf(yyout_y,"expr -> expr <= expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
-	| expr EQUAL expr { fprintf(yyout_y,"expr -> expr == expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
-	| expr NOT_EQUAL expr { fprintf(yyout_y,"expr -> expr != expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
-	| expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n"); /*backpatch($1.falselist,M.quad);$$.truelist = $4.truelist; $$.falselist = merge($1.falselist,$4.falselist);*/}		
-	| expr OR M expr	 { fprintf(yyout_y,"expr -> expr or expr\n"); /*backpatch($1.falselist,M.quad);
-	$$.truelist = merge($1.truelist,$4.truelist); $$.falselist = $4.falselist;*/}
-	| term  { fprintf(yyout_y,"expr -> term\n"); } 
+	|relop 
+	|boolexpr
+
+	
 	;
 
 term: 
@@ -679,9 +686,9 @@ funcprefix:
 
 funcargs:
 
-	funcprefix  LEFTPAR {increase_scope();isFunct1 = true; isFunct = true; sim_funcs++;} idlist RIGHTPAR
+	funcprefix M LEFTPAR {increase_scope();isFunct1 = true; isFunct = true; sim_funcs++;} idlist RIGHTPAR
 		{
-			$1->sym->value.funcVal->args=$4;
+			$1->sym->value.funcVal->args=$5;
 			enterscopespace(); //entering function locals space
 			resetfunctionlocaloffset(); //tbf(10,10), Start counting locals from zero kai prepei na ftiaxtei
 				};
@@ -898,14 +905,19 @@ loopstmt:
 
 
 whilestmt:
-	while LEFTPAR expr RIGHTPAR loopstmt;
-
-forstmt:
-	for LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR loopstmt;
+	whilestart whilecond loopstmt
+	{
+		fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
+		emit(jump,NULL,NULL,$1,-1,currQuad);
+		patchlabel($2, nextquad());
+		patchlist($3.breaklist, nextquad());
+		pathclist($3.contlist, $1);
+	}
+	;
 
 
 whilestart:
-	while{
+	WHILE{
 		$$=nextquad();
 	};
 
@@ -916,7 +928,7 @@ whilecond:
 		$$ = nextquad();
 		emit(jump, NULL,NULL,0,-1,currQuad);
 	};
-
+/*
 while:
 	whilestart whilecond stmt 
 	{
@@ -925,7 +937,7 @@ while:
 		patchlabel($2, nextquad());
 		patchlist($3.breaklist, nextquad());
 		pathclist($3.contlist, $1);
-	};
+	};*/
 
 N:
 	{$$ = nextquad(); emit(jump, NULL,NULL,0,-1,currQuad);};
@@ -933,15 +945,15 @@ M:
 	{$$=nextquad();};
 
 forprefix:
-	for LEFTPAR{sim_loops++;} elist SEMICOLON M expr SEMICOLON
+	FOR LEFTPAR{sim_loops++;} elist SEMICOLON M expr SEMICOLON
 	{
 		$$.test = $6;
 		$$.enter = nextquad();
 		emit(if_eq, $7, newexpr_constbool(1), 0,-1,currQuad);
 	}
 
-for:
-	forprefix N elist RIGHTPAR N stmt N
+forstmt:
+	forprefix N elist RIGHTPAR N loopstmt N
 	{
 		patchlabel($1.enter, $5+1); //true jump
 		patchlabel($2, nextquad()); //false jump
@@ -951,8 +963,6 @@ for:
 		patchlist($6.breaklist, nextquad());
 		patchlist(%6.contlist, $2+1);
 	}
-forstmt:
- 	FOR LEFTPAR{sim_loops++;} elist SEMICOLON expr SEMICOLON elist RIGHTPAR stmt {fprintf(yyout_y,"forstmt -> for ( elist ; expr ; elist ) stmt\n");};
 
 returnstmt:
  	RETURN
