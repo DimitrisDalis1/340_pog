@@ -72,29 +72,25 @@
 %type stmt
 %type<exprNode> lvalue
 %type<listId> idlist
-%type call
+%type<exprNode> call
 %type elist
-%type callsuffix
-%type normcall
+%type<callNode> callsuffix
+%type<callNode> normcall
 %type funcdef
 %type expr
-%type objectdef
-%type member
+%type<exprNode> objectdef
+%type<exprNode> member
 %type block
-%type assignexpr
+%type<exprNode> assignexpr
 %type temp
-%type methodcall
-%type term
-%type  primary
-%type const
+%type<callNode> methodcall
+%type<exprNode> term
+%type<exprNode>  primary
+%type<exprNode> const
 %type ifprefix whilestmt forstmt returnstmt elseprefix
 %type N M forprefix for
 %type while whilestart whilecond
 %type if
-%typeof<funcname>:	char*
-%typeof<funcbody>:	unsigned
-%typeof<funcprefix,funcdef>:	symbol*
-%type funcblockend funcblockstart
 %type loopstart loopend loopstmt
 %type  stmts
 
@@ -359,15 +355,26 @@ lvalue:
 				{
 					if(current_scope==0)
 					{
+						
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,GLOBAL);
+						entry.space=currscopespace();
+						entry.offset=currscopeoffset();
+						entry.type=var_s;
+						inccurrscopeoffset();
 					}else{
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,LOCALV);
+						entry.space=currscopespace();
+						entry.offset=currscopeoffset();
+						entry.type=var_s;
+						inccurrscopeoffset();
 					}
 					$$=entry;	
+					$$=lvalue_expr(entry);
 				}
 				else
 				{
 					$$=entry;	
+					$$=lvalue_expr(entry);
 				}
 
 			}else
@@ -387,6 +394,7 @@ lvalue:
 				
 			}
 			$$=entry;
+			$$=lvalue_expr(entry);
 		}
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
 		{
@@ -395,7 +403,9 @@ lvalue:
 				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
 			}
 			$$=entry;
+			$$=lvalue_expr(entry);
 		}else $$=entry;
+		$$=lvalue_expr(entry);
 
 
     	}
@@ -418,18 +428,27 @@ lvalue:
          			if(current_scope == 0)
 				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,GLOBAL);
+					entry.space=currscopespace();
+						entry.offset=currscopeoffset();
+						entry.type=var_s;
+						inccurrscopeoffset();
 				}
            			else
 				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,LOCALV);
-
+					entry.space=currscopespace();
+						entry.offset=currscopeoffset();
+						entry.type=var_s;
+						inccurrscopeoffset();
 				}
             			$$= entry;
+				$$=lvalue_expr(entry);
       			}
   		}else
 		{
 		printf("Error: In line %d variable %s is already defined\n", yylineno, $2);
       		$$ = entry;
+		$$=lvalue_expr(entry);
 		}
 	}
 	|COLON2 ID
@@ -441,6 +460,7 @@ lvalue:
 			//$$=NULL; //petaei seg
 		}else
 			$$=entry;
+			$$=lvalue_expr(entry);
 		fprintf(yyout_y,"lvalue -> ::id\n"); 
 	}
 	|member {
