@@ -39,11 +39,17 @@
 %start program
 
 %union{
+    unsigned int uns;
     char* stringValue;
     int intValue;
     double doubleValue;
-    struct SymbolTableEntry* exprNode;
+    struct SymbolTableEntry* symbol;
+    struct expr* exprNode;
+    struct call* callNode
     struct id_list* listId;
+    struct stmt_t* stmtNode;
+    struct for_t forNode;
+
 }
 
 %expect 1
@@ -69,37 +75,54 @@
 %left LEFTBRACE RIGHTBRACE
 %left LEFTPAR RIGHTPAR
 
-%type stmt
+%type<exprNode> arithop
+%type<stmtNode> stmt
 %type<exprNode> lvalue
 %type<listId> idlist
 %type<exprNode> call
-%type elist
+%type<exprNode> elist
 %type<callNode> callsuffix
 %type<callNode> normcall
-%type funcdef
-%type expr
+//%type funcdef
+%type<exprNode> expr
 %type<exprNode> objectdef
 %type<exprNode> member
-%type block
+%type<stmtNode> block
 %type<exprNode> assignexpr
 %type temp
 %type<callNode> methodcall
 %type<exprNode> term
-%type<exprNode>  primary
+%type<exprNode> primary
 %type<exprNode> const
-%type ifprefix whilestmt forstmt returnstmt elseprefix
-%type N M forprefix for
-%type while whilestart whilecond
-%type if
-%type loopstart loopend loopstmt
-%type  stmts
-
-
+%type<uns> ifprefix
+%type<uns> elseprefix
+%type<uns> whilestart
+%type<uns> whilecond
+%type<uns> M
+%type<uns> N
+%type<stmtNode> whilestmt
+%type<stmtNode> forstmt 
+%type<stmtNode>returnstmt
+%type<stmtNode>program
+%type<forNode>forprefix
+%type<forNode> for
+%type<stmtNode> while 
+%type<stmtNode> if
+%type loopstart loopend
+%type <stmtNode> loopstmt
+%type<stmtNode>stmts
+%type<exprNode>indexed
+%type<stringValue>funcname
+%type<exprNode>funcprefix
+%type<exprNode>funcdef
+%type<exprNode> funcargs
+%type<intValue> funcblockstart 
+%type<intValue> funcblockend
 %%
 
 program: 
 	stmt program{fprintf(yyout_y,"program -> stmt(asteraki)\n");}  
-	| ;
+	| {};
 
 stmt:	
 	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); }
@@ -609,46 +632,32 @@ funcname:
 	{
 		char* my_name= malloc(50*(sizeof(char)));
 		sprintf(my_name,"_myfync%d",unnamed_counter++);
-		SymbolTableEntry* entry = SymTable_insert(hash,my_name,yylineno,(id_list*)$4,current_scope-1,USERFUNC);
-		$$ = newtempfuncname();
+		//SymbolTableEntry* entry = SymTable_insert(hash,my_name,yylineno,(id_list*)$4,current_scope-1,USERFUNC);
+		$$ = my_name;
 	};
 
 funcprefix:
 	FUNCTION funcname
 	{
-		$$ = SymTable_insert(hash, $2, yylineno, NULL, current_scope, USERFUNC); //Mesa anaferetai sto deutero orisma ws function_s	
-		//$funcprefix.iaddress = nextquadlabel(); Ti einai to iaddress, to nextquadlabel einai sth diafaneia 10, diale3h 10
-		emit(funcstart, $$, NULL, NULL,nextquadlabel(),currQuad);
-		//push(scopeoffserstack, currscopeoffset()); Mia push na ftia3oume gia na kanei save to curr offset
-		enterscopespace(); //Entering function argument scope space
-		resetformalargsoffset(); //Start formals from zero tbf(10,10)
-			
-	};
-
-funcargs:
-	LEFTPAR {increase_scope();isFunct1 = true; isFunct = true; sim_funcs++;} idlist RIGHTPAR
-		{
-			enterscopespace(); //entering function locals space
-			resetfunctionlocaloffset(); //tbf(10,10), Start counting locals from zero kai prepei na ftiaxtei
-			SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
+		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
 			if (search!=NULL)
 			{
 				if(search->type==LIBFUNC)
 				{
 					fprintf(stderr,"Userfunc shadows libraryfunn in line %d and scope %d \n",yylineno,current_scope);
-				}else if(current_scope-1 == 0)
+				}else if(current_scope== 0)
 				{
 					fprintf(stderr,"Found symbol with same name in line %d and scope %d \n",yylineno,current_scope);
 				}	
 			}
 			/*check if it doesnt exist on the hash*/
 			//printf("1321\n");
-			int temp = current_scope - 1;
-			search = lookup_inScope(hash,(char *)$2,current_scope-1);
+			int temp = current_scope;
+			search = lookup_inScope(hash,(char *)$2,current_scope);
 			if (search == NULL)
 			{
 				//printf("This function %s did not exist so we are free to add it to the hash\n", $2);
-				SymTable_insert(hash,(char *)$2,yylineno,(id_list*)$5,temp,USERFUNC);
+				$$->sym=SymTable_insert(hash,(char *)$2,yylineno,NULL,temp,USERFUNC);
 			}
 			else
 			{
@@ -657,22 +666,49 @@ funcargs:
 				else{
 					fprintf(stderr, "Function %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);}	
 			}
-		};
+		//$$ = SymTable_insert(hash, $2, yylineno, NULL, current_scope, USERFUNC); //Mesa anaferetai sto deutero orisma ws function_s	
+		//$funcprefix.iaddress = nextquadlabel(); Ti einai to iaddress, to nextquadlabel einai sth diafaneia 10, diale3h 10
+		emit(funcstart, $$, NULL, NULL,nextquadlabel(),currQuad);
+		//push(scopeoffserstack, currscopeoffset()); Mia push na ftia3oume gia na kanei save to curr offset
+		enterscopespace(); //Entering function argument scope space
+		resetformalargsoffset(); //Start formals from zero tbf(10,10)
+			
+	};
 
-funcbody:
-	funcblockstart block
+
+
+funcargs:
+
+	funcprefix  LEFTPAR {increase_scope();isFunct1 = true; isFunct = true; sim_funcs++;} idlist RIGHTPAR
+		{
+			$1->sym->value.funcVal->args=$4;
+			enterscopespace(); //entering function locals space
+			resetfunctionlocaloffset(); //tbf(10,10), Start counting locals from zero kai prepei na ftiaxtei
+				};
+funcblockstart:
 	{
-		fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");
-		$$ = currscopeoffset(); //Extract total locals
-		exitscopespace();	//Exiting function locals space
-	}funcblockend;
+		push(loopcounterstack,loopcounter); loopcounter=0;
+	};
+
+funcblockend:
+	{
+		loopcounter=pop(loopcounterstack);
+	};
+
 //gia ta 2 apo epanw
 //Epishs for further notice leei mesa oti: scopespacecounter == currentscope mono at 
 //formal arguments einai se upshlotero scope kata ena apo oti ta function locals
 //Ean de sumbainei auto tote theloume 3exwristh metablhth gia scope
 
 funcdef:
-	funcprefix funcargs funcbody
+	funcargs funcblockstart block
+	{
+		int curr_scope_offset= currscopeoffset();
+		fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");
+		 //Extract total locals
+		exitscopespace();	//Exiting function locals space
+	}
+	funcblockend
 	{
 		existscopespace(); //Exiting function definition space
 		//$funcprefix.totalLocals = $3; Store locals in symbol entry
@@ -867,15 +903,6 @@ whilestmt:
 forstmt:
 	for LEFTPAR elist SEMICOLON expr SEMICOLON elist RIGHTPAR loopstmt;
 
-funcblockstart:
-	{
-		push(loopcounterstack,loopcounter); loopcounter=0;
-	};
-
-funcblockend:
-	{
-		loopcounter=pop(loopcounterstack);
-	};
 
 whilestart:
 	while{
