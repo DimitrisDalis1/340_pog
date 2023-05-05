@@ -244,7 +244,7 @@ static unsigned int SymTable_hash(const char *name,unsigned int SIZE){
 } 
 
 
-static void expand(SymTable_T *oSymTable){
+static void expand_table(SymTable_T *oSymTable){
     unsigned int SIZE,BUCKETS;
     struct SymbolTableEntry *temp,*prev,*next,*list;
     int i,hashkey;
