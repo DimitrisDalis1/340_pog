@@ -1,3 +1,5 @@
+#ifndef SYMTABLE_H
+#define SYMTABLE_H
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -62,6 +64,7 @@ SymTable_T* SymTable_new(void);
 void SymTable_free(SymTable_T* oSymTable);
 
 id_list* create_id_list();
+
 void decrease_scope();
 
 void increase_scope();
@@ -89,8 +92,6 @@ typedef struct id_list{
     struct id_node *head;
 }id_list;
 
-
-
 struct Scope_node{
     SymbolTableEntry *symbol;
     unsigned int scope;
@@ -100,7 +101,8 @@ struct Scope_node{
 SymbolTableEntry* lookup_inScope_wA(SymTable_T* sym, const char* key, unsigned int scope);
 int id_list_contains(id_list *, const char *);
 static unsigned int SymTable_hash(const char*, unsigned int);
-static void expand(SymTable_T*);
+static void expand_table(SymTable_T*);
 SymbolTableEntry* lookup_inScope(SymTable_T* , const char* , unsigned int );
 SymbolTableEntry* lookup_inBucket_without_isActive(SymTable_T *, const char *, unsigned int );
 void scope_deactivate(Scope_node *ScopeTable);
+#endif
