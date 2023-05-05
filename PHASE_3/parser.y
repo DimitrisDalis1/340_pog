@@ -155,7 +155,7 @@ stmts:
 		$$.breaklist = mergelist($1.breaklist, $2.breaklist);
 		$$.contlist = mergelist($1.contlist, $2.contlist);
 
-	}
+	};
 
 arithop:
 	expr PLUS expr{$$=add;}
@@ -195,9 +195,9 @@ relop:
 		;
 
 boolexpr:
-	| expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n"); /*backpatch($1.falselist,M.quad);$$.truelist = $4.truelist; $$.falselist = merge($1.falselist,$4.falselist);*/}		
-	| expr OR M	expr { fprintf(yyout_y,"expr -> expr or expr\n"); /*backpatch($1.falselist,M.quad);
-	$$.truelist = merge($1.truelist,$4.truelist); $$.falselist = $4.falselist;*/}
+	expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n"); /*backpatch($1.falselist,M.quad);$$.truelist = $4.truelist; $$.falselist = merge($1.falselist,$4.falselist);*/}		
+	| expr OR M expr { fprintf(yyout_y,"expr -> expr or expr\n"); /*backpatch($1.falselist,M.quad);
+	$$.truelist = merge($1.truelist,$4.truelist); $$.falselist = $4.falselist;*/};
 
 //Still stuff to do according to DIale3h 11, diafaneia 5
 //Gia ta upolipa leei gia olikh apotimhsh opote to suzhtame (11,6)
@@ -314,7 +314,6 @@ term:
 		fprintf(yyout_y,"term -> lvalue--\n");
 	}
 	|primary {$$ = $1;fprintf(yyout_y,"term -> primary\n"); };
-;
 
 assignexpr:
 	lvalue ASSIGN expr   
@@ -340,7 +339,7 @@ assignexpr:
        			fprintf(stderr,"Error,value cannot be assigned to a function in line %d and scope %d \n",yylineno,current_scope);
     		}}
 		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
-	}
+	};
 
 primary:
 	lvalue {
@@ -626,7 +625,8 @@ objectdef:
 
 indexed:
 	indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");} 
-	|indexed COMMA indexedelem {fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  ;
+	|indexed COMMA indexedelem {fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  
+	;
 
 indexedelem:
  	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
@@ -950,7 +950,7 @@ forprefix:
 		$$.test = $6;
 		$$.enter = nextquad();
 		emit(if_eq, $7, newexpr_constbool(1), 0,-1,currQuad);
-	}
+	};
 
 forstmt:
 	forprefix N elist RIGHTPAR N loopstmt N
@@ -962,7 +962,7 @@ forstmt:
 
 		patchlist($6.breaklist, nextquad());
 		patchlist(%6.contlist, $2+1);
-	}
+	};
 
 returnstmt:
  	RETURN
