@@ -2,11 +2,6 @@
 #define EXPR_H
 #include "symtable.h"
 
-typedef enum scopespace_t{
-	programvar,
-	functionlocal,
-	formalarg
-}scopespace_t;
 
 typedef enum symbol_t{
 	var_s,
@@ -33,7 +28,7 @@ typedef enum expr_t{
 
 typedef struct expr{
     	expr_t type;
-	SymbolTableEntry* sym;
+	struct SymbolTableEntry* sym;
 	struct expr* index;
 	int intConst;
 	double numConst;
@@ -50,5 +45,5 @@ expr* newexpr_constdouble(double i);
 expr* newexpr_constnil();
 expr* newexpr_constbool(unsigned char b);
 expr* newexpr_constint(int i);
-expr* lvalue_expr(SymbolTableEntry* sym);
+expr* lvalue_expr(struct SymbolTableEntry* sym);
 #endif
