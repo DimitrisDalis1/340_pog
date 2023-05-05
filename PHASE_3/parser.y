@@ -22,6 +22,8 @@
     int sim_funcs = 0;
     int currQuad=0;
     int offset=0;
+    int loopcounter=0;
+    int loopcounterstack=0;
     
     
     int b_n_b = 0; //before loop
@@ -161,12 +163,12 @@ stmts:
 
 	};
 
-arithop:
-	expr PLUS expr{$$=add;}
-	|expr MINUS expr{$$=sub;}
-	|expr MULT expr{$$=mul;}
-	|expr DIV expr{$$=divi;}
-	|expr PERC expr{$$=mod;}
+arithop://na ginoun oi emit
+	expr PLUS expr{$$->type=arithexpr_e;}
+	|expr MINUS expr{$$->type=arithexpr_e;}
+	|expr MULT expr{$$->type=arithexpr_e;}
+	|expr DIV expr{$$->type=arithexpr_e;}
+	|expr PERC expr{$$->type=arithexpr_e;}
 	;
 
 relop:
@@ -241,10 +243,12 @@ term:
 		check_arith($2,$2->strConst);
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
-			emit(add, $$, newexpr_constnum(1), $$, -1, currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
+			emit(add, $$, newexpr_constint(1), $$, -1, currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
 			emit(tablesetelem, $2, $2->index, $$, -1,currQuad);
 		}else{
-			emit(add, $2, newexpr_constnum(1), $2,-1,currQuad)
+                        expr* num=newexpr_constint(1);
+
+			emit(add, $2, num, $2,-1,currQuad);
 			$$ = newexpr(arithexpr_e);
 			$$->sym = newtemp();
 			emit(assign, $2, NULL, $$,-1,currQuad);
@@ -263,12 +267,12 @@ term:
 		if ($1->type == tableitem_e){
 			expr* val = emit_iftableitem($1);
 			emit(assign, val, NULL, $$,-1,currQuad);
-			emit(add,val,newexpr_constnum(1), val,-1,currQuad);
-			emit(tablesetelem, $1, $1->index, val-1,currQuad);
+			emit(add,val,newexpr_constint(1), val,-1,currQuad); //na dw kai periptwsh me double
+			emit(tablesetelem, $1, $1->index, val-1,-1,currQuad);
 		}
 		else {
 			emit(assign, $1, NULL, $$,-1,currQuad);
-			emit(add, $1, newexpr_constnum(1), $1,-1,currQuad);
+			emit(add, $1, newexpr_constint(1), $1,-1,currQuad);
 		}
 		if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
 		{
@@ -281,10 +285,11 @@ term:
 		check_arith($2,$2->strConst);
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
-			emit(sub, $$, newexpr_constnum(1), $$,-1,currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
+			expr* num=newexpr_constint(1);
+			emit(sub, $$, num, $$,-1,currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
 			emit(tablesetelem, $2, $2->index, $$,-1,currQuad);
 		}else{
-			emit(sub, $2, newexpr_constnum(1), $2,-1,currQuad)
+			emit(sub, $2, newexpr_constint(1), $2,-1,currQuad);
 			$$ = newexpr(arithexpr_e);
 			$$->sym = newtemp();
 			emit(assign, $2, NULL, $$,-1,currQuad);
@@ -304,12 +309,12 @@ term:
 		if ($1->type == tableitem_e){
 			expr* val = emit_iftableitem($1);
 			emit(assign, val, NULL, $$,-1,currQuad);
-			emit(sub,val,newexpr_constnum(1), val,-1,currQuad);
+			emit(sub,val,newexpr_constint(1), val,-1,currQuad);
 			emit(tablesetelem, $1, $1->index, val,-1,currQuad);
 		}
 		else {
 			emit(assign, $1, NULL, $$,-1,currQuad);
-			emit(sub, $1, newexpr_constnum(1), $1,-1,currQuad);
+			emit(sub, $1, newexpr_constint(1), $1,-1,currQuad);
 		}
 
 		if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC ||((SymbolTableEntry*)$1)->type == LIBFUNC))
@@ -355,7 +360,7 @@ primary:
 	|objectdef  {fprintf(yyout_y,"primary -> objectdef\n");}
 	|LEFTPAR funcdef RIGHTPAR  {
 					$$ = newexpr(programfunc_e);
-					$$->sym = $2;
+					$$->sym = $2->sym;
 					fprintf(yyout_y,"primary -> ( funcdef )\n");}
 	|const  {fprintf(yyout_y,"primary -> const\n");} 
 	;
@@ -401,13 +406,12 @@ lvalue:
 						entry->offset=currscopeoffset();
 						entry->type=var_s;
 						incurrscopeoffset();
-					}
-					$$=entry;	
+					}	
 					$$=lvalue_expr(entry);
 				}
 				else
 				{
-					$$=entry;	
+	
 					$$=lvalue_expr(entry);
 				}
 
@@ -427,7 +431,7 @@ lvalue:
 				fprintf(stderr, "Cannot access %s in line %d\n", $1, yylineno);	
 				
 			}
-			$$=entry;
+
 			$$=lvalue_expr(entry);
 		}
 		else if(entry->type == FORMAL) 	//an einai formal h dothesa
@@ -436,10 +440,9 @@ lvalue:
 			{
 				fprintf(stderr, "Cannot access formal %s in line %d\n",$1, yylineno);
 			}
-			$$=entry;
+
 			$$=lvalue_expr(entry);
-		}else $$=entry;
-		$$=lvalue_expr(entry);
+		}else 		$$=lvalue_expr(entry);
 
 
     	}
@@ -465,7 +468,7 @@ lvalue:
 					entry->space=currscopespace();
 						entry->offset=currscopeoffset();
 						entry->type=var_s;
-						inccurrscopeoffset();
+						incurrscopeoffset();
 				}
            			else
 				{
@@ -473,15 +476,15 @@ lvalue:
 					entry->space=currscopespace();
 						entry->offset=currscopeoffset();
 						entry->type=var_s;
-						inccurrscopeoffset();
+						incurrscopeoffset();
 				}
-            			$$= entry;
+            			
 				$$=lvalue_expr(entry);
       			}
   		}else
 		{
 		printf("Error: In line %d variable %s is already defined\n", yylineno, $2);
-      		$$ = entry;
+      		
 		$$=lvalue_expr(entry);
 		}
 	}
@@ -493,7 +496,7 @@ lvalue:
 			fprintf(stderr,"Global not found in line %d and scope %d \n",yylineno,current_scope);
 			//$$=NULL; //petaei seg
 		}else
-			$$=entry;
+
 			$$=lvalue_expr(entry);
 		fprintf(yyout_y,"lvalue -> ::id\n"); 
 	}
@@ -560,7 +563,7 @@ call: call LEFTPAR elist RIGHTPAR
 	} 
 	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {
 		expr* func = newexpr(programfunc_e);
-		func->sym = $2;
+		func->sym = $2->sym;
 		$$ = make_call(func, $5);
 		call_flag = false;fprintf(yyout_y,"call -> ( funcdef ) ( elist )\n");}
 	;
@@ -585,7 +588,7 @@ normcall:
 methodcall:
 	//exei thema obv
 	PERIOD2 ID LEFTPAR elist RIGHTPAR {
-		$$->elist = $2;
+		$$->elist = $4;
 		$$->method = 1;
 		$$->name = $2;
 		fprintf(yyout_y,"methodcall -> ..id ( elist )\n");}
@@ -612,7 +615,7 @@ objectdef:
 					t->sym = newtemp();
 					emit(tablecreate, t, NULL, NULL,-1,currQuad);
 					for(int i = 0; $2; $2 = $2->next)
-						emit(tablesetelem, t, newexpr_constnum(i++), $2,-1,currQuad);
+						emit(tablesetelem, t, newexpr_constint(i++), $2,-1,currQuad);
 					$$ = t;
 					fprintf(yyout_y,"objectdef -> { elist }\n");} 
 	|LEFTBRACE indexed RIGHTBRACE {
@@ -700,12 +703,12 @@ funcargs:
 				};
 funcblockstart:
 	{
-		push(loopcounterstack,loopcounter); loopcounter=0;
+		push(loopcounterstack); loopcounter=0; //push(loopcounterstack,loopcounter);
 	};
 
 funcblockend:
 	{
-		loopcounter=pop(loopcounterstack);
+		loopcounter=pop(); //loopcounter=pop(loopcounterstack);
 	};
 
 //gia ta 2 apo epanw
@@ -832,7 +835,7 @@ block:
 
 		//increase_scope();
  	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  p??s??? (e?d??? pe??pt?s?): t? block t?? s????t?s?? de? a????e? ep?p???? t? scope ?at? 
-+1 ??a t? ?e?t???? block t?? s????t?s?? e??a? +1 se s?????s? µe t? scope p?? pe????e? t?
++1 ??a t? ?e?t???? block t?? s????t?s?? e??a? +1 se s?????s? Βµe t? scope p?? pe????e? t?
 s????t?s?*/
     	temp RIGHTCURLY
 	{
@@ -880,7 +883,7 @@ s????t?s?*/
 
 ifprefix:
 	IF LEFTPAR expr RIGHTPAR{
-		emit(if_eq, $3, newexpr_constbool(1),nextquad()+2, currQuad+2, currQuad);
+		emit(if_eq,NULL, $3, newexpr_constbool(1),nextquad()+2, currQuad);
 		$$ = nextquad();
 		emit(jump, NULL, NULL, 0,-1,currQuad);
 	};
@@ -914,7 +917,7 @@ whilestmt:
 	whilestart whilecond loopstmt
 	{
 		fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
-		emit(jump,NULL,NULL,$1,-1,currQuad);
+		emit(jump,NULL,NULL,NULL,$1,currQuad);
 		patchlabel($2, nextquad());
 		patchlist($3->breaklist, nextquad());
 		patchlist($3->contlist, $1);
@@ -930,7 +933,7 @@ whilestart:
 whilecond:	
 	LEFTPAR{sim_loops++;} expr RIGHTPAR
 	{
-		emit(if_eq, $3,newexpr_constbool(1),nextquad()+2,currQuad+2,currQuad);
+		emit(if_eq,NULL, $3,newexpr_constbool(1),nextquad()+2,currQuad);
 		$$ = nextquad();
 		emit(jump, NULL,NULL,0,-1,currQuad);
 	};
