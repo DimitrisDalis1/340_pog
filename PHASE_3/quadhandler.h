@@ -75,7 +75,7 @@ void incurrscopeoffset();
 void enterscopespace();
 void exitscopespace();
 void expand();
-void emit(iopcode, expr*, expr, expr*, unsigned int, unsigned int);
+void emit(iopcode, expr*, expr*, expr*, unsigned int, unsigned int);
 char* newtempname();
 void resettemp();
 SymbolTableEntry* newtemp();
