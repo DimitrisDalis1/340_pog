@@ -1,5 +1,8 @@
-#include "symtable.h"
+#ifndef QUADHANDLER_H
+#define QUADHANDLER_H
 #include "expr.h"
+#include "stack.h"
+#include "symtable.h"
 extern Scope_node *head_scope_node;
 extern SymTable_T* hash ;
 extern int current_scope;
@@ -15,32 +18,21 @@ typedef enum scopespace_t scopespace_t;
 typedef enum symbol_t symbol_t;
 typedef struct symbol symbol;
 typedef struct quad quad;
-typedef struct call call;
+typedef struct call_t call_t;
 typedef struct stmt_t stmt_t;
-typedef struct for_t for_t
+typedef struct for_t for_t;
 
 typedef enum iopcode{
 	assign,	add,	sub,	
-	mul,	div,	mod,
+	mul,	divi,	mod,
 	uminus,	and,	or,
 	not,	if_eq,	if_noteq,
 	if_greater,	call,	param,
 	ret,	getretval,	funcstart,
 	funcend,	tablecreate,	tablegetelem,	
-	tablesetelem
+	tablesetelem,jump
 }iopcode;
 
-typedef enum scopespace_t{
-	programvar,
-	functionlocal,
-	formalarg
-}scopespace_t;
-
-typedef enum symbol_t{
-	var_s,
-	programfunc_s,
-	libraryfunc_s	
-}symbol_t;
 
 typedef struct symbol{
 	char* name;
@@ -60,15 +52,15 @@ typedef struct quad{
 	unsigned int line;
 }quad;
 
-typedef struct call{
+typedef struct call_t{
 	expr* elist;
 	unsigned char method;
 	char* name;
-}call;
+}call_t;
 
 typedef struct stmt_t {
-	int breakList;
-	int contList;
+	int breaklist;
+	int contlist;
 	int returnlist;
 }stmt_t;
 
@@ -99,9 +91,9 @@ void check_arith(expr*, const char* );
 unsigned int istempname(char*);
 unsigned int istempexpr(expr*);
 void patchlabel(unsigned, unsigned);
-expr* newexpr_constbool(unsigned int);
 unsigned nextquad(void);
 void make_stmt(stmt_t*);
 int newlist(int);
 int mergelist(int, int);
 void patchlist(int, int);
+#endif
