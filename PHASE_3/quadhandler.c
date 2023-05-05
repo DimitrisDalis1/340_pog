@@ -1,11 +1,9 @@
-#include "symtable.h"
 #include "quadhandler.h"
 
 quad*	quads = (quad*) 0;
 unsigned total = 0;
-unsigned int currQuad = 0;
 int tempcounter=0;
-
+extern int currQuad;
 unsigned programVarOffset =0; 
 unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
@@ -147,6 +145,7 @@ void patchlabel(unsigned int quadNo, unsigned int label){
 	quads[quadNo].label=label;
 }
 
+
 expr* member_item(expr* lv, char* name){
 	lv=emit_iftableitem(lv);
 	expr* ti=newexpr(tableitem_e);
@@ -158,7 +157,7 @@ expr* member_item(expr* lv, char* name){
 ///////////////////////////////////////////////////////////////////////////////
 
 expr* emit_iftableitem(expr* e){
-	if(e->type !-tableitem_e){
+	if(e->type !=tableitem_e){
 		return e;
 	}else{
 		expr* result = newexpr(var_e);
@@ -208,21 +207,12 @@ unsigned int istempexpr(expr* e){
 	return e->sym && istempname(e->sym->name); ///////get name if variable or function
 }
 
-void patchlabel (unsigned quadNo, unsigned label) {
-	assert(quadNo < currQuad && !quads[quadNo].label);
-	quads[quadNo].label = label;
-}
-expr* newexpr_constbool (unsigned int b) {
-	expr* e = newexpr(constbool_e);
-	e->boolConst = !!b;
-	return e;
-}
 unsigned nextquad (void) { return currQuad; }
 
 
 
 void make_stmt (stmt_t* s){
-	 s->breakList = s->contList = 0; 
+	 s->breaklist = s->contlist = 0; 
 }
 
 int newlist (int i){ 
