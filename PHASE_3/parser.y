@@ -1,6 +1,6 @@
 %{
     #include <stdio.h>
-    #include "symtable.h"
+    #include "quadhandler.h"
     #define for_each_time(item, list) \
 	for(T * item = list->head; item != NULL; item = item->next)
     int yyerror (char* yaccProvidedMessage);
@@ -20,6 +20,9 @@
     int global_check = 0;
     int sim_loops = 0; //simultaneous loops active
     int sim_funcs = 0;
+    int currQuad=0;
+    int offset=0;
+    
     
     int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
@@ -45,10 +48,10 @@
     double doubleValue;
     struct SymbolTableEntry* symbol;
     struct expr* exprNode;
-    struct call* callNode
+    struct call_t* callNode;
     struct id_list* listId;
     struct stmt_t* stmtNode;
-    struct for_t forNode;
+    struct for_t* forNode;
 
 }
 
@@ -58,7 +61,8 @@
 %token<stringValue> STRING
 %token<intValue> INT
 %token<doubleValue> REAL
-%token<stringValue> IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL
+%token<stmtNode> BREAK CONTINUE
+%token<stringValue> IF ELSE WHILE FOR FUNCTION RETURN AND NOT OR LOCAL TRUE FALSE NIL
 %token<stringValue> ASSIGN PLUS MINUS MULT DIV PERC EQUAL NOT_EQUAL PLUS2 MINUS2 BIGGER SMALLER BIGGER_EQUAL SMALLER_EQUAL 
 %token<stringValue> LEFTCURLY RIGHTCURLY LEFTBRACE RIGHTBRACE LEFTPAR RIGHTPAR SEMICOLON COMMA COLON COLON2 PERIOD PERIOD2
 
@@ -133,14 +137,14 @@ stmt:
 	|BREAK SEMICOLON  {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Break used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
-				make_stmt(&$1);
-				$1.breaklist = newlist(nextquad()); emit(jump,NULL,NULL,0,-1,currQuad); //not sure orisma 5
+				make_stmt($1);
+				$1->breaklist = newlist(nextquad()); emit(jump,NULL,NULL,0,-1,currQuad); //not sure orisma 5
 				fprintf(yyout_y,"stmt -> break;\n"); }
 	|CONTINUE SEMICOLON {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Continue used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
-				make_stmt(&$1);
-				$1.contlist = newlist(nextquad()); emit(jump, NULL, NULL,0, -1, currQuad); //not sure orisma 5
+				make_stmt($1);
+				$1->contlist = newlist(nextquad()); emit(jump, NULL, NULL,0, -1, currQuad); //not sure orisma 5
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 			    }
 	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
@@ -152,8 +156,8 @@ stmts:
 	stmt{$$= $1;}
 	|stmts stmt
 	{
-		$$.breaklist = mergelist($1.breaklist, $2.breaklist);
-		$$.contlist = mergelist($1.contlist, $2.contlist);
+		$$->breaklist = mergelist($1->breaklist, $2->breaklist);
+		$$->contlist = mergelist($1->contlist, $2->contlist);
 
 	};
 
@@ -161,7 +165,7 @@ arithop:
 	expr PLUS expr{$$=add;}
 	|expr MINUS expr{$$=sub;}
 	|expr MULT expr{$$=mul;}
-	|expr DIV expr{$$=div;}
+	|expr DIV expr{$$=divi;}
 	|expr PERC expr{$$=mod;}
 	;
 
@@ -197,7 +201,8 @@ relop:
 boolexpr:
 	expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n"); /*backpatch($1.falselist,M.quad);$$.truelist = $4.truelist; $$.falselist = merge($1.falselist,$4.falselist);*/}		
 	| expr OR M expr { fprintf(yyout_y,"expr -> expr or expr\n"); /*backpatch($1.falselist,M.quad);
-	$$.truelist = merge($1.truelist,$4.truelist); $$.falselist = $4.falselist;*/};
+	$$->truelist = merge($1->truelist,$4->truelist); 
+	$$->falselist = $4->falselist;*/};
 
 //Still stuff to do according to DIale3h 11, diafaneia 5
 //Gia ta upolipa leei gia olikh apotimhsh opote to suzhtame (11,6)
@@ -220,7 +225,7 @@ expr:
 term: 
 	LEFTPAR expr RIGHTPAR   {$$ = $2; fprintf(yyout_y,"term -> ( expr )\n"); }
 	| MINUS expr { 
-		check_arith($2);
+		check_arith($2,$2->strConst);
 		$$ = newexpr(arithexpr_e);
 		$$->sym = istempexpr($2) ? $2->sym : newtemp();
 		emit(uminus, $2, NULL, $$, -1, currQuad);
@@ -228,12 +233,12 @@ term:
 	}
 	|NOT expr { 
 		fprintf(yyout_y,"term -> not expr\n"); 
-		/*$$.truelist = $2.falselist;
-		$$.falselist = $2.truelist;*/
+		/*$$->truelist = $2->falselist;
+		$$->falselist = $2->truelist;*/
 	}
 	|PLUS2 lvalue
 	{ 
-		check_arith($2);
+		check_arith($2,$2->strConst);
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
 			emit(add, $$, newexpr_constnum(1), $$, -1, currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
@@ -252,7 +257,7 @@ term:
 	}
 	|lvalue PLUS2
 	{ 
-		check_arith($1);
+		check_arith($1,$1->strConst);
 		$$ = newexpr(var_e);
 		$$->sym = newtemp();
 		if ($1->type == tableitem_e){
@@ -273,7 +278,7 @@ term:
 	}
 	|MINUS2 lvalue
 	{
-		check_arith($2);
+		check_arith($2,$2->strConst);
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
 			emit(sub, $$, newexpr_constnum(1), $$,-1,currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
@@ -293,7 +298,7 @@ term:
 	}
 	|lvalue MINUS2
 	{
-		check_arith($1);
+		check_arith($1,$1->strConst);
 		$$ = newexpr(var_e);
 		$$->sym = newtemp();
 		if ($1->type == tableitem_e){
@@ -322,7 +327,7 @@ assignexpr:
 		{
 			emit(tablesetelem, $1, $1->index, $3,-1,currQuad);
 			$$ = emit_iftableitem($1);
-			((SymbolTableEntry*)$$)->type = assignexxpr_e;
+			((SymbolTableEntry*)$$)->type = assignexpr_e;
 
 		}
 		else
@@ -386,15 +391,15 @@ lvalue:
 					{
 						
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,GLOBAL);
-						entry.space=currscopespace();
-						entry.offset=currscopeoffset();
-						entry.type=var_s;
+						entry->space=currscopespace();
+						entry->offset=currscopeoffset();
+						entry->type=var_s;
 						inccurrscopeoffset();
 					}else{
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,LOCALV);
-						entry.space=currscopespace();
-						entry.offset=currscopeoffset();
-						entry.type=var_s;
+						entry->space=currscopespace();
+						entry->offset=currscopeoffset();
+						entry->type=var_s;
 						inccurrscopeoffset();
 					}
 					$$=entry;	
@@ -457,17 +462,17 @@ lvalue:
          			if(current_scope == 0)
 				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,GLOBAL);
-					entry.space=currscopespace();
-						entry.offset=currscopeoffset();
-						entry.type=var_s;
+					entry->space=currscopespace();
+						entry->offset=currscopeoffset();
+						entry->type=var_s;
 						inccurrscopeoffset();
 				}
            			else
 				{
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,LOCALV);
-					entry.space=currscopespace();
-						entry.offset=currscopeoffset();
-						entry.type=var_s;
+					entry->space=currscopespace();
+						entry->offset=currscopeoffset();
+						entry->type=var_s;
 						inccurrscopeoffset();
 				}
             			$$= entry;
@@ -540,10 +545,10 @@ call: call LEFTPAR elist RIGHTPAR
 	|lvalue callsuffix
 	{
 		$1 = emit_iftableitem($1); //in case it was a table item too
-		if($2.method){
+		if($2->method){
 			expr* t = $1;
-			$1 = emit_iftableitem(member_item(t, $2.name));
-			$2.elist->next = t; //insert as first argument (recersed, so last)
+			$1 = emit_iftableitem(member_item(t, $2->name));
+			$2->elist->next = t; //insert as first argument (recersed, so last)
 		}
 		call_flag = false;
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
@@ -571,18 +576,18 @@ callsuffix:
 	
 normcall:
 	LEFTPAR elist RIGHTPAR  {
-		$$.elist = $2;
-		$$.method = 0;
-		$$.name = NULL;
+		$$->elist = $2;
+		$$->method = 0;
+		$$->name = NULL;
 		fprintf(yyout_y,"normcall -> ( elist )\n");}
 	;
 	
 methodcall:
 	//exei thema obv
 	PERIOD2 ID LEFTPAR elist RIGHTPAR {
-		$$.elist = $2;
-		$$.method = 1;
-		$$.name = $2.val;
+		$$->elist = $2;
+		$$->method = 1;
+		$$->name = $2;
 		fprintf(yyout_y,"methodcall -> ..id ( elist )\n");}
 	;
 	
@@ -613,7 +618,7 @@ objectdef:
 	|LEFTBRACE indexed RIGHTBRACE {
 					expr* t = newexpr(newtable_e);
 					t->sym = newtemp();
-					emit(tablecreate,t , NULL, NULL,-1,currQuad;
+					emit(tablecreate,t , NULL, NULL,-1,currQuad);
 					//Fix this
 					while($2!=NULL)
 					{
@@ -621,7 +626,8 @@ objectdef:
 					}
 					$$ = t;
 						
-					fprintf(yyout_y,"objectdef -> { indexed }\n");} ;
+					fprintf(yyout_y,"objectdef -> { indexed }\n");
+		} ;
 
 indexed:
 	indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");} 
@@ -678,7 +684,7 @@ funcprefix:
 		emit(funcstart, $$, NULL, NULL,nextquadlabel(),currQuad);
 		//push(scopeoffserstack, currscopeoffset()); Mia push na ftia3oume gia na kanei save to curr offset
 		enterscopespace(); //Entering function argument scope space
-		resetformalargsoffset(); //Start formals from zero tbf(10,10)
+		resetformalargoffset(); //Start formals from zero tbf(10,10)
 			
 	};
 
@@ -717,7 +723,7 @@ funcdef:
 	}
 	funcblockend
 	{
-		existscopespace(); //Exiting function definition space
+		exitscopespace(); //Exiting function definition space
 		//$funcprefix.totalLocals = $3; Store locals in symbol entry
 		//int offset = pop_and_top(scopeoffsetStack); pop and get pre scope offset
 		restorecurrscopeoffset(offset); //restore previous scope offset, tbf(10,10)
@@ -825,9 +831,9 @@ block:
 		}
 
 		//increase_scope();
- 	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  προσοχή (ειδική περίπτωση): το block της συνάρτησης δεν αυξάνει επιπλέον το scope κατά 
-+1 άρα το κεντρικό block της συνάρτησης είναι +1 σε σύγκριση με το scope που περιέχει τη
-συνάρτηση*/
+ 	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  p??s??? (e?d??? pe??pt?s?): t? block t?? s????t?s?? de? a????e? ep?p???? t? scope ?at? 
++1 ??a t? ?e?t???? block t?? s????t?s?? e??a? +1 se s?????s? µe t? scope p?? pe????e? t?
+s????t?s?*/
     	temp RIGHTCURLY
 	{
 		//isFunc_loop
@@ -910,8 +916,8 @@ whilestmt:
 		fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
 		emit(jump,NULL,NULL,$1,-1,currQuad);
 		patchlabel($2, nextquad());
-		patchlist($3.breaklist, nextquad());
-		pathclist($3.contlist, $1);
+		patchlist($3->breaklist, nextquad());
+		patchlist($3->contlist, $1);
 	}
 	;
 
@@ -935,8 +941,8 @@ while:
 		fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
 		emit(jump,NULL,NULL,$1,-1,currQuad);
 		patchlabel($2, nextquad());
-		patchlist($3.breaklist, nextquad());
-		pathclist($3.contlist, $1);
+		patchlist($3->breaklist, nextquad());
+		pathclist($3->contlist, $1);
 	};*/
 
 N:
@@ -947,21 +953,21 @@ M:
 forprefix:
 	FOR LEFTPAR{sim_loops++;} elist SEMICOLON M expr SEMICOLON
 	{
-		$$.test = $6;
-		$$.enter = nextquad();
+		$$->test = $6;
+		$$->enter = nextquad();
 		emit(if_eq, $7, newexpr_constbool(1), 0,-1,currQuad);
 	};
 
 forstmt:
 	forprefix N elist RIGHTPAR N loopstmt N
 	{
-		patchlabel($1.enter, $5+1); //true jump
+		patchlabel($1->enter, $5+1); //true jump
 		patchlabel($2, nextquad()); //false jump
-		patchlabel($5, $1.test);    //loop jump
+		patchlabel($5, $1->test);    //loop jump
 		patchlabel($7, $2+1);       //closure jump
 
-		patchlist($6.breaklist, nextquad());
-		patchlist(%6.contlist, $2+1);
+		patchlist($6->breaklist, nextquad());
+		patchlist($6->contlist, $2+1);
 	};
 
 returnstmt:
