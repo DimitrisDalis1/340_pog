@@ -17,6 +17,7 @@ typedef struct symbol symbol;
 typedef struct quad quad;
 typedef struct call call;
 typedef struct stmt_t stmt_t;
+typedef struct for_t for_t
 
 typedef enum iopcode{
 	assign,	add,	sub,	
@@ -70,6 +71,11 @@ typedef struct stmt_t {
 	int contList;
 	int returnlist;
 }stmt_t;
+
+typedef struct for_t{
+    int test;
+    int enter;
+} for_t;
 
 scopespace_t currscopespace();
 unsigned int currscopeoffset();
