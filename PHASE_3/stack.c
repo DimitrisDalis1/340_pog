@@ -1,6 +1,6 @@
 #include "stack.h"
 myStruct* top=NULL;
-myStruct* temp=NULL;
+myStruct* temp_=NULL;
 myStruct* top1=NULL;
 
 int count = 0;
@@ -13,10 +13,10 @@ void push(int data) {
     }
     else
     {
-        temp =(struct myStruct *)malloc(1*sizeof(myStruct));
-        temp->next = top;
-        temp->data = data;
-        top = temp;
+        temp_ =(struct myStruct *)malloc(1*sizeof(myStruct));
+        temp_->next = top;
+        temp_->data = data;
+        top = temp_;
     }
     count++;
     printf("Node is Inserted\n\n");
