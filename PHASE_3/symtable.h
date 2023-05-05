@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "expr.h"
 #include <stdbool.h>
 #define HASH_MULTIPLIER 65599
 #define MAX_SIZE 65521
@@ -21,6 +22,14 @@ typedef struct symtable_s SymTable_T;
 typedef struct id_list id_list;
 typedef struct SymbolTableEntry SymbolTableEntry;
 typedef struct Scope_node Scope_node;
+typedef enum scopespace_t scopespace_t;
+
+typedef enum scopespace_t{
+	programvar,
+	functionlocal,
+	formalarg
+}scopespace_t;
+
 
 typedef struct Variable{
     const char *name;
@@ -48,6 +57,8 @@ struct SymbolTableEntry{
 
     }value;
     enum SymbolType type;
+    enum scopespace_t space;
+    unsigned int offset;
     SymbolTableEntry* next;
     SymbolTableEntry *next_in_scope;
 };
