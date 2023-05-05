@@ -7,13 +7,13 @@ int count = 0;
 void push(int data) {
      if (top == NULL)
     {
-        top =(struct node *)malloc(1*sizeof(myStruct));
+        top =(struct myStruct *)malloc(1*sizeof(myStruct));
         top->next = NULL;
         top->data = data;
     }
     else
     {
-        temp =(struct node *)malloc(1*sizeof(myStruct));
+        temp =(struct myStruct *)malloc(1*sizeof(myStruct));
         temp->next = top;
         temp->data = data;
         top = temp;
