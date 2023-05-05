@@ -166,7 +166,9 @@ expr* emit_iftableitem(expr* e){
 			tablegetelem,
 			e,
 			e->index,
-			result
+			result,
+			-1,
+			currQuad
 		);
 		return result;
 	}
@@ -177,13 +179,13 @@ expr* emit_iftableitem(expr* e){
 expr* make_call(expr* lv, expr* reversed_elist){
 	expr* func=emit_iftableitem(lv);
 	while(reversed_elist){
-		emit(param,reversed_elist,NULL,NULL);
+		emit(param,reversed_elist,NULL,NULL, -1, currQuad); //2 teleftaia oti na nai
 		reversed_elist=reversed_elist->next;
 	}
-	emit(call,func,NULL,NULL);
+	emit(call,func,NULL,NULL, -1, currQuad); //2 teleftaia argument apla gia test
 	expr* result=newexpr(var_e);
 	result->sym=newtemp();
-	emit(getretval,NULL,NULL,result);
+	emit(getretval,NULL,NULL,result, -1, currQuad);
 
 	return result;
 }
@@ -204,7 +206,8 @@ unsigned int istempname(char* s){
 }
 
 unsigned int istempexpr(expr* e){
-	return e->sym && istempname(e->sym->name); ///////get name if variable or function
+	//return( e->sym); && istempname(e->sym->value.varVal->name)); ///////get name if variable or function
+	return 5;
 }
 
 unsigned nextquad (void) { return currQuad; }
