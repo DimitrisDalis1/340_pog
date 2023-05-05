@@ -394,7 +394,7 @@ lvalue:
 						entry->space=currscopespace();
 						entry->offset=currscopeoffset();
 						entry->type=var_s;
-						inccurrscopeoffset();
+						incurrscopeoffset();
 					}else{
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,LOCALV);
 						entry->space=currscopespace();
