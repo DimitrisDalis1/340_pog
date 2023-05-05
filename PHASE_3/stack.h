@@ -4,7 +4,7 @@
 #include<stdlib.h>
 typedef struct myStruct{
     int data;
-    myStruct* next;
+    struct myStruct* next;
 
 }myStruct;
 
