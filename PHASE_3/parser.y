@@ -400,7 +400,7 @@ lvalue:
 						entry->space=currscopespace();
 						entry->offset=currscopeoffset();
 						entry->type=var_s;
-						inccurrscopeoffset();
+						incurrscopeoffset();
 					}
 					$$=entry;	
 					$$=lvalue_expr(entry);
