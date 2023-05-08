@@ -18,7 +18,7 @@ expr* newexpr_conststring(char* s){
 expr* newexpr_constdouble(double i){
     expr* e = newexpr(constdouble_e);
     e->numConst = i;
-	e->sym = NULL;
+    e->sym = NULL;
     return e;
 }
 
@@ -50,11 +50,15 @@ expr* lvalue_expr(SymbolTableEntry* sym){
 	e->sym =sym;
 
 	switch (sym->type){
-		case var_s: e->type=var_e;
+		case GLOBAL: e->type=var_e;
 		break;
-		case programfunc_s: e->type=programfunc_e;
+		case LOCALV: e->type=var_e;
 		break;
-		case libraryfunc_s: e->type=libraryfunc_e;
+		case FORMAL: e->type=var_e;
+		break;
+		case USERFUNC: e->type=programfunc_e;
+		break;
+		case LIBFUNC: e->type=libraryfunc_e;
 		break;
 		default: assert(0);
 	}
