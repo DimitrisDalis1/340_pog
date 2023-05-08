@@ -164,11 +164,21 @@ stmts:
 	};
 
 arithop://na ginoun oi emit
-	expr PLUS expr{$$->type=arithexpr_e;}
-	|expr MINUS expr{$$->type=arithexpr_e;}
-	|expr MULT expr{$$->type=arithexpr_e;}
-	|expr DIV expr{$$->type=arithexpr_e;}
-	|expr PERC expr{$$->type=arithexpr_e;}
+	expr PLUS expr{
+		$$ = malloc (sizeof(expr*));
+		$$->type=arithexpr_e;}
+	|expr MINUS expr{
+		$$ = malloc (sizeof(expr*));
+		$$->type=arithexpr_e;}
+	|expr MULT expr{
+		$$ = malloc (sizeof(expr*));
+		$$->type=arithexpr_e;}
+	|expr DIV expr{
+		$$ = malloc (sizeof(expr*));
+		$$->type=arithexpr_e;}
+	|expr PERC expr{
+		$$ = malloc (sizeof(expr*));
+		$$->type=arithexpr_e;}
 	;
 
 relop:
@@ -212,7 +222,7 @@ boolexpr:
     
 expr:	
 	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
-	| term  { fprintf(yyout_y,"expr -> term\n"); } 
+	| term  {fprintf(yyout_y,"expr -> term\n"); } 
 	| arithop {
 		$$=newexpr(arithexpr_e);
 		$$->sym=newtemp();
@@ -323,7 +333,7 @@ term:
     		}		
 		fprintf(yyout_y,"term -> lvalue--\n");
 	}
-	|primary {$$ = $1;fprintf(yyout_y,"term -> primary\n"); };
+	|primary {printf("edw eimai %d\n", yylineno);$$ = $1;fprintf(yyout_y,"term -> primary\n"); };
 
 assignexpr:
 	lvalue ASSIGN expr   
@@ -337,10 +347,13 @@ assignexpr:
 		}
 		else
 		{
-			emit(assign, $3, NULL, $1,-1,currQuad);
-			$$ = newexpr(assignexpr_e);
-			$$->sym=newtemp();
-			emit(assign, $1, NULL, $$,-1,currQuad);
+			printf("na sou kaei\n");
+			emit(assign, $1, $3, NULL,-1,currQuad);
+			SymbolTableEntry* temp = newtemp();
+	 		$$ = lvalue_expr(temp);
+			//$$->type = assignexpr_e;
+			//$$->sym=newtemp();
+			emit(assign, $$, $1, NULL,-1,currQuad);
 		}
 		if(call_flag == false){ 
 		if( $1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
@@ -394,17 +407,14 @@ lvalue:
 				{
 					if(current_scope==0)
 					{
-						
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,GLOBAL);
 						entry->space=currscopespace();
 						entry->offset=currscopeoffset();
-						entry->type=var_s;
 						incurrscopeoffset();
 					}else{
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,LOCALV);
 						entry->space=currscopespace();
 						entry->offset=currscopeoffset();
-						entry->type=var_s;
 						incurrscopeoffset();
 					}	
 					$$=lvalue_expr(entry);
@@ -467,7 +477,6 @@ lvalue:
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,GLOBAL);
 					entry->space=currscopespace();
 						entry->offset=currscopeoffset();
-						entry->type=var_s;
 						incurrscopeoffset();
 				}
            			else
@@ -475,7 +484,6 @@ lvalue:
 					entry=SymTable_insert(hash,(char *)$2,yylineno,NULL,current_scope,LOCALV);
 					entry->space=currscopespace();
 						entry->offset=currscopeoffset();
-						entry->type=var_s;
 						incurrscopeoffset();
 				}
             			
@@ -989,7 +997,6 @@ returnstmt:
 %%
 int main(int argc, char** argv)
 {
-
     yyout_y = fopen("yacc_output.txt", "w");
     hash = SymTable_new();
     //symtable_print(head_scope_node,hash);
@@ -1001,6 +1008,7 @@ int main(int argc, char** argv)
     }
     else
         yyin= stdin;
+
     yyparse();
     symtable_print(head_scope_node,hash);
     return 0;
