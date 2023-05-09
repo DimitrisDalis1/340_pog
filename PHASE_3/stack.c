@@ -1,29 +1,38 @@
 #include "stack.h"
-myStruct* top=NULL;
-myStruct* temp_=NULL;
-myStruct* top1=NULL;
+stack_node* temp_=NULL;
+stack_node* top1=NULL;
 
-int count = 0;
-void push(int data) {
-     if (top == NULL)
+
+struct stack* create_stack(){
+    stack* temp;
+    temp = malloc(sizeof(stack));
+    assert(temp);
+    temp->head = NULL;
+    temp->length = 0;
+    return temp;
+}
+
+void push(stack* name,int data) {
+     if (name->head == NULL)
     {
-        top =(struct myStruct *)malloc(1*sizeof(myStruct));
-        top->next = NULL;
-        top->data = data;
+        name->head  =(struct stack_node *)malloc(1*sizeof(stack_node));
+        name->head->next = NULL;
+        name->head->data = data;
     }
     else
     {
-        temp_ =(struct myStruct *)malloc(1*sizeof(myStruct));
-        temp_->next = top;
+        temp_ =(struct stack_node *)malloc(1*sizeof(stack_node));
+        temp_->next = name->head ;
         temp_->data = data;
-        top = temp_;
+        name->head  = temp_;
     }
-    count++;
+    name->length++;
     printf("Node is Inserted\n\n");
 }
 
-int pop() {
-     top1 = top;
+int pop(stack* name) {
+    assert(name);
+     top1 = name->head ;
  
     if (top1 == NULL)
     {
@@ -32,9 +41,9 @@ int pop() {
     }
     else
         top1 = top1->next;
-    int popped = top->data;
-    free(top);
-    top = top1;
-    count--;
+    int popped = name->head ->data;
+    free(name->head );
+    name->head  = top1;
+    name->length--;
     return popped;
 }
