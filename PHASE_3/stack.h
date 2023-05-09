@@ -1,12 +1,22 @@
 
+
 #define SIZE 1024
 #include <stdio.h>
+#include <assert.h>
 #include<stdlib.h>
-typedef struct myStruct{
+typedef struct stack_node{
     int data;
-    struct myStruct* next;
+    struct stack_node* next;
 
-}myStruct;
+}stack_node;
 
-void push(int data);
-int pop();
+typedef struct stack
+{
+    struct stack_node* head;
+    int length;
+}stack;
+
+
+struct stack* create_stack();
+void push(stack* name,int data);
+int pop(stack* name);
