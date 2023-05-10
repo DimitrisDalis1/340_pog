@@ -118,6 +118,8 @@
 %type <stmtNode> loopstmt
 
 %type<exprNode>indexed
+%type<exprNode>indexedelem
+%type<stmtNode>whilestmt
 %type<stringValue>funcname
 %type<exprNode>funcprefix
 %type<exprNode>funcdef
@@ -139,27 +141,35 @@ stmt:
 	|BREAK SEMICOLON  {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Break used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
+				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
 				$1->breaklist = newlist(nextquad()); emit(jump,NULL,NULL,0,-1,currQuad); //not sure orisma 5
 				fprintf(yyout_y,"stmt -> break;\n"); }
 	|CONTINUE SEMICOLON {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Continue used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
+				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
 				$1->contlist = newlist(nextquad()); emit(jump, NULL, NULL,0, -1, currQuad); //not sure orisma 5
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 			    }
 	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
-	|funcdef	{ fprintf(yyout_y,"stmt -> funcdef\n"); }
+	|funcdef	{ 
+				$$=malloc(sizeof(stmt_t));
+				make_stmt($$);
+				fprintf(yyout_y,"stmt -> funcdef\n");
+	 }
 	|SEMICOLON 	{ fprintf(yyout_y,"stmt -> ;\n"); }
 	;
 
 stmts:
 	stmt{$$= $1;}
 	|stmts stmt
-	{
+	{	$$=malloc(sizeof(stmt_t));
+		make_stmt($$);
 		$$->breaklist = mergelist($1->breaklist, $2->breaklist);
 		$$->contlist = mergelist($1->contlist, $2->contlist);
+		$$->returnlist= mergelist($1->returnlist, $2->returnlist);
 
 	};
 
@@ -221,7 +231,8 @@ boolexpr:
 
     
 expr:	
-	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
+	assignexpr  { $$=newexpr(assignexpr_e);
+		 fprintf(yyout_y,"expr -> assignexpr\n"); }
 	| term  {fprintf(yyout_y,"expr -> term\n"); } 
 	| arithop {
 		$$=newexpr(arithexpr_e);
@@ -229,7 +240,9 @@ expr:
 		//emit($2, $1, $3, $$, -1,currQuad);
 	}
 	|relop 
-	|boolexpr
+	|boolexpr{ $$=newexpr(boolexpr_e);
+		 fprintf(yyout_y,"expr -> boolexpr\n"); }
+
 
 	
 	;
@@ -333,7 +346,7 @@ term:
     		}		
 		fprintf(yyout_y,"term -> lvalue--\n");
 	}
-	|primary {printf("edw eimai %d\n", yylineno);$$ = $1;fprintf(yyout_y,"term -> primary\n"); };
+	|primary {$$ = $1;fprintf(yyout_y,"term -> primary\n"); };
 
 assignexpr:
 	lvalue ASSIGN expr   
@@ -346,9 +359,7 @@ assignexpr:
 
 		}
 		else
-		{
-			printf("na sou kaei\n");
-			emit(assign, $1, $3, NULL,-1,currQuad);
+		{			emit(assign, $1, $3, NULL,-1,currQuad);
 			SymbolTableEntry* temp = newtemp();
 	 		$$ = lvalue_expr(temp);
 			//$$->type = assignexpr_e;
@@ -454,7 +465,7 @@ lvalue:
 			$$=lvalue_expr(entry);
 		}else 		$$=lvalue_expr(entry);
 
-
+		$$=lvalue_expr(entry);
     	}
 	|LOCAL ID
 	{
@@ -543,8 +554,15 @@ member:
         	fprintf(stderr,"Cannot use function name as an lvalue[] in line %d and scope %d \n",yylineno,current_scope);
     		}
 	}
-	| call PERIOD ID  {call_flag = true; fprintf(yyout_y,"member -> call.id\n");}
-	| call LEFTBRACE expr RIGHTBRACE {fprintf(yyout_y,"member -> call [ expr ]\n");}
+	| call PERIOD ID  {$$ = member_item($1, $3);
+		call_flag = true; 
+		fprintf(yyout_y,"member -> call.id\n");}
+	| call LEFTBRACE expr RIGHTBRACE {		$1 = emit_iftableitem($1);
+		$$ = newexpr(tableitem_e);
+		$$->sym = $1->sym;
+		$$->index = $3;
+
+		fprintf(yyout_y,"member -> call [ expr ]\n");}
 	;
 	
 call: call LEFTPAR elist RIGHTPAR
@@ -567,6 +585,7 @@ call: call LEFTPAR elist RIGHTPAR
 		{
 			fprintf(stderr,"Function not declared in line %d and scope %d \n",yylineno,current_scope);
 		}
+		$$ = make_call($1, $2->elist);
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 	} 
 	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {
@@ -587,6 +606,7 @@ callsuffix:
 	
 normcall:
 	LEFTPAR elist RIGHTPAR  {
+		$$=malloc(sizeof(call_t));
 		$$->elist = $2;
 		$$->method = 0;
 		$$->name = NULL;
@@ -596,6 +616,7 @@ normcall:
 methodcall:
 	//exei thema obv
 	PERIOD2 ID LEFTPAR elist RIGHTPAR {
+		$$=malloc(sizeof(call_t));
 		$$->elist = $4;
 		$$->method = 1;
 		$$->name = $2;
@@ -603,8 +624,10 @@ methodcall:
 	;
 	
 elist:
-	expr  {fprintf(yyout_y,"elist -> expr\n");}
-	|elist COMMA expr  
+	expr  {
+		$$=$1;
+		fprintf(yyout_y,"elist -> expr\n");}
+	|elist COMMA expr  { }
 	| {};
  
 const:
@@ -641,12 +664,16 @@ objectdef:
 		} ;
 
 indexed:
-	indexedelem {fprintf(yyout_y,"indexed -> indexedelem\n");} 
+	indexedelem {
+		$$=$1;
+		fprintf(yyout_y,"indexed -> indexedelem\n");} 
 	|indexed COMMA indexedelem {fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  
 	;
 
 indexedelem:
- 	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");} ;
+ 	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");
+		$$=$4;
+		} ;
 
 funcname:
 	ID{
@@ -663,6 +690,8 @@ funcname:
 funcprefix:
 	FUNCTION funcname
 	{
+
+		
 		SymbolTableEntry* search =lookup_inScope(hash,(char *)$2,0);
 			if (search!=NULL)
 			{
@@ -672,7 +701,9 @@ funcprefix:
 				}else if(current_scope== 0)
 				{
 					fprintf(stderr,"Found symbol with same name in line %d and scope %d \n",yylineno,current_scope);
-				}	
+				}
+				$$=malloc(sizeof(expr));
+				$$->sym=search;	
 			}
 			/*check if it doesnt exist on the hash*/
 			//printf("1321\n");
@@ -681,6 +712,9 @@ funcprefix:
 			if (search == NULL)
 			{
 				//printf("This function %s did not exist so we are free to add it to the hash\n", $2);
+				$$=newexpr(programfunc_e);
+				//$$=malloc(sizeof(expr));
+				//$$->type=var_e;
 				$$->sym=SymTable_insert(hash,(char *)$2,yylineno,NULL,temp,USERFUNC);
 			}
 			else
@@ -689,6 +723,8 @@ funcprefix:
 					fprintf(stderr, "Function redefinition in line %d and scope %d \n",yylineno,current_scope);}
 				else{
 					fprintf(stderr, "Function %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);}	
+				$$=malloc(sizeof(expr));
+				$$->sym=search;	
 			}
 		//$$ = SymTable_insert(hash, $2, yylineno, NULL, current_scope, USERFUNC); //Mesa anaferetai sto deutero orisma ws function_s	
 		//$funcprefix.iaddress = nextquadlabel(); Ti einai to iaddress, to nextquadlabel einai sth diafaneia 10, diale3h 10
@@ -711,12 +747,13 @@ funcargs:
 				};
 funcblockstart:
 	{
-		push(loopcounterstack); loopcounter=0; //push(loopcounterstack,loopcounter);
+		//push(loopcounterstack); 
+		loopcounter=0; //push(loopcounterstack,loopcounter);
 	};
 
 funcblockend:
 	{
-		loopcounter=pop(); //loopcounter=pop(loopcounterstack);
+		//loopcounter=pop(); //loopcounter=pop(loopcounterstack);
 	};
 
 //gia ta 2 apo epanw
@@ -738,8 +775,9 @@ funcdef:
 		//$funcprefix.totalLocals = $3; Store locals in symbol entry
 		//int offset = pop_and_top(scopeoffsetStack); pop and get pre scope offset
 		restorecurrscopeoffset(offset); //restore previous scope offset, tbf(10,10)
+		assert($$);
 		$$ = $1;	//The function definition returns the symbol
-		emit(funcend, $$, NULL, NULL,nextquadlabel(),currQuad);	
+		//emit(funcend, $$, NULL, NULL,nextquadlabel(),currQuad);	
 	};
 
 idlist:
@@ -780,7 +818,7 @@ idlist:
     
     //insertion in the idlist and saving the idlist
     insert($1,$3);
-    $$ = $1; //not sure if this is functional 
+    //$$ = $1; //not sure if this is functional 
 
 	//insertion in the symtable/scopelist
 	SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
@@ -843,7 +881,7 @@ block:
 
 		//increase_scope();
  	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  p??s??? (e?d??? pe??pt?s?): t? block t?? s????t?s?? de? a????e? ep?p???? t? scope ?at? 
-+1 ??a t? ?e?t???? block t?? s????t?s?? e??a? +1 se s?????s? Βµe t? scope p?? pe????e? t?
++1 ??a t? ?e?t???? block t?? s????t?s?? e??a? +1 se s?????s? ?µe t? scope p?? pe????e? t?
 s????t?s?*/
     	temp RIGHTCURLY
 	{
@@ -893,7 +931,7 @@ ifprefix:
 	IF LEFTPAR expr RIGHTPAR{
 		emit(if_eq,NULL, $3, newexpr_constbool(1),nextquad()+2, currQuad);
 		$$ = nextquad();
-		emit(jump, NULL, NULL, 0,-1,currQuad);
+		emit(jump, NULL, NULL, NULL,-1,currQuad);
 	};
 
 if:	
@@ -908,7 +946,7 @@ if:
 elseprefix:
 	ELSE{
 		$$=nextquad();
-		emit(jump, NULL,NULL,0,-1,currQuad);
+		emit(jump, NULL,NULL,NULL,-1,currQuad);
 	};
 
 loopstart:
@@ -918,7 +956,7 @@ loopend:
 	{--loopcounter;};
 
 loopstmt:
-	loopstart stmt loopend {$$=$2;};
+	loopstart stmt loopend {$$=$2; };
 
 
 whilestmt:
@@ -929,6 +967,7 @@ whilestmt:
 		patchlabel($2, nextquad());
 		patchlist($3->breaklist, nextquad());
 		patchlist($3->contlist, $1);
+		$$=$3;
 	}
 	;
 
@@ -943,7 +982,7 @@ whilecond:
 	{
 		emit(if_eq,NULL, $3,newexpr_constbool(1),nextquad()+2,currQuad);
 		$$ = nextquad();
-		emit(jump, NULL,NULL,0,-1,currQuad);
+		emit(jump, NULL,NULL,NULL,-1,currQuad);
 	};
 /*
 while:
@@ -963,7 +1002,7 @@ M:
 
 forprefix:
 	FOR LEFTPAR{sim_loops++;} elist SEMICOLON M expr SEMICOLON
-	{
+	{       $$=malloc(sizeof(for_t));
 		$$->test = $6;
 		$$->enter = nextquad();
 		emit(if_eq, $7, newexpr_constbool(1), 0,-1,currQuad);
