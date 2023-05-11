@@ -100,5 +100,7 @@ int mergelist(int, int);
 void patchlist(int, int);
 void printMedianCode();
 void printExpr(expr*);
+expr* result_finder(expr*, expr*);
+expr* emitBoolean(expr*);
 
 #endif
