@@ -24,6 +24,10 @@
     int offset=0;
     int loopcounter=0;
     int loopcounterstack=0;
+	int offset_=-1; 
+    //extern unsigned functionLocalOffset;
+    //extern unsigned formalArgOffset;
+	extern unsigned formalArgOffset;
     
     
     int b_n_b = 0; //before loop
@@ -37,6 +41,7 @@
     int isFunc_loop = 0; //exoume function call mesa se active loopa
 
     bool called_from_func = false;
+	stack* stack_;
 
 %}
 
@@ -233,7 +238,8 @@ boolexpr:
 expr:	
 	assignexpr  { $$=newexpr(assignexpr_e);
 		 fprintf(yyout_y,"expr -> assignexpr\n"); }
-	| term  {fprintf(yyout_y,"expr -> term\n"); } 
+	| term  {fprintf(yyout_y,"expr -> term\n");
+	$$=$1; } 
 	| arithop {
 		$$=newexpr(arithexpr_e);
 		$$->sym=newtemp();
@@ -250,16 +256,32 @@ expr:
 term: 
 	LEFTPAR expr RIGHTPAR   {$$ = $2; fprintf(yyout_y,"term -> ( expr )\n"); }
 	| MINUS expr { 
+		if($2 ==  NULL){
+			return 0; //not sure for this
+		}else if($2->type==programfunc_e || $2->type==libraryfunc_e){
+			fprintf(stderr,"Term cannot be a library or a program function \n"); //check if we should terminate it here
+		}
+
 		check_arith($2,$2->strConst);
-		$$ = newexpr(arithexpr_e);
-		$$->sym = istempexpr($2) ? $2->sym : newtemp();
-		emit(uminus, $2, NULL, $$, -1, currQuad);
-		fprintf(yyout_y,"term -> -expr\n"); 
+		
+		if(istempexpr($2)){
+			emit(uminus, $2, $2, NULL, -1, currQuad);
+			$$ = $2;
+		}else{
+			$$ = newexpr(arithexpr_e);
+			$$->sym = newtemp();
+			emit(uminus, $$, $2, NULL, -1, currQuad); // _t0 = -x;
+			fprintf(yyout_y,"term -> -expr\n"); 
+		}
 	}
-	|NOT expr { 
-		fprintf(yyout_y,"term -> not expr\n"); 
-		/*$$->truelist = $2->falselist;
-		$$->falselist = $2->truelist;*/
+	| NOT expr {
+		if($2 == NULL){
+			$$ = NULL;
+		}else{
+			$$->truelist = $2->falselist;
+			$$->falselist = $2->truelist;
+			fprintf(yyout_y,"term -> not expr\n"); 
+		}
 	}
 	|PLUS2 lvalue
 	{ 
@@ -418,16 +440,18 @@ lvalue:
 				{
 					if(current_scope==0)
 					{
+						offset_++;
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,GLOBAL);
 						entry->space=currscopespace();
-						entry->offset=currscopeoffset();
-						incurrscopeoffset();
+						entry->offset=offset_;
 					}else{
+						offset_++;
 						entry=SymTable_insert(hash,(char *)$1,yylineno,NULL,current_scope,LOCALV);
 						entry->space=currscopespace();
-						entry->offset=currscopeoffset();
-						incurrscopeoffset();
+						entry->offset=offset_;	
 					}	
+					//incurrscopeoffset();
+					
 					$$=lvalue_expr(entry);
 				}
 				else
@@ -466,6 +490,8 @@ lvalue:
 		}else 		$$=lvalue_expr(entry);
 
 		$$=lvalue_expr(entry);
+		printf("offset is %d \n",offset_);
+		//printf("after offset is %d \n",offset_);
     	}
 	|LOCAL ID
 	{
@@ -631,14 +657,20 @@ elist:
 	| {};
  
 const:
- 	INT {fprintf(yyout_y,"const -> number\n");}
-	| REAL {fprintf(yyout_y,"const -> number\n");}
-	| STRING  {fprintf(yyout_y,"const -> string\n");}
-	|NIL  {fprintf(yyout_y,"const -> nil\n");}
-	|TRUE  {fprintf(yyout_y,"const -> true\n");}
-	|FALSE  {fprintf(yyout_y,"const -> false\n");}
-	;
-
+     INT {fprintf(yyout_y,"const -> number\n");
+    $$=newexpr_constint($1);
+    }
+    | REAL {fprintf(yyout_y,"const -> number\n");
+        $$=newexpr_constdouble($1);}
+    | STRING  {fprintf(yyout_y,"const -> string\n");
+        $$=newexpr_conststring($1);}
+    |NIL  {fprintf(yyout_y,"const -> nil\n");
+        $$=newexpr_constnil();}
+    |TRUE  {fprintf(yyout_y,"const -> true\n");
+        $$=newexpr_constbool('t');}
+    |FALSE  {fprintf(yyout_y,"const -> false\n");
+        $$=newexpr_constbool('f');}
+    ;
 
 objectdef:
  	LEFTBRACE elist RIGHTBRACE {
@@ -724,12 +756,16 @@ funcprefix:
 				else{
 					fprintf(stderr, "Function %s declared with same name as variable in line %d and scope %d \n",$2,yylineno,current_scope);}	
 				$$=malloc(sizeof(expr));
-				$$->sym=search;	
+				$$->sym=search;
 			}
 		//$$ = SymTable_insert(hash, $2, yylineno, NULL, current_scope, USERFUNC); //Mesa anaferetai sto deutero orisma ws function_s	
 		//$funcprefix.iaddress = nextquadlabel(); Ti einai to iaddress, to nextquadlabel einai sth diafaneia 10, diale3h 10
 		emit(funcstart, $$, NULL, NULL,nextquadlabel(),currQuad);
-		//push(scopeoffserstack, currscopeoffset()); Mia push na ftia3oume gia na kanei save to curr offset
+		if(offset_ > -1){
+			push(stack_, offset_);// Mia push na ftia3oume gia na kanei save to curr offset
+		}
+		
+		offset_ = -1;
 		enterscopespace(); //Entering function argument scope space
 		resetformalargoffset(); //Start formals from zero tbf(10,10)
 			
@@ -747,13 +783,24 @@ funcargs:
 				};
 funcblockstart:
 	{
+		
 		//push(loopcounterstack); 
-		loopcounter=0; //push(loopcounterstack,loopcounter);
+		//loopcounter=0; //push(loopcounterstack,loopcounter);
+		//push(funcLocalStack,currscopeoffset());// loopcounter=0; //push(loopcounterstack,loopcounter);
+		//curr_scope_offset = 0;
 	};
 
 funcblockend:
 	{
 		//loopcounter=pop(); //loopcounter=pop(loopcounterstack);
+		//loopcounter=pop(loopcounterstack); //loopcounter=pop(loopcounterstack); den ehei ylopoithei
+		//int temp = pop(programVarStack);
+		//push(programVarStack,curr_scope_offset);
+		exitscopespace();
+		if(offset_ > -1){
+			offset_ = pop(stack_);
+		}
+		//offset = temp;
 	};
 
 //gia ta 2 apo epanw
@@ -767,14 +814,14 @@ funcdef:
 		int curr_scope_offset= currscopeoffset();
 		fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");
 		 //Extract total locals
-		exitscopespace();	//Exiting function locals space
+		//exitscopespace();	//Exiting function locals space
 	}
 	funcblockend
 	{
-		exitscopespace(); //Exiting function definition space
+		//exitscopespace(); //Exiting function definition space
 		//$funcprefix.totalLocals = $3; Store locals in symbol entry
-		//int offset = pop_and_top(scopeoffsetStack); pop and get pre scope offset
-		restorecurrscopeoffset(offset); //restore previous scope offset, tbf(10,10)
+		//int offset = pop(currscopeoffset()); //pop and get pre scope offset
+		//restorecurrscopeoffset(offset); //restore previous scope offset, tbf(10,10)
 		assert($$);
 		$$ = $1;	//The function definition returns the symbol
 		//emit(funcend, $$, NULL, NULL,nextquadlabel(),currQuad);	
@@ -800,8 +847,12 @@ idlist:
 		insert($$,$1);
 
 		//insertion in the symtable/scopelist
-		SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+		SymbolTableEntry* temp;
+		temp = SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
+		temp->offset = formalArgOffset;
+		temp->space = formalarg;
 		fprintf(yyout_y,"idlist -> id\n");}
+		printf("formal offset is %d \n",formalArgOffset);
 	}
 	|idlist COMMA ID 
 	{
@@ -821,9 +872,15 @@ idlist:
     //$$ = $1; //not sure if this is functional 
 
 	//insertion in the symtable/scopelist
-	SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
-	}
+	SymbolTableEntry* temp;
+		temp =SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
+		temp->offset = formalArgOffset++;
+		temp->space = formalarg;
+printf("formal offset is %d \n",formalArgOffset);
+	
+}
     fprintf(yyout_y,"idlist -> idlist , id\n");
+	
 	}
 	| 
 	{    
@@ -1036,6 +1093,8 @@ returnstmt:
 %%
 int main(int argc, char** argv)
 {
+	stack_ = create_stack();
+    //programVarStack = create_stack();
     yyout_y = fopen("yacc_output.txt", "w");
     hash = SymTable_new();
     //symtable_print(head_scope_node,hash);
