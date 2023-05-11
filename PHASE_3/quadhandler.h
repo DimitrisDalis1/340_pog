@@ -27,11 +27,13 @@ typedef enum iopcode{
 	mul,	divi,	mod,
 	uminus,	and,	or,
 	not,	if_eq,	if_noteq,
-	if_greater,	call,	param,
+	if_greater, if_lesseq, if_less,
+	if_greatereq, call,	param,
 	ret,	getretval,	funcstart,
 	funcend,	tablecreate,	tablegetelem,	
 	tablesetelem,jump
 }iopcode;
+
 
 
 typedef struct symbol{
