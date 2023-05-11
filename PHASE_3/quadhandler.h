@@ -96,4 +96,7 @@ void make_stmt(stmt_t*);
 int newlist(int);
 int mergelist(int, int);
 void patchlist(int, int);
+void printMedianCode();
+void printExpr(expr*);
+
 #endif
