@@ -27,7 +27,8 @@
 	int offset_=-1; 
     //extern unsigned functionLocalOffset;
     //extern unsigned formalArgOffset;
-	extern unsigned formalArgOffset;
+    extern int tempcounter;
+    extern unsigned formalArgOffset;
     
     
     int b_n_b = 0; //before loop
@@ -138,18 +139,24 @@ program:
 	| {};
 
 stmt:	
-	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); }
-	|if		{ fprintf(yyout_y,"stmt -> ifstmt\n"); }
-	|whilestmt	{ fprintf(yyout_y,"stmt -> whilestmt\n"); }
-	|forstmt	{ fprintf(yyout_y,"stmt -> forstmt\n"); }
-	|returnstmt	{ fprintf(yyout_y,"stmt -> returnstmt\n"); }
+	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); 
+			tempcounter=0;}
+	|if		{ fprintf(yyout_y,"stmt -> ifstmt\n"); 
+			tempcounter=0;}
+	|whilestmt	{ fprintf(yyout_y,"stmt -> whilestmt\n"); 
+			tempcounter=0;}
+	|forstmt	{ fprintf(yyout_y,"stmt -> forstmt\n");
+			tempcounter=0;}
+	|returnstmt	{ fprintf(yyout_y,"stmt -> returnstmt\n");
+			tempcounter=0;}
 	|BREAK SEMICOLON  {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Break used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
 				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
 				$1->breaklist = newlist(nextquad()); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
-				fprintf(yyout_y,"stmt -> break;\n"); }
+				fprintf(yyout_y,"stmt -> break;\n"); 
+				tempcounter=0;}
 	|CONTINUE SEMICOLON {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Continue used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
@@ -157,14 +164,17 @@ stmt:
 				make_stmt($1);
 				$1->contlist = newlist(nextquad()); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
 	 			fprintf(yyout_y,"stmt -> continue;\n");
+				tempcounter=0;
 			    }
 	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
 	|funcdef	{ 
 				$$=malloc(sizeof(stmt_t));
 				make_stmt($$);
 				fprintf(yyout_y,"stmt -> funcdef\n");
+				tempcounter=0;
 	 }
-	|SEMICOLON 	{ fprintf(yyout_y,"stmt -> ;\n"); }
+	|SEMICOLON 	{ fprintf(yyout_y,"stmt -> ;\n"); 
+			tempcounter=0;}
 	;
 
 stmts:
@@ -255,7 +265,7 @@ expr:
 		$$->sym=newtemp();
 		//emit($2, $1, $3, $$, -1,currQuad);
 	}
-	|relop 
+	|relop {$$=$1; } 
 	|boolexpr{ $$=newexpr(boolexpr_e);
 		 fprintf(yyout_y,"expr -> boolexpr\n"); }
 
