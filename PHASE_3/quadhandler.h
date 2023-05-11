@@ -89,7 +89,7 @@ expr* emit_iftableitem(expr*);
 expr* make_call(expr*, expr* );
 void check_arith(expr*, const char* );
 unsigned int istempname(char*);
-unsigned int istempexpr(expr*);
+bool istempexpr(expr*);
 void patchlabel(unsigned, unsigned);
 unsigned nextquad(void);
 void make_stmt(stmt_t*);
