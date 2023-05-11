@@ -148,14 +148,14 @@ stmt:
 				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
 				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
-				$1->breaklist = newlist(nextquad()); emit(jump,NULL,NULL,0,-1,currQuad); //not sure orisma 5
+				$1->breaklist = newlist(nextquad()); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
 				fprintf(yyout_y,"stmt -> break;\n"); }
 	|CONTINUE SEMICOLON {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Continue used inside of function with no active loop inside of it in line %d\n", yylineno);}
 				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
 				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
-				$1->contlist = newlist(nextquad()); emit(jump, NULL, NULL,0, -1, currQuad); //not sure orisma 5
+				$1->contlist = newlist(nextquad()); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 			    }
 	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
@@ -181,47 +181,57 @@ stmts:
 arithop://na ginoun oi emit
 	expr PLUS expr{
 		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;}
+		$$->type=arithexpr_e;
+		//emit(add, lvalue_expr, $1, $3,-1,currQuad);
+}
 	|expr MINUS expr{
 		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;}
+		$$->type=arithexpr_e;
+		//emit(sub, lvalue_expr, $1, $3,-1,currQuad);
+}
 	|expr MULT expr{
 		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;}
+		$$->type=arithexpr_e;
+		//emit(mul, lvalue_expr, $1, $3,-1,currQuad);
+}
 	|expr DIV expr{
 		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;}
+		$$->type=arithexpr_e;
+		//emit(divi, lvalue_expr, $1, $3,-1,currQuad);
+}
 	|expr PERC expr{
 		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;}
+		$$->type=arithexpr_e;
+		//emit(mod, lvalue_expr, $1, $3,-1,currQuad);
+}
 	;
 
 relop:
 	expr BIGGER expr{ fprintf(yyout_y,"expr -> expr > expr\n"); 
 						/*$$truelist = makelist(nextquad);
 						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
+						emit(if_greater, NULL,$1,$3,0,currQuad);
+						emit(jump, NULL,NULL,NULL,0,currQuad);*/}
 	| expr SMALLER expr { fprintf(yyout_y,"expr -> expr < expr\n");
 						/*$$truelist = makelist(nextquad);
 						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
+						emit(if_less, NULL, $1, $3, 0, currQuad);
+            					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
 	| expr SMALLER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n"); 
 						/*$$truelist = makelist(nextquad);
 						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
+            					emit(if_lesseq, NULL, $1, $3, 0, currQuad);
+            					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
 	| expr EQUAL expr{ fprintf(yyout_y,"expr -> expr == expr\n"); 
 						/*$$truelist = makelist(nextquad);
 						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
+        					emit(if_eq, NULL, $1, $3, 0, currQuad);
+        					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
 	| expr NOT_EQUAL expr{ fprintf(yyout_y,"expr -> expr != expr\n"); 
 						/*$$truelist = makelist(nextquad);
 						$$falselist = makelist(nexrquad+1);
-						emit(IF_RELOP,$1.val,$3.val,_);
-						emit(JUMP,_);*/}
+        					emit(if_noteq, NULL, $1, $3, 0, currQuad);
+        					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
 	
 		;
 
@@ -288,15 +298,15 @@ term:
 		check_arith($2,$2->strConst);
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
-			emit(add, $$, newexpr_constint(1), $$, -1, currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
+			emit(add, $$,$$ ,newexpr_constint(1) , -1, currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
 			emit(tablesetelem, $2, $2->index, $$, -1,currQuad);
 		}else{
                         expr* num=newexpr_constint(1);
 
-			emit(add, $2, num, $2,-1,currQuad);
+			emit(add, $2, $2, num,-1,currQuad);
 			$$ = newexpr(arithexpr_e);
 			$$->sym = newtemp();
-			emit(assign, $2, NULL, $$,-1,currQuad);
+			emit(assign, $$, $2, NULL,-1,currQuad);
 		}
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC || ((SymbolTableEntry*)$2)->type == LIBFUNC))
 		{
@@ -311,13 +321,13 @@ term:
 		$$->sym = newtemp();
 		if ($1->type == tableitem_e){
 			expr* val = emit_iftableitem($1);
-			emit(assign, val, NULL, $$,-1,currQuad);
-			emit(add,val,newexpr_constint(1), val,-1,currQuad); //na dw kai periptwsh me double
-			emit(tablesetelem, $1, $1->index, val-1,-1,currQuad);
+			emit(assign, $$, val, NULL,-1,currQuad);
+			emit(add,val,val, newexpr_constint(1),-1,currQuad); //na dw kai periptwsh me double
+			emit(tablesetelem, $1, $1->index, val,-1,currQuad);
 		}
 		else {
-			emit(assign, $1, NULL, $$,-1,currQuad);
-			emit(add, $1, newexpr_constint(1), $1,-1,currQuad);
+			emit(assign, $$, $1, NULL,-1,currQuad);
+			emit(add, $1, $1,newexpr_constint(1),-1,currQuad);
 		}
 		if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC))
 		{
@@ -331,13 +341,13 @@ term:
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
 			expr* num=newexpr_constint(1);
-			emit(sub, $$, num, $$,-1,currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
+			emit(sub, $$, $$, num,-1,currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
 			emit(tablesetelem, $2, $2->index, $$,-1,currQuad);
 		}else{
-			emit(sub, $2, newexpr_constint(1), $2,-1,currQuad);
+			emit(sub, $2,$2, newexpr_constint(1),-1,currQuad);
 			$$ = newexpr(arithexpr_e);
 			$$->sym = newtemp();
-			emit(assign, $2, NULL, $$,-1,currQuad);
+			emit(assign, $$, $2, NULL,-1,currQuad);
 		}
 
 		if(((SymbolTableEntry*)$2) != NULL && (((SymbolTableEntry*)$2)->type == USERFUNC ||((SymbolTableEntry*)$2)->type == LIBFUNC))
@@ -353,13 +363,13 @@ term:
 		$$->sym = newtemp();
 		if ($1->type == tableitem_e){
 			expr* val = emit_iftableitem($1);
-			emit(assign, val, NULL, $$,-1,currQuad);
-			emit(sub,val,newexpr_constint(1), val,-1,currQuad);
+			emit(assign, $$, val, NULL,-1,currQuad);
+			emit(sub,val,val,newexpr_constint(1),-1,currQuad);
 			emit(tablesetelem, $1, $1->index, val,-1,currQuad);
 		}
 		else {
-			emit(assign, $1, NULL, $$,-1,currQuad);
-			emit(sub, $1, newexpr_constint(1), $1,-1,currQuad);
+			emit(assign, $$, $1, NULL,-1,currQuad);
+			emit(sub, $1, $1,newexpr_constint(1),-1,currQuad);
 		}
 
 		if(((SymbolTableEntry*)$1) != NULL && (((SymbolTableEntry*)$1)->type == USERFUNC ||((SymbolTableEntry*)$1)->type == LIBFUNC))
@@ -760,7 +770,8 @@ funcprefix:
 			}
 		//$$ = SymTable_insert(hash, $2, yylineno, NULL, current_scope, USERFUNC); //Mesa anaferetai sto deutero orisma ws function_s	
 		//$funcprefix.iaddress = nextquadlabel(); Ti einai to iaddress, to nextquadlabel einai sth diafaneia 10, diale3h 10
-		emit(funcstart, $$, NULL, NULL,nextquadlabel(),currQuad);
+		//emit(jump, NULL, NULL, NULL, 0, currQuad);
+		//emit(funcstart, newexpr_conststring(name), NULL, NULL,-1,currQuad);
 		if(offset_ > -1){
 			push(stack_, offset_);// Mia push na ftia3oume gia na kanei save to curr offset
 		}
