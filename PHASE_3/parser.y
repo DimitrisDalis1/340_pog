@@ -135,7 +135,8 @@
 %%
 
 program: 
-	stmts{fprintf(yyout_y,"program -> stmt(asteraki)\n");}  
+	stmts{$$=$1;
+	fprintf(yyout_y,"program -> stmt(asteraki)\n");}  
 	| {};
 
 stmt:	
@@ -439,11 +440,11 @@ term:
 assignexpr:
 	lvalue ASSIGN expr   
 	{ 
-		if(((SymbolTableEntry*)$1)->type == tableitem_e)
+		if(($1)->type == tableitem_e)
 		{
 			emit(tablesetelem, $1, $1->index, $3,-1,currQuad);
 			$$ = emit_iftableitem($1);
-			((SymbolTableEntry*)$$)->type = assignexpr_e;
+			($$)->type = assignexpr_e;
 
 		}
 		else
@@ -468,13 +469,16 @@ primary:
 			fprintf(yyout_y,"primary -> lvalue\n");
 			$$ = emit_iftableitem($1);
 		}
-	|call  {fprintf(yyout_y,"primary -> call\n");}
-	|objectdef  {fprintf(yyout_y,"primary -> objectdef\n");}
+	|call  {fprintf(yyout_y,"primary -> call\n");
+		$$=$1;}
+	|objectdef  {fprintf(yyout_y,"primary -> objectdef\n");
+		$$=$1;}
 	|LEFTPAR funcdef RIGHTPAR  {
 					$$ = newexpr(programfunc_e);
 					$$->sym = $2->sym;
 					fprintf(yyout_y,"primary -> ( funcdef )\n");}
-	|const  {fprintf(yyout_y,"primary -> const\n");} 
+	|const  {fprintf(yyout_y,"primary -> const\n");
+		$$=$1;} 
 	;
 	
 lvalue:
@@ -556,7 +560,6 @@ lvalue:
 		}else 		$$=lvalue_expr(entry);
 
 		$$=lvalue_expr(entry);
-		printf("offset is %d \n",offset_);
 		//printf("after offset is %d \n",offset_);
     	}
 	|LOCAL ID
@@ -598,6 +601,7 @@ lvalue:
       		
 		$$=lvalue_expr(entry);
 		}
+		$$=lvalue_expr(entry);
 	}
 	|COLON2 ID
 	{ 
@@ -719,8 +723,12 @@ elist:
 	expr  {
 		$$=$1;
 		fprintf(yyout_y,"elist -> expr\n");}
-	|elist COMMA expr  { }
-	| {};
+	|elist COMMA expr  { while($1->next){
+				$1=$1->next;
+				}
+			$1->next=$3;
+		}
+	| {$$=NULL;};
  
 const:
      INT {fprintf(yyout_y,"const -> number\n");
@@ -755,6 +763,7 @@ objectdef:
 					while($2!=NULL)
 					{
 						emit(tablesetelem, t, $2->index, $2,-1,currQuad);
+						$2=$2->next;
 					}
 					$$ = t;
 						
@@ -765,11 +774,19 @@ indexed:
 	indexedelem {
 		$$=$1;
 		fprintf(yyout_y,"indexed -> indexedelem\n");} 
-	|indexed COMMA indexedelem {fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  
+	|indexed COMMA indexedelem {
+		 while($$->next){  
+                   $$ = $$->next;
+                 }        
+                 $$->next = $3;
+		fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  
 	;
 
+
 indexedelem:
- 	LEFTCURLY expr COLON expr RIGHTCURLY {fprintf(yyout_y,"indexedelem -> { expr : expr }\n");
+ 	LEFTCURLY expr COLON expr RIGHTCURLY {
+		 $4->index = $2;
+		fprintf(yyout_y,"indexedelem -> { expr : expr }\n");
 		$$=$4;
 		} ;
 
@@ -942,7 +959,6 @@ idlist:
 		temp =SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
 		temp->offset = formalArgOffset++;
 		temp->space = formalarg;
-printf("formal offset is %d \n",formalArgOffset);
 	
 }
     fprintf(yyout_y,"idlist -> idlist , id\n");
@@ -1059,6 +1075,7 @@ ifprefix:
 
 if:	
 	ifprefix stmt{
+		$$=$2;
 		patchlabel($1, nextquad());
 	}
 	|ifprefix stmt elseprefix stmt{
