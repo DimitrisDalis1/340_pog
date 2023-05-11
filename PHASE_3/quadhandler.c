@@ -321,7 +321,7 @@ unsigned nextquad (void) { return currQuad; }
 
 
 void make_stmt (stmt_t* s){
-	 s->breaklist = s->contlist = 0; 
+	 s->breaklist= s->returnlist = s->contlist = 0;  
 }
 
 int newlist (int i){ 
