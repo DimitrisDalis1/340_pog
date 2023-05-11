@@ -871,10 +871,9 @@ idlist:
 		//insertion in the symtable/scopelist
 		SymbolTableEntry* temp;
 		temp = SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
-		temp->offset = formalArgOffset;
+		temp->offset = formalArgOffset++;
 		temp->space = formalarg;
 		fprintf(yyout_y,"idlist -> id\n");}
-		printf("formal offset is %d \n",formalArgOffset);
 	}
 	|idlist COMMA ID 
 	{
