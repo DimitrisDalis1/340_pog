@@ -843,8 +843,8 @@ funcprefix:
 			}
 		//$$ = SymTable_insert(hash, $2, yylineno, NULL, current_scope, USERFUNC); //Mesa anaferetai sto deutero orisma ws function_s	
 		//$funcprefix.iaddress = nextquadlabel(); Ti einai to iaddress, to nextquadlabel einai sth diafaneia 10, diale3h 10
-		//emit(jump, NULL, NULL, NULL, 0, currQuad);
-		//emit(funcstart, newexpr_conststring(name), NULL, NULL,-1,currQuad);
+		emit(jump, NULL, NULL, NULL, 0, currQuad);
+		emit(funcstart, newexpr_conststring($2), NULL, NULL,-1,currQuad);
 		if(offset_ > -1){
 			push(stack_, offset_);// Mia push na ftia3oume gia na kanei save to curr offset
 		}
@@ -1070,7 +1070,7 @@ ifprefix:
 	IF LEFTPAR expr RIGHTPAR{
 		emit(if_eq,NULL, $3, newexpr_constbool(1),nextquad()+2, currQuad);
 		$$ = nextquad();
-		emit(jump, NULL, NULL, NULL,-1,currQuad);
+		emit(jump, NULL, NULL, NULL,0,currQuad);
 	};
 
 if:	
@@ -1086,7 +1086,7 @@ if:
 elseprefix:
 	ELSE{
 		$$=nextquad();
-		emit(jump, NULL,NULL,NULL,-1,currQuad);
+		emit(jump, NULL,NULL,NULL,0,currQuad);
 	};
 
 loopstart:
@@ -1122,21 +1122,21 @@ whilecond:
 	{
 		emit(if_eq,NULL, $3,newexpr_constbool(1),nextquad()+2,currQuad);
 		$$ = nextquad();
-		emit(jump, NULL,NULL,NULL,-1,currQuad);
+		emit(jump, NULL,NULL,NULL,0,currQuad);
 	};
 /*
 while:
 	whilestart whilecond stmt 
 	{
 		fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
-		emit(jump,NULL,NULL,$1,-1,currQuad);
+		emit(jump,NULL,NULL,NULL,$1,currQuad);
 		patchlabel($2, nextquad());
 		patchlist($3->breaklist, nextquad());
 		pathclist($3->contlist, $1);
 	};*/
 
 N:
-	{$$ = nextquad(); emit(jump, NULL,NULL,0,-1,currQuad);};
+	{$$ = nextquad(); emit(jump, NULL,NULL,NULL,0,currQuad);};
 M:
 	{$$=nextquad();};
 
@@ -1145,7 +1145,7 @@ forprefix:
 	{       $$=malloc(sizeof(for_t));
 		$$->test = $6;
 		$$->enter = nextquad();
-		emit(if_eq, $7, newexpr_constbool(1), 0,-1,currQuad);
+		emit(if_eq, NULL, $7,newexpr_constbool(1), 0,currQuad);
 	};
 
 forstmt:
