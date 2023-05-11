@@ -164,9 +164,9 @@ expr* emit_iftableitem(expr* e){
 		result->sym=newtemp();
 		emit(
 			tablegetelem,
-			e,
-			e->index,
 			result,
+			e->index,
+			e,
 			-1,
 			currQuad
 		);
