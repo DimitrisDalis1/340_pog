@@ -349,3 +349,24 @@ void patchlist (int list, int label) {
 		list = next;
 	}
 }
+
+expr* result_finder(expr* a1, expr* a2){
+	SymbolTableEntry* result;
+	expr* temp;
+	if(a1->sym && a1->sym->type<2 && istempname(a1->sym->value.varVal->name))
+	{
+		result = a1->sym;
+	}else if(a2->sym && a2->sym->type<2 && istempname(a2->sym->value.varVal->name))
+	{
+		result = a2->sym;
+	}else{
+		result = newtemp();
+	}
+	temp = lvalue_expr(result);
+	return temp;
+}
+
+expr* emitBoolean(expr*){
+	
+}
+
