@@ -219,38 +219,83 @@ arithop://na ginoun oi emit
 
 relop:
 	expr BIGGER expr{ fprintf(yyout_y,"expr -> expr > expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
+						$$ = newexpr(boolexpr_e);
+						$$->truelist = newlist(nextquad());
+						$$->falselist = newlist(nextquad()+1);
 						emit(if_greater, NULL,$1,$3,0,currQuad);
-						emit(jump, NULL,NULL,NULL,0,currQuad);*/}
+						emit(jump, NULL,NULL,NULL,0,currQuad);}
 	| expr SMALLER expr { fprintf(yyout_y,"expr -> expr < expr\n");
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
+						$$ = newexpr(boolexpr_e);
+						$$->truelist = newlist(nextquad());
+						$$->falselist = newlist(nextquad()+1);
 						emit(if_less, NULL, $1, $3, 0, currQuad);
-            					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
+            			emit(jump, NULL, NULL, NULL, 0, currQuad);}
 	| expr SMALLER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-            					emit(if_lesseq, NULL, $1, $3, 0, currQuad);
-            					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
+						$$ = newexpr(boolexpr_e);
+						$$->truelist = newlist(nextquad());
+						$$->falselist = newlist(nextquad()+1);
+            			emit(if_lesseq, NULL, $1, $3, 0, currQuad);
+            			emit(jump, NULL, NULL, NULL, 0, currQuad);}
+	| expr BIGGER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n"); 
+						$$ = newexpr(boolexpr_e);
+						$$->truelist = newlist(nextquad());
+						$$->falselist = newlist(nextquad()+1);
+            			emit(if_greatereq, NULL, $1, $3, 0, currQuad);
+            			emit(jump, NULL, NULL, NULL, 0, currQuad);}
+
 	| expr EQUAL expr{ fprintf(yyout_y,"expr -> expr == expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-        					emit(if_eq, NULL, $1, $3, 0, currQuad);
-        					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
+						$$ = newexpr(boolexpr_e);
+						$$->truelist = newlist(nextquad());
+						$$->falselist = newlist(nextquad()+1);
+        				emit(if_eq, NULL, $1, $3, 0, currQuad);
+        				emit(jump, NULL, NULL, NULL, 0, currQuad);}
 	| expr NOT_EQUAL expr{ fprintf(yyout_y,"expr -> expr != expr\n"); 
-						/*$$truelist = makelist(nextquad);
-						$$falselist = makelist(nexrquad+1);
-        					emit(if_noteq, NULL, $1, $3, 0, currQuad);
-        					emit(jump, NULL, NULL, NULL, 0, currQuad);*/}
+						$$ = newexpr(boolexpr_e);
+						$$->truelist = newlist(nextquad());
+						$$->falselist = newlist(nextquad()+1);
+        				emit(if_noteq, NULL, $1, $3, 0, currQuad);
+        				emit(jump, NULL, NULL, NULL, 0, currQuad);}
 	
 		;
 
 boolexpr:
-	expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n"); /*backpatch($1.falselist,M.quad);$$.truelist = $4.truelist; $$.falselist = merge($1.falselist,$4.falselist);*/}		
-	| expr OR M expr { fprintf(yyout_y,"expr -> expr or expr\n"); /*backpatch($1.falselist,M.quad);
-	$$->truelist = merge($1->truelist,$4->truelist); 
-	$$->falselist = $4->falselist;*/};
+	expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n");
+
+	$1->type = boolexpr_e;
+	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);
+	emit(jump,NULL,NULL,NULL,0,currQuad);
+	$1->truelist = newlist(nextquad());
+	$1->falselist = newlist(nextquad()+1);
+
+	$4->type = boolexpr_e;
+	emit(if_eq,NULL,$4,newexpr_constbool(1),0,currQuad);
+	emit(jump,NULL,NULL,NULL,0,currQuad);
+	$4->truelist = newlist(nextquad());
+	$4->falselist = newlist(nextquad()+1);
+
+	patchlist($1->falselist,$3);
+	$$->truelist = $4->truelist; 
+	$$->falselist = mergelist($1->falselist,$4->falselist);
+
+	}		
+	| expr OR M expr { fprintf(yyout_y,"expr -> expr or expr\n"); 
+	
+	$1->type = boolexpr_e;
+	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);
+	emit(jump,NULL,NULL,NULL,0,currQuad);
+	$1->truelist = newlist(nextquad());
+	$1->falselist = newlist(nextquad()+1);
+
+	$4->type = boolexpr_e;
+	emit(if_eq,NULL,$4,newexpr_constbool(1),0,currQuad);
+	emit(jump,NULL,NULL,NULL,0,currQuad);
+	$4->truelist = newlist(nextquad());
+	$4->falselist = newlist(nextquad()+1);
+	
+	patchlist($1->falselist,$3);
+	$$->truelist = mergelist($1->truelist,$4->truelist); 
+	$$->falselist = $4->falselist;
+	};
 
 //Still stuff to do according to DIale3h 11, diafaneia 5
 //Gia ta upolipa leei gia olikh apotimhsh opote to suzhtame (11,6)
@@ -959,7 +1004,7 @@ block:
 
 		//increase_scope();
  	} /*talk about this one, giati ousiastika kanoume increase scope alla ama einai megalo to function kai 3ekinaei kai allo function ta gamaei ola ekei mesa  p??s??? (e?d??? pe??pt?s?): t? block t?? s????t?s?? de? a????e? ep?p???? t? scope ?at? 
-+1 ??a t? ?e?t???? block t?? s????t?s?? e??a? +1 se s?????s? ?µe t? scope p?? pe????e? t?
++1 ??a t? ?e?t???? block t?? s????t?s?? e??a? +1 se s?????s? ?Βµe t? scope p?? pe????e? t?
 s????t?s?*/
     	temp RIGHTCURLY
 	{
@@ -1129,6 +1174,7 @@ int main(int argc, char** argv)
         yyin= stdin;
 
     yyparse();
-    symtable_print(head_scope_node,hash);
+    //symtable_print(head_scope_node,hash);
+    printMedianCode();
     return 0;
 }
