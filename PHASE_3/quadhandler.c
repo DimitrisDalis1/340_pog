@@ -9,6 +9,104 @@ unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
 
+void printExpr(expr* argExpr){
+	if(argExpr==NULL){
+		printf("keno expr");
+	}else{
+		if(argExpr->type == var_e){
+				printf("%-*s \t",20,argExpr->sym->value.varVal->name);
+			}else if (argExpr->type == tableitem_e){
+				printf("%-*s \t",20,argExpr->sym->value.varVal->name);
+			}else if (argExpr->type == programfunc_e){
+				printf("%-*s \t",20,argExpr->sym->value.funcVal->name);
+			}else if (argExpr->type == libraryfunc_e){
+				printf("%-*s \t",20,argExpr->sym->value.funcVal->name);
+			}else if (argExpr->type == arithexpr_e){
+				printf("%-*s \t",20,argExpr->sym->value.varVal->name);
+			}else if (argExpr->type == boolexpr_e){
+				printf("%-*s \t",20,argExpr->sym->value.varVal->name);
+			}else if (argExpr->type == assignexpr_e){
+				printf("%-*s \t",20,argExpr->sym->value.varVal->name);
+			}else if (argExpr->type == newtable_e){
+				printf("%-*s \t",20,argExpr->sym->value.varVal->name);
+			}else if (argExpr->type == constint_e){
+				printf("%-*d \t",20,argExpr->intConst);
+			}else if (argExpr->type == constdouble_e){
+				printf("%-*d \t",20,argExpr->numConst);
+			}else if (argExpr->type == constbool_e){
+				char* tmp=malloc(6);
+				argExpr->boolConst=='t'? strcat(tmp,"true\0"):strcat(tmp,"false\0");
+				printf("%-*s \t",20,tmp);
+			}else if (argExpr->type == conststring_e){
+				printf("%-*s \t",20,argExpr->strConst);
+			}else if (argExpr->type == nil_e){
+				printf("NIL \t");
+			}
+	}
+
+
+}
+void printMedianCode(){
+    char opcode_array[25][25]={
+		"assign\0","add\0","sub\0",
+		"mul\0","div\0","mod\0",
+		"uminus\0","and\0","or\0",
+		"not\0","if_eq\0","if_noteq\0",
+		"if_greater\0","call\0","param\0",
+		"ret\0","getretval\0","funcstart\0",
+		"funcend\0","tablecreate\0","tablegetelem\0",    
+		"tablesetelem\0"};
+
+    int line_for_print = 0;
+    printf("quad#\t\t\topcdode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tlabel\n");
+    printf("-------------------------------------------------------------------------------------------------------------------------------\n");    
+    //quads[i].label = 0;
+    
+    for(int i = 0; i < currQuad; i++){
+        printf("%-*d \t",20,line_for_print);
+        printf("%-*s \t", 20, opcode_array[quads[i].op]);
+		 if(quads[i].op== assign){
+			printExpr(quads[i].result);
+			printExpr(quads[i].arg1);
+			printf("%-*s \t",20,"\t");
+        }else if(quads[i].op == add || quads[i].op== sub || quads[i].op == mul || quads[i].op == divi || quads[i].op== mod){
+            printExpr(quads[i].result);
+			printExpr(quads[i].arg1);
+			printExpr(quads[i].arg2);
+	    }else if(quads[i].op == uminus || quads[i].op == not){
+            printExpr(quads[i].result);
+			printExpr(quads[i].arg1);
+			printf("%-*s \t",20,"\t");
+	    }else if(quads[i].op == and ||quads[i].op== or ){
+		    printExpr(quads[i].result);
+			printExpr(quads[i].arg1);
+			printExpr(quads[i].arg2);
+	    }else if(quads[i].op== if_eq || quads[i].op== if_noteq || quads[i].op == if_lesseq || quads[i].op== if_greatereq || quads[i].op == if_less || quads[i].op == if_greater){
+            printExpr(quads[i].result);
+			printExpr(quads[i].arg1);
+			printExpr(quads[i].arg2);
+        }else if(quads[i].op == call || quads[i].op == jump || quads[i].op == tablecreate || quads[i].op == funcend || quads[i].op == getretval || quads[i].op == funcstart || quads[i].op== param || quads[i].op== ret){
+		    printExpr(quads[i].result);
+			printf("%-*s \t",20,"\t");
+			printf("%-*s \t",20,"\t");
+	    }else if(quads[i].op == tablegetelem){
+            printExpr(quads[i].result);
+			printExpr(quads[i].arg1);
+			printExpr(quads[i].arg2);       
+        }else if(quads[i].op == tablesetelem){
+            printExpr(quads[i].result);
+			printExpr(quads[i].arg1);
+			printExpr(quads[i].arg2);  
+	    }
+	
+		printf("%-*d \t",20,quads[i].label);
+        line_for_print++;
+        printf("\n");
+    }
+    return;
+}
+
+
 scopespace_t currscopespace(){
 	if(scopeSpaceCounter==1){
 		return programvar;
