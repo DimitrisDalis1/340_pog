@@ -1,7 +1,8 @@
 #ifndef EXPR_H
 #define EXPR_H
 #include "symtable.h"
-
+#include <stdlib.h>
+#include <string.h>
 
 typedef enum symbol_t{
 	var_s,
@@ -27,7 +28,7 @@ typedef enum expr_t{
 }expr_t;
 
 typedef struct expr{
-    	expr_t type;
+    	
 	struct SymbolTableEntry* sym;
 	struct expr* index;
 	int intConst;
@@ -35,6 +36,7 @@ typedef struct expr{
 	char* strConst;
 	unsigned char boolConst;
 	struct expr* next;
+	enum expr_t type;
 	int truelist;
 	int falselist;
 }expr;
