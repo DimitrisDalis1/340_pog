@@ -198,16 +198,24 @@ void check_arith(expr*e, const char* context){
 		e->type == programfunc_e ||
 		e->type == libraryfunc_e ||
 		e->type == boolexpr_e )
-	printf("Illegal expr used in %s!", context); ////////////make new function for comiletime errorrs
+	printf("Illegal expr used in %s!", context); ////////////make new function for compiletime errorrs
 }
 
 unsigned int istempname(char* s){
 	return *s=='_';
 }
 
-unsigned int istempexpr(expr* e){
-	//return( e->sym); && istempname(e->sym->value.varVal->name)); ///////get name if variable or function
-	return 5;
+bool istempexpr(expr* e){
+	if(e->sym == NULL){
+		return 0;
+	}
+	if (e->sym->type == GLOBAL|| e->sym->type == LOCALV || e->sym->type == FORMAL )
+	{
+		return (( e->sym) && istempname(e->sym->value.varVal->name)); ///////get name if variable or function
+	}else if(e->sym->type == USERFUNC || e->sym->type == LIBFUNC){
+		return (( e->sym) && istempname(e->sym->value.funcVal->name)); ///////get name if variable or function
+	}
+	return 0;
 }
 
 unsigned nextquad (void) { return currQuad; }
