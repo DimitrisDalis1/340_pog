@@ -194,27 +194,27 @@ arithop://na ginoun oi emit
 	expr PLUS expr{
 		$$ = malloc (sizeof(expr*));
 		$$->type=arithexpr_e;
-		//emit(add, lvalue_expr, $1, $3,-1,currQuad);
+		emit(add, result_finder($1,$3), $1, $3,-1,currQuad);
 }
 	|expr MINUS expr{
 		$$ = malloc (sizeof(expr*));
 		$$->type=arithexpr_e;
-		//emit(sub, lvalue_expr, $1, $3,-1,currQuad);
+		emit(sub, result_finder($1,$3), $1, $3,-1,currQuad);
 }
 	|expr MULT expr{
 		$$ = malloc (sizeof(expr*));
 		$$->type=arithexpr_e;
-		//emit(mul, lvalue_expr, $1, $3,-1,currQuad);
+		emit(mul, result_finder($1,$3), $1, $3,-1,currQuad);
 }
 	|expr DIV expr{
 		$$ = malloc (sizeof(expr*));
 		$$->type=arithexpr_e;
-		//emit(divi, lvalue_expr, $1, $3,-1,currQuad);
+		emit(divi, result_finder($1,$3), $1, $3,-1,currQuad);
 }
 	|expr PERC expr{
 		$$ = malloc (sizeof(expr*));
 		$$->type=arithexpr_e;
-		//emit(mod, lvalue_expr, $1, $3,-1,currQuad);
+		emit(mod, result_finder($1,$3), $1, $3,-1,currQuad);
 }
 	;
 
