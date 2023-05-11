@@ -166,7 +166,8 @@ stmt:
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 				tempcounter=0;
 			    }
-	|block		{ fprintf(yyout_y,"stmt -> block\n"); }
+	|block		{ fprintf(yyout_y,"stmt -> block\n");
+				tempcounter=0;}
 	|funcdef	{ 
 				$$=malloc(sizeof(stmt_t));
 				make_stmt($$);
