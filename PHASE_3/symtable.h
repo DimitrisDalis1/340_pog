@@ -32,13 +32,13 @@ typedef enum scopespace_t{
 
 
 typedef struct Variable{
-    const char *name;
+    char *name;
     unsigned int scope;
     unsigned int line;
 }Variable;
 
 typedef struct Function{
-    const char *name;
+    char *name;
     id_list *args;
     unsigned int scope;
     unsigned int line;
