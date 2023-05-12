@@ -365,7 +365,20 @@ expr* result_finder(expr* a1, expr* a2){
 	return temp;
 }
 
-expr* emitBoolean(expr*){
-	
+expr* emitBoolean(expr* ex){
+    if(ex->type == boolexpr_e || ex->type == constbool_e){
+        patchlist(ex->truelist, nextquad());
+        patchlist(ex->falselist, nextquad()+2);
+
+        expr* tmp = newexpr(boolexpr_e);
+        tmp->sym = newtemp();
+        
+        emit(assign, tmp, newexpr_constbool('t'), NULL, -1, currQuad);
+        emit(jump, NULL, NULL, NULL, nextquad() + 2 , currQuad);
+        emit(assign, tmp, newexpr_constbool('f'), NULL, -1, currQuad);
+        
+        return tmp;
+    }else  return ex;
+
 }
 
