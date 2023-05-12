@@ -140,7 +140,7 @@ program:
 	| {};
 
 stmt:	
-	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); 
+	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); emitBoolean($1);
 			tempcounter=0;}
 	|if		{ fprintf(yyout_y,"stmt -> ifstmt\n"); 
 			tempcounter=0;}
@@ -258,45 +258,51 @@ relop:
         				emit(jump, NULL, NULL, NULL, 0, currQuad);}
 	
 		;
-
-boolexpr:
-	expr AND M expr  { fprintf(yyout_y,"expr -> expr and expr\n");
-
-	$1->type = boolexpr_e;
-	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);
-	emit(jump,NULL,NULL,NULL,0,currQuad);
-	$1->truelist = newlist(nextquad());
-	$1->falselist = newlist(nextquad()+1);
-
-	$4->type = boolexpr_e;
-	emit(if_eq,NULL,$4,newexpr_constbool(1),0,currQuad);
-	emit(jump,NULL,NULL,NULL,0,currQuad);
-	$4->truelist = newlist(nextquad());
-	$4->falselist = newlist(nextquad()+1);
-
-	patchlist($1->falselist,$3);
-	$$->truelist = $4->truelist; 
-	$$->falselist = mergelist($1->falselist,$4->falselist);
-
-	}		
-	| expr OR M expr { fprintf(yyout_y,"expr -> expr or expr\n"); 
 	
-	$1->type = boolexpr_e;
-	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);
-	emit(jump,NULL,NULL,NULL,0,currQuad);
-	$1->truelist = newlist(nextquad());
-	$1->falselist = newlist(nextquad()+1);
-
-	$4->type = boolexpr_e;
-	emit(if_eq,NULL,$4,newexpr_constbool(1),0,currQuad);
-	emit(jump,NULL,NULL,NULL,0,currQuad);
-	$4->truelist = newlist(nextquad());
-	$4->falselist = newlist(nextquad()+1);
+boolexpr:	
+	expr AND {	
+	if($1 == NULL) return 0;	
+	if($1->type==boolexpr_e) return 0;	
+	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);	
+	emit(jump,NULL,NULL,NULL,0,currQuad);	
+	$1->truelist = newlist(nextquad()-2);	
+	$1->falselist = newlist(nextquad()-1);	
+	}  M expr  { fprintf(yyout_y,"expr -> expr and expr\n");	
+	if($5 == NULL) return 0;
+	emit(if_eq,NULL,$5,newexpr_constbool(1),0,currQuad);	
+	emit(jump,NULL,NULL,NULL,0,currQuad);	
+	$5->truelist = newlist(nextquad()-2);	
+	$5->falselist = newlist(nextquad()-1);	
+	$$=newexpr(boolexpr_e);	
+	$$->type = boolexpr_e;	
+        patchlist($1->truelist, $4);	
+        $$->truelist = $5->truelist;	
+        $$->falselist = mergelist($1->falselist, $5->falselist);	
+	}			
+	| expr OR {	
+	if($1 == NULL) return 0;	
+	if($1->type==boolexpr_e) return 0;	
+        	
+	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);	
+	emit(jump,NULL,NULL,NULL,0,currQuad);	
+	$1->truelist = newlist(nextquad()-2);	
+	$1->falselist = newlist(nextquad()-1);	
+	} M expr { fprintf(yyout_y,"expr -> expr or expr\n"); 	
+		
+	if($5 == NULL) return 0;	
+		
+	emit(if_eq,NULL,$5,newexpr_constbool(1),0,currQuad);	
+	emit(jump,NULL,NULL,NULL,0,currQuad);	
+	$5->truelist = newlist(nextquad()-2);	
+	$5->falselist = newlist(nextquad()-1);	
+		
+	$$=newexpr(boolexpr_e);	
+	$$->type = boolexpr_e;	
 	
-	patchlist($1->falselist,$3);
-	$$->truelist = mergelist($1->truelist,$4->truelist); 
-	$$->falselist = $4->falselist;
-	};
+        patchlist($1->falselist, $4);	
+        $$->truelist = mergelist($1->truelist, $5->truelist);	
+        $$->falselist = $5->falselist;	
+	};	
 
 //Still stuff to do according to DIale3h 11, diafaneia 5
 //Gia ta upolipa leei gia olikh apotimhsh opote to suzhtame (11,6)
@@ -306,18 +312,15 @@ expr:
 	assignexpr  { $$=newexpr(assignexpr_e);
 		 fprintf(yyout_y,"expr -> assignexpr\n"); }
 	| term  {fprintf(yyout_y,"expr -> term\n");
-	$$=$1; } 
+	} 
 	| arithop {
 		$$=newexpr(arithexpr_e);
 		$$->sym=newtemp();
 		//emit($2, $1, $3, $$, -1,currQuad);
 	}
 	|relop {$$=$1; } 
-	|boolexpr{ $$=newexpr(boolexpr_e);
+	|boolexpr{ $$=$1;
 		 fprintf(yyout_y,"expr -> boolexpr\n"); }
-
-
-	
 	;
 
 term: 
@@ -342,11 +345,22 @@ term:
 		}
 	}
 	| NOT expr {
+		
+
 		if($2 == NULL){
 			$$ = NULL;
 		}else{
-			$$->truelist = $2->falselist;
-			$$->falselist = $2->truelist;
+			if($2->type==boolexpr_e) return 0;
+	 		$2->type = boolexpr_e;
+			emit(if_eq,NULL,$2,newexpr_constbool(1),0,currQuad);
+			emit(jump,NULL,NULL,NULL,0,currQuad);
+			$2->truelist = newlist(nextquad()-2);
+			$2->falselist = newlist(nextquad()-1);
+
+			int tmp = $2->truelist;
+			$2->truelist = $2->falselist;
+			$2->falselist = tmp;
+			$$=$2;
 			fprintf(yyout_y,"term -> not expr\n"); 
 		}
 	}
@@ -448,7 +462,10 @@ assignexpr:
 
 		}
 		else
-		{			emit(assign, $1, $3, NULL,-1,currQuad);
+		{	
+			expr* tmp=$3;
+			if($3->type==boolexpr_e) tmp= emitBoolean($3);
+			emit(assign, $1, tmp, NULL,-1,currQuad);
 			SymbolTableEntry* temp = newtemp();
 	 		$$ = lvalue_expr(temp);
 			//$$->type = assignexpr_e;
@@ -478,7 +495,8 @@ primary:
 					$$->sym = $2->sym;
 					fprintf(yyout_y,"primary -> ( funcdef )\n");}
 	|const  {fprintf(yyout_y,"primary -> const\n");
-		$$=$1;} 
+		$$=$1; //
+} 
 	;
 	
 lvalue:
@@ -740,7 +758,7 @@ const:
         $$=newexpr_conststring($1);}
     |NIL  {fprintf(yyout_y,"const -> nil\n");
         $$=newexpr_constnil();}
-    |TRUE  {fprintf(yyout_y,"const -> true\n");
+    |TRUE  {fprintf(yyout_y,"const -> true\n"); printf("edw");
         $$=newexpr_constbool('t');}
     |FALSE  {fprintf(yyout_y,"const -> false\n");
         $$=newexpr_constbool('f');}
@@ -1058,11 +1076,6 @@ s????t?s?*/
 		{
 			isFunc_loop = 0;
 		}
-
-
-		
-
-		
 		
 	}; 
 
@@ -1124,16 +1137,6 @@ whilecond:
 		$$ = nextquad();
 		emit(jump, NULL,NULL,NULL,0,currQuad);
 	};
-/*
-while:
-	whilestart whilecond stmt 
-	{
-		fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
-		emit(jump,NULL,NULL,NULL,$1,currQuad);
-		patchlabel($2, nextquad());
-		patchlist($3->breaklist, nextquad());
-		pathclist($3->contlist, $1);
-	};*/
 
 N:
 	{$$ = nextquad(); emit(jump, NULL,NULL,NULL,0,currQuad);};
@@ -1191,7 +1194,7 @@ int main(int argc, char** argv)
         yyin= stdin;
 
     yyparse();
-    //symtable_print(head_scope_node,hash);
+    symtable_print(head_scope_node,hash);
     printMedianCode();
     return 0;
 }
