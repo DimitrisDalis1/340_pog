@@ -351,7 +351,6 @@ term:
 			$$ = NULL;
 		}else{
 			if($2->type==boolexpr_e) return 0;
-	 		$2->type = boolexpr_e;
 			emit(if_eq,NULL,$2,newexpr_constbool(1),0,currQuad);
 			emit(jump,NULL,NULL,NULL,0,currQuad);
 			$2->truelist = newlist(nextquad()-2);
