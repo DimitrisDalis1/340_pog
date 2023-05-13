@@ -102,5 +102,7 @@ void printMedianCode();
 void printExpr(expr*);
 expr* result_finder(expr*, expr*);
 expr* emitBoolean(expr*);
+int check_for_valid_loop_stop(int); //returns 1 if valid to put break or continue and 0 if not valid
+
 
 #endif
