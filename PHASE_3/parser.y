@@ -23,7 +23,6 @@
     int currQuad=0;
     int offset=0;
     int loopcounter=0;
-    int loopcounterstack=0;
 	int offset_=-1; 
     //extern unsigned functionLocalOffset;
     //extern unsigned formalArgOffset;
@@ -43,6 +42,7 @@
 
     bool called_from_func = false;
 	stack* stack_;
+	stack* loopcounterstack;
 
 %}
 
@@ -162,8 +162,7 @@ stmt:
 			fprintf(yyout_y,"stmt -> returnstmt\n");
 			tempcounter=0;}
 	|BREAK SEMICOLON  {
-				if(isFunc_loop == 1){fprintf(stderr, "Error: Break used inside of function with no active loop inside of it in line %d\n", yylineno);}
-				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
+				if(check_for_valid_loop_stop(loopcounter) == 0) printf("Error! Break not inside of loop in line %d\n", yylineno);
 				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
 				$1->breaklist = newlist(nextquad()-1); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
@@ -171,8 +170,7 @@ stmt:
 				fprintf(yyout_y,"stmt -> break;\n"); 
 				tempcounter=0;}
 	|CONTINUE SEMICOLON {
-				if(isFunc_loop == 1){fprintf(stderr, "Error: Continue used inside of function with no active loop inside of it in line %d\n", yylineno);}
-				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
+				if(check_for_valid_loop_stop(loopcounter) == 0) printf("Error! Continue not inside of loop in line %d\n", yylineno);
 				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
 				$1->contlist = newlist(nextquad()-1); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
@@ -992,7 +990,7 @@ funcprefix:
 
 funcargs:
 
-	funcprefix M LEFTPAR {increase_scope();isFunct1 = true; isFunct = true; sim_funcs++;} idlist RIGHTPAR
+	funcprefix M LEFTPAR {increase_scope();isFunct1 = true; isFunct = true;} idlist RIGHTPAR
 		{
 			$1->sym->value.funcVal->args=$5;
 			enterscopespace(); //entering function locals space
@@ -1002,19 +1000,17 @@ funcargs:
 funcblockstart:
 	{
 		
-		//push(loopcounterstack); 
-		//loopcounter=0; //push(loopcounterstack,loopcounter);
-		//push(funcLocalStack,currscopeoffset());// loopcounter=0; //push(loopcounterstack,loopcounter);
-		//curr_scope_offset = 0;
-        fprintf(yyout_y,"funcblockstart -> NULL\n");
+		sim_funcs++;
+		push(loopcounterstack,loopcounter); //push sto loopcounterstack to loopcounter
+		//printf("pushing: %d\n", loopcounter);
+		loopcounter=0;
+	        fprintf(yyout_y,"funcblockstart -> NULL\n");
 	};
 
 funcblockend:
 	{
-		//loopcounter=pop(); //loopcounter=pop(loopcounterstack);
-		//loopcounter=pop(loopcounterstack); //loopcounter=pop(loopcounterstack); den ehei ylopoithei
-		//int temp = pop(programVarStack);
-		//push(programVarStack,curr_scope_offset);
+		loopcounter=pop(loopcounterstack); //pop apo to stack last inserted loopcounter
+		sim_funcs--;
 		exitscopespace();
 		if(offset_ > -1){
 			offset_ = pop(stack_);
@@ -1116,39 +1112,7 @@ temp:
 block:
 	LEFTCURLY
  	{
-		//b_a == after loop
-		//b_n_b == before loop
-		//checkarisma an anoikse block enw den uparxei active loop
-		if(sim_loops == 0)
-		{
-			b_n_b++;
-		}
-		else
-		{
-			b_a++;
-		}
-		
-		//same logic for functions
-		if(sim_funcs == 0)
-		{
-			b_n_bf++;
-		}
-		else
-		{
-			b_af++;
-		}
-
-		if(sim_loops > 0 && isFunct == true) //An exoume active loopa ektos tou function
-		{
-			isFunc_loop = 1; //Tote exoume funct mesa se loop
-				
-		}
-		else
-		{
-			//printf("De mphka\n");
-			isFunc_loop = 0;
-		}
-	
+		if(sim_funcs!= 0){b_af++;}	
 		if(isFunct == true) //Auto elegxei an kaleitai apo func to block opote na mh megalwnoume peraiterw to scope
 		{
 			isFunct = false;
@@ -1168,38 +1132,14 @@ s????t?s?*/
 		//isFunc_loop
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
-		//an loopes ises me blocks tote sigoura apo loopa to block
-		if(sim_loops == b_a && sim_loops > 0)
-		{
-			sim_loops--; b_a--;
-		}
-		else if(sim_loops < b_a) //An loopes ligoteres apo active blocks meta apo autes tote meiwnw ena block
-		{
-			b_a--;
-		}
-		else if(sim_loops == 0) //An den exw energes loopes meiwnw apo tis before loopes
-		{
-			b_n_b--;	
-		}
-		
 		if(sim_funcs == b_af && sim_funcs > 0)
 		{
-			sim_funcs--; b_af--; if(sim_funcs == 0){ isFunct1 = false;}
+			b_af--;
 		}
 		else if(sim_funcs < b_af) //An loopes ligoteres apo active blocks meta apo autes tote meiwnw ena block
 		{
 			b_af--;
-		}
-		else if(sim_funcs == 0) //An den exw energes loopes meiwnw apo tis before loopes
-		{
-			b_n_bf--; isFunct1 = false;	
-		}
-		//Tsekare an exoume allo active func afou kleisei to block
-		if(isFunc_loop == 1 && sim_funcs == 0)
-		{
-			isFunc_loop = 0;
-		}
-		
+		}		
 	}; 
 
 ifprefix:
@@ -1321,6 +1261,7 @@ returnstmt:
 int main(int argc, char** argv)
 {
 	stack_ = create_stack();
+	loopcounterstack = create_stack();
     //programVarStack = create_stack();
     yyout_y = fopen("yacc_output.txt", "w");
     hash = SymTable_new();
