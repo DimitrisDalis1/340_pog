@@ -166,7 +166,8 @@ stmt:
 				if(sim_loops == 0){fprintf(stderr, "Error: Break used but not inside of a loop in line %d\n", yylineno);}
 				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
-				$1->breaklist = newlist(nextquad()); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
+				$1->breaklist = newlist(nextquad()-1); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
+				$$=$1;
 				fprintf(yyout_y,"stmt -> break;\n"); 
 				tempcounter=0;}
 	|CONTINUE SEMICOLON {
@@ -174,7 +175,8 @@ stmt:
 				if(sim_loops == 0){fprintf(stderr, "Error: Continue used but not inside of a loop in line %d\n", yylineno);}
 				$1=malloc(sizeof(stmt_t));
 				make_stmt($1);
-				$1->contlist = newlist(nextquad()); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
+				$1->contlist = newlist(nextquad()-1); emit(jump,NULL,NULL,NULL,0,currQuad); //not sure orisma 5
+				$$=$1;
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 				tempcounter=0;
 			    }
