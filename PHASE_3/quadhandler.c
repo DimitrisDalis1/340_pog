@@ -382,3 +382,11 @@ expr* emitBoolean(expr* ex){
 
 }
 
+int check_for_valid_loop_stop(int counter){
+	if(counter > 0)
+		return 1;
+	else 
+		return 0;
+}
+
+
