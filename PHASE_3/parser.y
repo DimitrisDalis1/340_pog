@@ -98,13 +98,12 @@
 %type<exprNode> elist
 %type<callNode> callsuffix
 %type<callNode> normcall
-//%type funcdef
 %type<exprNode> expr
 %type<exprNode> objectdef
 %type<exprNode> member
 %type<stmtNode> block
 %type<exprNode> assignexpr
-%type temp
+%type<stmtNode> temp
 %type<callNode> methodcall
 %type<exprNode> term
 %type<exprNode> primary
@@ -140,15 +139,27 @@ program:
 	| {};
 
 stmt:	
-	expr SEMICOLON  { fprintf(yyout_y,"stmt -> expr;\n"); emitBoolean($1);
+	expr SEMICOLON  { 
+			$$=malloc(sizeof(stmt_t));
+		 	make_stmt($$);
+
+			fprintf(yyout_y,"stmt -> expr;\n"); 
+			emitBoolean($1);
 			tempcounter=0;}
-	|if		{ fprintf(yyout_y,"stmt -> ifstmt\n"); 
+	|if		{ $$=$1; fprintf(yyout_y,"stmt -> ifstmt\n"); 
 			tempcounter=0;}
-	|whilestmt	{ fprintf(yyout_y,"stmt -> whilestmt\n"); 
+	|whilestmt	{
+			$$=malloc(sizeof(stmt_t));
+		 	make_stmt($$);
+			fprintf(yyout_y,"stmt -> whilestmt\n"); 
 			tempcounter=0;}
-	|forstmt	{ fprintf(yyout_y,"stmt -> forstmt\n");
+	|forstmt	{ 
+			$$=malloc(sizeof(stmt_t));
+		 	make_stmt($$);
+			fprintf(yyout_y,"stmt -> forstmt\n");
 			tempcounter=0;}
-	|returnstmt	{ fprintf(yyout_y,"stmt -> returnstmt\n");
+	|returnstmt	{ $$=$1;
+			fprintf(yyout_y,"stmt -> returnstmt\n");
 			tempcounter=0;}
 	|BREAK SEMICOLON  {
 				if(isFunc_loop == 1){fprintf(stderr, "Error: Break used inside of function with no active loop inside of it in line %d\n", yylineno);}
@@ -167,7 +178,7 @@ stmt:
 	 			fprintf(yyout_y,"stmt -> continue;\n");
 				tempcounter=0;
 			    }
-	|block		{ fprintf(yyout_y,"stmt -> block\n");
+	|block		{$$=$1; fprintf(yyout_y,"stmt -> block\n");
 				tempcounter=0;}
 	|funcdef	{ 
 				$$=malloc(sizeof(stmt_t));
@@ -175,133 +186,225 @@ stmt:
 				fprintf(yyout_y,"stmt -> funcdef\n");
 				tempcounter=0;
 	 }
-	|SEMICOLON 	{ fprintf(yyout_y,"stmt -> ;\n"); 
+	|SEMICOLON 	{
+				$$=malloc(sizeof(stmt_t));
+		 	make_stmt($$);
+			 fprintf(yyout_y,"stmt -> ;\n"); 
 			tempcounter=0;}
 	;
 
 stmts:
-	stmt{$$= $1;}
+	stmt{$$= $1;fprintf(yyout_y,"stmts -> stmt\n");}
 	|stmts stmt
 	{	$$=malloc(sizeof(stmt_t));
 		make_stmt($$);
 		$$->breaklist = mergelist($1->breaklist, $2->breaklist);
 		$$->contlist = mergelist($1->contlist, $2->contlist);
 		$$->returnlist= mergelist($1->returnlist, $2->returnlist);
-
+		fprintf(yyout_y,"stmts -> stmts stmt\n");
 	};
 
 arithop://na ginoun oi emit
 	expr PLUS expr{
-		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;
+		check_arith($1,"");
+		check_arith($3,"");
 		emit(add, result_finder($1,$3), $1, $3,-1,currQuad);
+        fprintf(yyout_y,"arithop -> expr + expr\n");
 }
 	|expr MINUS expr{
-		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;
+		check_arith($1,"");
+		check_arith($3,"");
 		emit(sub, result_finder($1,$3), $1, $3,-1,currQuad);
 }
 	|expr MULT expr{
-		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;
+		check_arith($1,"");
+		check_arith($3,"");
 		emit(mul, result_finder($1,$3), $1, $3,-1,currQuad);
+        fprintf(yyout_y,"arithop -> expr - expr\n");
 }
 	|expr DIV expr{
-		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;
+		check_arith($1,"");
+		check_arith($3,"");
 		emit(divi, result_finder($1,$3), $1, $3,-1,currQuad);
+        fprintf(yyout_y,"arithop -> expr / expr\n");
 }
 	|expr PERC expr{
-		$$ = malloc (sizeof(expr*));
-		$$->type=arithexpr_e;
+		check_arith($1,"");
+		check_arith($3,"");
 		emit(mod, result_finder($1,$3), $1, $3,-1,currQuad);
+        fprintf(yyout_y,"arithop -> expr % expr\n");
 }
 	;
 
 relop:
 	expr BIGGER expr{ fprintf(yyout_y,"expr -> expr > expr\n"); 
 						$$ = newexpr(boolexpr_e);
-						$$->truelist = newlist(nextquad());
-						$$->falselist = newlist(nextquad()+1);
+						check_arith($1,"");
+						check_arith($3,"");
+						if ($1->type == boolexpr_e)
+    						{
+        						$1 = emitBoolean($1);
+    						}
+    						if ($3->type == boolexpr_e)
+    						{
+        						$3 = emitBoolean($3);
+    						}
 						emit(if_greater, NULL,$1,$3,0,currQuad);
-						emit(jump, NULL,NULL,NULL,0,currQuad);}
+						emit(jump, NULL,NULL,NULL,0,currQuad);
+						
+						$$->truelist = newlist(nextquad()-2);
+						$$->falselist = newlist(nextquad()-1);}
+						
 	| expr SMALLER expr { fprintf(yyout_y,"expr -> expr < expr\n");
 						$$ = newexpr(boolexpr_e);
-						$$->truelist = newlist(nextquad());
-						$$->falselist = newlist(nextquad()+1);
+						check_arith($1,"");
+						check_arith($3,"");
+
+						if ($1->type == boolexpr_e)
+    						{
+        						$1 = emitBoolean($1);
+    						}
+    						if ($3->type == boolexpr_e)
+    						{
+        						$3 = emitBoolean($3);
+    						}
 						emit(if_less, NULL, $1, $3, 0, currQuad);
-            			emit(jump, NULL, NULL, NULL, 0, currQuad);}
-	| expr SMALLER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n"); 
+            					emit(jump, NULL, NULL, NULL, 0, currQuad);
+						$$->truelist = newlist(nextquad()-2);
+						$$->falselist = newlist(nextquad()-1);
+						}
+	| expr SMALLER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n");
 						$$ = newexpr(boolexpr_e);
-						$$->truelist = newlist(nextquad());
-						$$->falselist = newlist(nextquad()+1);
-            			emit(if_lesseq, NULL, $1, $3, 0, currQuad);
-            			emit(jump, NULL, NULL, NULL, 0, currQuad);}
-	| expr BIGGER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n"); 
+						check_arith($1,"");
+						check_arith($3,"");
+
+						if ($1->type == boolexpr_e)
+    						{
+        						$1 = emitBoolean($1);
+    						}
+    						if ($3->type == boolexpr_e)
+    						{
+        						$3 = emitBoolean($3);
+    						}
+            					emit(if_lesseq, NULL, $1, $3, 0, currQuad);
+            					emit(jump, NULL, NULL, NULL, 0, currQuad);
+						$$->truelist = newlist(nextquad()-2);
+						$$->falselist = newlist(nextquad()-1);}
+	| expr BIGGER_EQUAL expr{ fprintf(yyout_y,"expr -> expr <= expr\n");
 						$$ = newexpr(boolexpr_e);
-						$$->truelist = newlist(nextquad());
-						$$->falselist = newlist(nextquad()+1);
-            			emit(if_greatereq, NULL, $1, $3, 0, currQuad);
-            			emit(jump, NULL, NULL, NULL, 0, currQuad);}
+						check_arith($1,"");
+						check_arith($3,"");
+
+ 						if ($1->type == boolexpr_e)
+    						{
+        						$1 = emitBoolean($1);
+    						}
+    						if ($3->type == boolexpr_e)
+    						{
+        						$3 = emitBoolean($3);
+    						}
+
+						emit(if_greatereq, NULL, $1, $3, 0, currQuad);
+            					emit(jump, NULL, NULL, NULL, 0, currQuad);
+						$$->truelist = newlist(nextquad()-2);
+						$$->falselist = newlist(nextquad()-1);
+            			}
 
 	| expr EQUAL expr{ fprintf(yyout_y,"expr -> expr == expr\n"); 
 						$$ = newexpr(boolexpr_e);
-						$$->truelist = newlist(nextquad());
-						$$->falselist = newlist(nextquad()+1);
-        				emit(if_eq, NULL, $1, $3, 0, currQuad);
-        				emit(jump, NULL, NULL, NULL, 0, currQuad);}
+						check_arith($1,"");
+						check_arith($3,"");
+
+						if ($1->type == boolexpr_e)
+    						{
+        						$1 = emitBoolean($1);
+    						}
+    						if ($3->type == boolexpr_e)
+    						{
+        						$3 = emitBoolean($3);
+    						}
+						emit(if_eq, NULL, $1, $3, 0, currQuad);
+        					emit(jump, NULL, NULL, NULL, 0, currQuad);
+						
+						$$->truelist = newlist(nextquad()-2);
+						$$->falselist = newlist(nextquad()-1);
+        					}
 	| expr NOT_EQUAL expr{ fprintf(yyout_y,"expr -> expr != expr\n"); 
 						$$ = newexpr(boolexpr_e);
+						check_arith($1,"");
+						check_arith($3,"");
+
+						if ($1->type == boolexpr_e)
+    						{
+        						$1 = emitBoolean($1);
+    						}
+    						if ($3->type == boolexpr_e)
+    						{
+        						$3 = emitBoolean($3);
+    						}
+						emit(if_noteq, NULL, $1, $3, 0, currQuad);
+        					emit(jump, NULL, NULL, NULL, 0, currQuad);
 						$$->truelist = newlist(nextquad());
 						$$->falselist = newlist(nextquad()+1);
-        				emit(if_noteq, NULL, $1, $3, 0, currQuad);
-        				emit(jump, NULL, NULL, NULL, 0, currQuad);}
+        				}
 	
 		;
 	
 boolexpr:	
 	expr AND {	
-	if($1 == NULL) return 0;	
-	if($1->type==boolexpr_e) return 0;	
-	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);	
+	if($1 == NULL) {}	
+	if($1->type==boolexpr_e){}	
+	else{
+	//$1->type=boolexpr_e;
+	emit(if_eq,NULL,$1,newexpr_constbool('t'),0,currQuad);	
 	emit(jump,NULL,NULL,NULL,0,currQuad);	
 	$1->truelist = newlist(nextquad()-2);	
 	$1->falselist = newlist(nextquad()-1);	
-	}  M expr  { fprintf(yyout_y,"expr -> expr and expr\n");	
-	if($5 == NULL) return 0;
-	emit(if_eq,NULL,$5,newexpr_constbool(1),0,currQuad);	
+	}
+	}  M expr  { fprintf(yyout_y,"expr -> expr and expr\n");
+	
+	if($5 == NULL) {}
+	if($5->type==boolexpr_e){}
+	else{
+	emit(if_eq,NULL,$5,newexpr_constbool('t'),0,currQuad);	
 	emit(jump,NULL,NULL,NULL,0,currQuad);	
 	$5->truelist = newlist(nextquad()-2);	
-	$5->falselist = newlist(nextquad()-1);	
+	$5->falselist = newlist(nextquad()-1);
+	//$5->type=boolexpr_e;
+	}
 	$$=newexpr(boolexpr_e);	
-	$$->type = boolexpr_e;	
+
         patchlist($1->truelist, $4);	
         $$->truelist = $5->truelist;	
         $$->falselist = mergelist($1->falselist, $5->falselist);	
 	}			
 	| expr OR {	
-	if($1 == NULL) return 0;	
-	if($1->type==boolexpr_e) return 0;	
-        	
-	emit(if_eq,NULL,$1,newexpr_constbool(1),0,currQuad);	
+	if($1 == NULL){
+	}		
+	if($1->type==boolexpr_e){ }	
+        else{
+	//$1->type=boolexpr_e;
+	emit(if_eq,NULL,$1,newexpr_constbool('t'),0,currQuad);	
 	emit(jump,NULL,NULL,NULL,0,currQuad);	
 	$1->truelist = newlist(nextquad()-2);	
 	$1->falselist = newlist(nextquad()-1);	
+	}
 	} M expr { fprintf(yyout_y,"expr -> expr or expr\n"); 	
 		
-	if($5 == NULL) return 0;	
-		
-	emit(if_eq,NULL,$5,newexpr_constbool(1),0,currQuad);	
+	if($5 == NULL) {}	
+	if($5->type==boolexpr_e){}
+	else{//$5->type=boolexpr_e;	
+	emit(if_eq,NULL,$5,newexpr_constbool('t'),0,currQuad);	
 	emit(jump,NULL,NULL,NULL,0,currQuad);	
 	$5->truelist = newlist(nextquad()-2);	
 	$5->falselist = newlist(nextquad()-1);	
-		
+	}	
 	$$=newexpr(boolexpr_e);	
-	$$->type = boolexpr_e;	
 	
         patchlist($1->falselist, $4);	
         $$->truelist = mergelist($1->truelist, $5->truelist);	
         $$->falselist = $5->falselist;	
+        fprintf(yyout_y,"boolexpr -> expr OR\n");
 	};	
 
 //Still stuff to do according to DIale3h 11, diafaneia 5
@@ -309,16 +412,15 @@ boolexpr:
 
     
 expr:	
-	assignexpr  { $$=newexpr(assignexpr_e);
-		 fprintf(yyout_y,"expr -> assignexpr\n"); }
-	| term  {fprintf(yyout_y,"expr -> term\n");
+	assignexpr  { fprintf(yyout_y,"expr -> assignexpr\n"); }
+	| term  {fprintf(yyout_y,"expr -> term\n"); //$$=$1;
 	} 
 	| arithop {
-		$$=newexpr(arithexpr_e);
-		$$->sym=newtemp();
+		$$=$1;
 		//emit($2, $1, $3, $$, -1,currQuad);
+        fprintf(yyout_y,"expr -> arithop\n");
 	}
-	|relop {$$=$1; } 
+	|relop {$$=$1; fprintf(yyout_y,"expr -> relop\n");} 
 	|boolexpr{ $$=$1;
 		 fprintf(yyout_y,"expr -> boolexpr\n"); }
 	;
@@ -332,7 +434,7 @@ term:
 			fprintf(stderr,"Term cannot be a library or a program function \n"); //check if we should terminate it here
 		}
 
-		check_arith($2,$2->strConst);
+		check_arith($2,"");
 		
 		if(istempexpr($2)){
 			emit(uminus, $2, $2, NULL, -1, currQuad);
@@ -341,8 +443,8 @@ term:
 			$$ = newexpr(arithexpr_e);
 			$$->sym = newtemp();
 			emit(uminus, $$, $2, NULL, -1, currQuad); // _t0 = -x;
-			fprintf(yyout_y,"term -> -expr\n"); 
 		}
+        fprintf(yyout_y,"term -> -expr\n"); 
 	}
 	| NOT expr {
 		
@@ -351,7 +453,7 @@ term:
 			$$ = NULL;
 		}else{
 			if($2->type==boolexpr_e) return 0;
-			emit(if_eq,NULL,$2,newexpr_constbool(1),0,currQuad);
+			emit(if_eq,NULL,$2,newexpr_constbool('t'),0,currQuad);
 			emit(jump,NULL,NULL,NULL,0,currQuad);
 			$2->truelist = newlist(nextquad()-2);
 			$2->falselist = newlist(nextquad()-1);
@@ -360,12 +462,12 @@ term:
 			$2->truelist = $2->falselist;
 			$2->falselist = tmp;
 			$$=$2;
-			fprintf(yyout_y,"term -> not expr\n"); 
 		}
+        fprintf(yyout_y,"term -> not expr\n"); 
 	}
 	|PLUS2 lvalue
 	{ 
-		check_arith($2,$2->strConst);
+		check_arith($2,"");
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
 			emit(add, $$,$$ ,newexpr_constint(1) , -1, currQuad); //ENDEXETAI NA EXXEI TYPO TO DEUTERO ORISMA
@@ -386,7 +488,7 @@ term:
 	}
 	|lvalue PLUS2
 	{ 
-		check_arith($1,$1->strConst);
+		check_arith($1,"");
 		$$ = newexpr(var_e);
 		$$->sym = newtemp();
 		if ($1->type == tableitem_e){
@@ -407,7 +509,7 @@ term:
 	}
 	|MINUS2 lvalue
 	{
-		check_arith($2,$2->strConst);
+		check_arith($2,"");
 		if($2->type == tableitem_e){
 			$$ = emit_iftableitem($2);
 			expr* num=newexpr_constint(1);
@@ -428,7 +530,7 @@ term:
 	}
 	|lvalue MINUS2
 	{
-		check_arith($1,$1->strConst);
+		check_arith($1,"");
 		$$ = newexpr(var_e);
 		$$->sym = newtemp();
 		if ($1->type == tableitem_e){
@@ -453,6 +555,14 @@ term:
 assignexpr:
 	lvalue ASSIGN expr   
 	{ 
+		if(call_flag == false){ 
+		
+		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
+		if( $1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
+		{
+			//printf("call flag %d userfunc %d\n", call_flag, ((SymbolTableEntry*)$1)->type );
+       			fprintf(stderr,"Error,value cannot be assigned to a function in line %d and scope %d \n",yylineno,current_scope);
+    		}}
 		if(($1)->type == tableitem_e)
 		{
 			emit(tablesetelem, $1, $1->index, $3,-1,currQuad);
@@ -463,21 +573,15 @@ assignexpr:
 		else
 		{	
 			expr* tmp=$3;
+			assert($3);
 			if($3->type==boolexpr_e) tmp= emitBoolean($3);
 			emit(assign, $1, tmp, NULL,-1,currQuad);
 			SymbolTableEntry* temp = newtemp();
 	 		$$ = lvalue_expr(temp);
-			//$$->type = assignexpr_e;
-			//$$->sym=newtemp();
+			$$->type = assignexpr_e;
 			emit(assign, $$, $1, NULL,-1,currQuad);
 		}
-		if(call_flag == false){ 
-		if( $1 != NULL && ((SymbolTableEntry*)$1)->type == USERFUNC || ((SymbolTableEntry*)$1)->type == LIBFUNC)
-		{
-			//printf("call flag %d userfunc %d\n", call_flag, ((SymbolTableEntry*)$1)->type );
-       			fprintf(stderr,"Error,value cannot be assigned to a function in line %d and scope %d \n",yylineno,current_scope);
-    		}}
-		fprintf(yyout_y,"assignexpr -> lvalue = expr\n");
+		
 	};
 
 primary:
@@ -494,7 +598,7 @@ primary:
 					$$->sym = $2->sym;
 					fprintf(yyout_y,"primary -> ( funcdef )\n");}
 	|const  {fprintf(yyout_y,"primary -> const\n");
-		$$=$1; //
+		$$=$1; 
 } 
 	;
 	
@@ -738,28 +842,36 @@ methodcall:
 	
 elist:
 	expr  {
+		if($1->type==boolexpr_e){
+				$1=emitBoolean($1);
+			}
+
 		$$=$1;
 		fprintf(yyout_y,"elist -> expr\n");}
 	|elist COMMA expr  { while($1->next){
 				$1=$1->next;
 				}
+			if($3->type==boolexpr_e){
+				$3=emitBoolean($3);
+			}
 			$1->next=$3;
+            fprintf(yyout_y,"elist -> elist , expr\n");
 		}
-	| {$$=NULL;};
+	| {$$=NULL;fprintf(yyout_y,"elist -> NULL\n");};
  
 const:
-     INT {fprintf(yyout_y,"const -> number\n");
-    $$=newexpr_constint($1);
+     INT {fprintf(yyout_y,"const -> INT\n");
+   	 $$=newexpr_constint($1);
     }
-    | REAL {fprintf(yyout_y,"const -> number\n");
+    | REAL {fprintf(yyout_y,"const -> REAL\n");
         $$=newexpr_constdouble($1);}
-    | STRING  {fprintf(yyout_y,"const -> string\n");
+    | STRING  {fprintf(yyout_y,"const -> STRING\n");
         $$=newexpr_conststring($1);}
     |NIL  {fprintf(yyout_y,"const -> nil\n");
         $$=newexpr_constnil();}
-    |TRUE  {fprintf(yyout_y,"const -> true\n"); printf("edw");
+    |TRUE  {fprintf(yyout_y,"const -> TRUE\n");
         $$=newexpr_constbool('t');}
-    |FALSE  {fprintf(yyout_y,"const -> false\n");
+    |FALSE  {fprintf(yyout_y,"const -> FALSE\n");
         $$=newexpr_constbool('f');}
     ;
 
@@ -792,10 +904,10 @@ indexed:
 		$$=$1;
 		fprintf(yyout_y,"indexed -> indexedelem\n");} 
 	|indexed COMMA indexedelem {
-		 while($$->next){  
-                   $$ = $$->next;
+		 while($1->next){  
+                   $1 = $1->next;
                  }        
-                 $$->next = $3;
+                 $1->next = $3;
 		fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}  
 	;
 
@@ -810,6 +922,7 @@ indexedelem:
 funcname:
 	ID{
 		$$ = $1;
+        fprintf(yyout_y,"funcname -> ID\n");
 	}
 	|
 	{
@@ -817,6 +930,7 @@ funcname:
 		sprintf(my_name,"_myfync%d",unnamed_counter++);
 		//SymbolTableEntry* entry = SymTable_insert(hash,my_name,yylineno,(id_list*)$4,current_scope-1,USERFUNC);
 		$$ = my_name;
+        fprintf(yyout_y,"funcname -> NULL\n");
 	};
 
 funcprefix:
@@ -869,7 +983,7 @@ funcprefix:
 		offset_ = -1;
 		enterscopespace(); //Entering function argument scope space
 		resetformalargoffset(); //Start formals from zero tbf(10,10)
-			
+		fprintf(yyout_y,"funcprefix -> FUNCTION funcname\n");
 	};
 
 
@@ -881,7 +995,8 @@ funcargs:
 			$1->sym->value.funcVal->args=$5;
 			enterscopespace(); //entering function locals space
 			resetfunctionlocaloffset(); //tbf(10,10), Start counting locals from zero kai prepei na ftiaxtei
-				};
+			fprintf(yyout_y,"funcargs -> funcprefix M ( idlist )\n");
+                };
 funcblockstart:
 	{
 		
@@ -889,6 +1004,7 @@ funcblockstart:
 		//loopcounter=0; //push(loopcounterstack,loopcounter);
 		//push(funcLocalStack,currscopeoffset());// loopcounter=0; //push(loopcounterstack,loopcounter);
 		//curr_scope_offset = 0;
+        fprintf(yyout_y,"funcblockstart -> NULL\n");
 	};
 
 funcblockend:
@@ -902,6 +1018,7 @@ funcblockend:
 			offset_ = pop(stack_);
 		}
 		//offset = temp;
+        fprintf(yyout_y,"funcblockend -> NULL\n");
 	};
 
 //gia ta 2 apo epanw
@@ -916,6 +1033,7 @@ funcdef:
 		fprintf(yyout_y,"funcdef -> function temp_id ( idlist ) {}\n");
 		 //Extract total locals
 		//exitscopespace();	//Exiting function locals space
+        fprintf(yyout_y,"funcdef -> funcargs funcblockstart block\n");
 	}
 	funcblockend
 	{
@@ -925,7 +1043,8 @@ funcdef:
 		//restorecurrscopeoffset(offset); //restore previous scope offset, tbf(10,10)
 		assert($$);
 		$$ = $1;	//The function definition returns the symbol
-		//emit(funcend, $$, NULL, NULL,nextquadlabel(),currQuad);	
+		//emit(funcend, $$, NULL, NULL,nextquadlabel(),currQuad);
+        fprintf(yyout_y,"funcdef -> funcblockend\n");	
 	};
 
 idlist:
@@ -976,7 +1095,7 @@ idlist:
 		temp =SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
 		temp->offset = formalArgOffset++;
 		temp->space = formalarg;
-	
+	fprintf(yyout_y,"idlist -> idlist , ID\n");
 }
     fprintf(yyout_y,"idlist -> idlist , id\n");
 	
@@ -987,8 +1106,10 @@ idlist:
  		fprintf(yyout_y,"idlist ->  \n"); 
 	};
 temp:
- 	temp stmt {fprintf(yyout_y,"temp -> temp stmt\n");}
-	| {}; 
+ 	temp stmt {$$=$2;
+		fprintf(yyout_y,"temp -> temp stmt\n");}
+	| {stmt_t* tmp=malloc(sizeof(stmt_t));
+		$$=tmp;fprintf(yyout_y,"temp -> NULL\n");}; 
 
 block:
 	LEFTCURLY
@@ -1041,6 +1162,7 @@ block:
 s????t?s?*/
     	temp RIGHTCURLY
 	{
+		$$=$3;
 		//isFunc_loop
 		fprintf(yyout_y,"block -> { temp }\n");
 		decrease_scope(); /*opote care about this one as well*/
@@ -1080,88 +1202,106 @@ s????t?s?*/
 
 ifprefix:
 	IF LEFTPAR expr RIGHTPAR{
-		emit(if_eq,NULL, $3, newexpr_constbool(1),nextquad()+2, currQuad);
+		if($3->type==boolexpr_e){
+			$3=emitBoolean($3);
+		}
+		emit(if_eq,NULL, $3, newexpr_constbool('t'),nextquad()+2, currQuad);
 		$$ = nextquad();
 		emit(jump, NULL, NULL, NULL,0,currQuad);
+        fprintf(yyout_y,"ifprefix -> IF ( expr )\n");
 	};
 
 if:	
 	ifprefix stmt{
 		$$=$2;
 		patchlabel($1, nextquad());
+        fprintf(yyout_y,"if -> ifprefix stmt\n");
 	}
 	|ifprefix stmt elseprefix stmt{
 		patchlabel($1,$3+1);
 		patchlabel($3,nextquad());
+		stmt_t *tmp=malloc(sizeof(stmt_t));
+		make_stmt(tmp);
+		$$=tmp;
+		$$->breaklist = mergelist($2->breaklist, $4->breaklist); 
+                $$->contlist = mergelist($2->contlist, $4->contlist);
+                $$->returnlist = mergelist($2->returnlist, $4->returnlist);
+                fprintf(yyout_y,"if -> ifprefix stmt elseprefix stmt\n");
 	};
 
 elseprefix:
 	ELSE{
 		$$=nextquad();
 		emit(jump, NULL,NULL,NULL,0,currQuad);
+        fprintf(yyout_y,"elseprefix -> ELSE\n");
 	};
 
 loopstart:
-	{++loopcounter;};
+	{++loopcounter;fprintf(yyout_y,"loopstart -> NULL\n");};
 
 loopend:
-	{--loopcounter;};
+	{--loopcounter;fprintf(yyout_y,"loopend -> NULL\n");};
 
 loopstmt:
-	loopstart stmt loopend {$$=$2; };
-
-
+	loopstart stmt loopend {$$=$2;fprintf(yyout_y,"loopstmt -> loopstart stmt loopend\n"); };
 whilestmt:
-	whilestart whilecond loopstmt
-	{
-		fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
-		emit(jump,NULL,NULL,NULL,$1,currQuad);
-		patchlabel($2, nextquad());
-		patchlist($3->breaklist, nextquad());
-		patchlist($3->contlist, $1);
-		$$=$3;
-	}
-	;
+    whilestart whilecond loopstmt
+    {
+        fprintf(yyout_y,"whilestmt -> while ( expr ) stmt\n");
+        emit(jump,NULL,NULL,NULL,$1,currQuad);
+        patchlabel($2, nextquad());
+        patchlist($3->breaklist, nextquad());
+        patchlist($3->contlist, $1);
+        $$=$3;
+    }
+    ;
 
 
 whilestart:
-	WHILE{
-		$$=nextquad();
-	};
+    WHILE{
+        $$=nextquad();
+    };
 
-whilecond:	
-	LEFTPAR{sim_loops++;} expr RIGHTPAR
-	{
-		emit(if_eq,NULL, $3,newexpr_constbool(1),nextquad()+2,currQuad);
-		$$ = nextquad();
-		emit(jump, NULL,NULL,NULL,0,currQuad);
-	};
-
+whilecond:    
+    LEFTPAR{sim_loops++;} expr RIGHTPAR
+    {
+        if($3->type = boolexpr_e){
+            $3 = emitBoolean($3);
+        }
+        emit(if_eq,NULL, $3,newexpr_constbool('t'),nextquad()+2,currQuad);
+        $$ = nextquad();
+        emit(jump, NULL,NULL,NULL,0,currQuad);
+    };
 N:
-	{$$ = nextquad(); emit(jump, NULL,NULL,NULL,0,currQuad);};
+	{$$ = nextquad(); emit(jump, NULL,NULL,NULL,0,currQuad);fprintf(yyout_y,"N -> NULL \n");};
 M:
-	{$$=nextquad();};
+	{$$=nextquad();fprintf(yyout_y,"M -> NULL\n");};
 
 forprefix:
-	FOR LEFTPAR{sim_loops++;} elist SEMICOLON M expr SEMICOLON
-	{       $$=malloc(sizeof(for_t));
-		$$->test = $6;
-		$$->enter = nextquad();
-		emit(if_eq, NULL, $7,newexpr_constbool(1), 0,currQuad);
-	};
+    FOR LEFTPAR{sim_loops++;} elist SEMICOLON M expr SEMICOLON
+    {       $$=malloc(sizeof(for_t));
+        $$->test = $6;
+        if($7->type == boolexpr_e){
+            $7 = emitBoolean($7);
+        }
+        $$->enter = nextquad();
+        emit(if_eq, NULL, $7,newexpr_constbool('t'), 0,currQuad);
+        fprintf(yyout_y,"forprefix -> for ( \n");
+    };
 
 forstmt:
-	forprefix N elist RIGHTPAR N loopstmt N
-	{
-		patchlabel($1->enter, $5+1); //true jump
-		patchlabel($2, nextquad()); //false jump
-		patchlabel($5, $1->test);    //loop jump
-		patchlabel($7, $2+1);       //closure jump
+    forprefix N elist RIGHTPAR N loopstmt N
+    {
+        patchlabel($1->enter, $5+1); //true jump
+        patchlabel($2, nextquad()); //false jump
+        patchlabel($5, $1->test);    //loop jump
+        patchlabel($7, $2+1);       //closure jump
 
-		patchlist($6->breaklist, nextquad());
-		patchlist($6->contlist, $2+1);
-	};
-
+        patchlist($6->breaklist, nextquad());
+        patchlist($6->contlist, $2+1);
+        $$ = $6;
+        fprintf(yyout_y,"forstmt -> forprefix N elist ( N loopstmt N \n");
+    };
 returnstmt:
  	RETURN
 	{		
