@@ -31,7 +31,7 @@ typedef enum iopcode{
 	if_greatereq, call,	param,
 	ret,	getretval,	funcstart,
 	funcend,	tablecreate,	tablegetelem,	
-	tablesetelem,jump
+	tablesetelem,jump,returnn
 }iopcode;
 
 
@@ -102,7 +102,5 @@ void printMedianCode();
 void printExpr(expr*);
 expr* result_finder(expr*, expr*);
 expr* emitBoolean(expr*);
-int check_for_valid_loop_stop(int); //returns 1 if valid to put break or continue and 0 if not valid
-
-
+int check_for_valid_loop_stop(int);
 #endif
