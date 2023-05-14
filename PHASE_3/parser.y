@@ -594,7 +594,7 @@ primary:
 			fprintf(yyout_y,"primary -> lvalue\n");
 			$$ = emit_iftableitem($1);
 		}
-	|call  {printf("Ed");
+	|call  {
 		fprintf(yyout_y,"primary -> call\n");
 		$$=$1;}
 	|objectdef  {fprintf(yyout_y,"primary -> objectdef\n");
@@ -801,14 +801,24 @@ call: call LEFTPAR elist RIGHTPAR
 		if($2->method){
 			expr* t = $1;
 			$1 = emit_iftableitem(member_item(t, $2->name));
-			$2->elist = t; //insert as first argument (recersed, so last)
-		}
+			expr* tmp;
+			if($2->elist!=NULL){
+			tmp=$2->elist;
+			while(tmp->next!=NULL){
+				tmp=tmp->next;
+			}
+				tmp->next=NULL;
+				t->next=$2->elist;
+				$2->elist = t; //insert as first argument (recersed, so last)
+			}//else $2->elist=t;
+			$$ = make_call($1, $2->elist);
+		}else $$ = make_call($1, NULL);
 		call_flag = false;
 		if(!$1)
 		{
 			fprintf(stderr,"Function not declared in line %d and scope %d \n",yylineno,current_scope);
 		}
-		$$ = make_call($1, $2->elist);
+		
 		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 	} 
 	|LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  {
@@ -855,15 +865,23 @@ elist:
 			}
 
 		$$=$1;
-		
+		$$->next=NULL;
 		fprintf(yyout_y,"elist -> expr\n");}
-	|elist COMMA expr  { while($1->next){
-				$1=$1->next;
+	|elist COMMA expr  { 
+		expr* tmp;
+			if($1!=NULL && $3!=NULL){
+			tmp=$1;
+			while(tmp->next){
+				tmp=tmp->next;
 				}
 			if($3->type==boolexpr_e){
 				$3=emitBoolean($3);
 			}
-			$1->next=$3;
+			tmp->next=$3;
+			$3->next=NULL;
+			$$=$1;
+			
+			}
             fprintf(yyout_y,"elist -> elist , expr\n");
 		}
 	| {$$=NULL;fprintf(yyout_y,"elist -> NULL\n");};
