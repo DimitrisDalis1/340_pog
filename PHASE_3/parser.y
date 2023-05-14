@@ -208,29 +208,34 @@ arithop://na ginoun oi emit
 	expr PLUS expr{
 		check_arith($1,"");
 		check_arith($3,"");
-		emit(add, result_finder($1,$3), $1, $3,-1,currQuad);
+		$$=result_finder($1,$3);
+		emit(add, $$, $1, $3,-1,currQuad);
         fprintf(yyout_y,"arithop -> expr + expr\n");
 }
 	|expr MINUS expr{
 		check_arith($1,"");
 		check_arith($3,"");
+		$$=result_finder($1,$3);
 		emit(sub, result_finder($1,$3), $1, $3,-1,currQuad);
 }
 	|expr MULT expr{
 		check_arith($1,"");
 		check_arith($3,"");
+		$$=result_finder($1,$3);
 		emit(mul, result_finder($1,$3), $1, $3,-1,currQuad);
         fprintf(yyout_y,"arithop -> expr - expr\n");
 }
 	|expr DIV expr{
 		check_arith($1,"");
 		check_arith($3,"");
+		$$=result_finder($1,$3);
 		emit(divi, result_finder($1,$3), $1, $3,-1,currQuad);
         fprintf(yyout_y,"arithop -> expr / expr\n");
 }
 	|expr PERC expr{
 		check_arith($1,"");
 		check_arith($3,"");
+		$$=result_finder($1,$3);
 		emit(mod, result_finder($1,$3), $1, $3,-1,currQuad);
         fprintf(yyout_y,"arithop -> expr % expr\n");
 }
@@ -589,7 +594,8 @@ primary:
 			fprintf(yyout_y,"primary -> lvalue\n");
 			$$ = emit_iftableitem($1);
 		}
-	|call  {fprintf(yyout_y,"primary -> call\n");
+	|call  {printf("Ed");
+		fprintf(yyout_y,"primary -> call\n");
 		$$=$1;}
 	|objectdef  {fprintf(yyout_y,"primary -> objectdef\n");
 		$$=$1;}
@@ -736,7 +742,7 @@ lvalue:
 			$$=lvalue_expr(entry);
 		fprintf(yyout_y,"lvalue -> ::id\n"); 
 	}
-	|member {
+	|member {	
 			$$ = $1;
 		 	fprintf(yyout_y,"lvalue -> member\n"); }
 	;
@@ -790,14 +796,14 @@ call: call LEFTPAR elist RIGHTPAR
 	}
 	|lvalue callsuffix
 	{
+		
 		$1 = emit_iftableitem($1); //in case it was a table item too
 		if($2->method){
 			expr* t = $1;
 			$1 = emit_iftableitem(member_item(t, $2->name));
-			$2->elist->next = t; //insert as first argument (recersed, so last)
+			$2->elist = t; //insert as first argument (recersed, so last)
 		}
 		call_flag = false;
-		fprintf(yyout_y,"call -> lvalue callsuffix\n");
 		if(!$1)
 		{
 			fprintf(stderr,"Function not declared in line %d and scope %d \n",yylineno,current_scope);
@@ -818,6 +824,7 @@ callsuffix:
 			fprintf(yyout_y,"callsuffix -> normcall\n");}
 	|methodcall  {
 			$$ = $1;
+			
 			fprintf(yyout_y,"callsuffix -> methodcall\n");}
 	;
 	
@@ -833,6 +840,7 @@ normcall:
 methodcall:
 	//exei thema obv
 	PERIOD2 ID LEFTPAR elist RIGHTPAR {
+		
 		$$=malloc(sizeof(call_t));
 		$$->elist = $4;
 		$$->method = 1;
@@ -847,6 +855,7 @@ elist:
 			}
 
 		$$=$1;
+		
 		fprintf(yyout_y,"elist -> expr\n");}
 	|elist COMMA expr  { while($1->next){
 				$1=$1->next;
@@ -959,8 +968,6 @@ funcprefix:
 			{
 				//printf("This function %s did not exist so we are free to add it to the hash\n", $2);
 				$$=newexpr(programfunc_e);
-				//$$=malloc(sizeof(expr));
-				//$$->type=var_e;
 				$$->sym=SymTable_insert(hash,(char *)$2,yylineno,NULL,temp,USERFUNC);
 			}
 			else
@@ -975,7 +982,7 @@ funcprefix:
 		//$$ = SymTable_insert(hash, $2, yylineno, NULL, current_scope, USERFUNC); //Mesa anaferetai sto deutero orisma ws function_s	
 		//$funcprefix.iaddress = nextquadlabel(); Ti einai to iaddress, to nextquadlabel einai sth diafaneia 10, diale3h 10
 		emit(jump, NULL, NULL, NULL, 0, currQuad);
-		emit(funcstart, newexpr_conststring($2), NULL, NULL,-1,currQuad);
+				emit(funcstart, newexpr_conststring($2), NULL, NULL,-1,currQuad);
 		if(offset_ > -1){
 			push(stack_, offset_);// Mia push na ftia3oume gia na kanei save to curr offset
 		}
@@ -1041,8 +1048,8 @@ funcdef:
 		//restorecurrscopeoffset(offset); //restore previous scope offset, tbf(10,10)
 		assert($$);
 		$$ = $1;	//The function definition returns the symbol
-		//emit(funcend, $$, NULL, NULL,nextquadlabel(),currQuad);
-        fprintf(yyout_y,"funcdef -> funcblockend\n");	
+		emit(funcend, $$, NULL, NULL,nextquadlabel(),currQuad);
+        	fprintf(yyout_y,"funcdef -> funcblockend\n");	
 	};
 
 idlist:
@@ -1086,7 +1093,7 @@ idlist:
     
     //insertion in the idlist and saving the idlist
     insert($1,$3);
-    //$$ = $1; //not sure if this is functional 
+    $$ = $1; //not sure if this is functional 
 
 	//insertion in the symtable/scopelist
 	SymbolTableEntry* temp;
@@ -1249,12 +1256,27 @@ returnstmt:
 	{		
 		if(sim_funcs == 0){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}	
 	}
-	SEMICOLON {emit(RETURN,NULL,NULL,NULL,-1,currQuad);fprintf(yyout_y,"returnstmt -> return ;\n");}
+	SEMICOLON {
+		stmt_t* tmp=malloc(sizeof(stmt_t));
+		make_stmt(tmp);
+		emit(returnn,NULL,NULL,NULL,-1,nextquad());
+		emit(jump,NULL,NULL,NULL,-1,currQuad);
+		$$->returnlist=newlist(nextquad()-1);
+		$$=tmp;
+		fprintf(yyout_y,"returnstmt -> return ;\n");}
 	|RETURN
 	{
 		if(sim_funcs == 0){fprintf(stderr, "Error: Return statement not inside of a function in line %d\n", yylineno);}
 	}
-	expr SEMICOLON {emit(RETURN,$3,NULL,NULL,-1,currQuad);fprintf(yyout_y,"returnstmt -> return expr ;\n");}
+	expr SEMICOLON {
+		if($3->type==boolexpr_e) $3=emitBoolean($3);
+		stmt_t* tmp=malloc(sizeof(stmt_t));
+		make_stmt(tmp);
+		emit(returnn,$3,NULL,NULL,-1,nextquad());
+		emit(jump,NULL,NULL,NULL,-1,currQuad);
+		$$->returnlist=newlist(nextquad()-1);
+		$$=tmp;
+		fprintf(yyout_y,"returnstmt -> return expr ;\n");}
 	;
 
 %%
@@ -1274,7 +1296,8 @@ int main(int argc, char** argv)
     }
     else
         yyin= stdin;
-
+	
+	expand();
     yyparse();
     symtable_print(head_scope_node,hash);
     printMedianCode();
