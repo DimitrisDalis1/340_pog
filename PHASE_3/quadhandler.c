@@ -8,6 +8,14 @@ unsigned programVarOffset =0;
 unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
+int print_flag=0;
+int check_for_valid_loop_stop(int counter){
+	if(counter > 0)
+		return 1;
+	else 
+		return 0;
+}
+
 void printExpr(expr* argExpr){
 	if(argExpr==NULL){
 		printf("%-*s \t",10,"\t");
@@ -33,11 +41,15 @@ void printExpr(expr* argExpr){
 			}else if (argExpr->type == constdouble_e){
 				printf("%-*d \t",20,argExpr->numConst);
 			}else if (argExpr->type == constbool_e){
-				char* tmp=malloc(6);
+				char* tmp=malloc(10);
 				argExpr->boolConst=='t'? strcat(tmp,"true\0"):strcat(tmp,"false\0");
 				printf("%-*s \t",20,tmp);
-			}else if (argExpr->type == conststring_e){
+			}else if (argExpr->type == conststring_e && print_flag==0){
+				printf("\"%-*s \t",20,argExpr->strConst);
+				print_flag=0;
+			}else if (argExpr->type == conststring_e && print_flag==1){
 				printf("%-*s \t",20,argExpr->strConst);
+				print_flag=0;
 			}else if (argExpr->type == nil_e){
 				printf("%-*s \t",20,"NIL");
 			}
@@ -46,7 +58,7 @@ void printExpr(expr* argExpr){
 
 }
 void printMedianCode(){
-    char opcode_array[26][25]={
+    char opcode_array[27][25]={
 		"assign\0","add\0","sub\0",
 		"mul\0","div\0","mod\0",
 		"uminus\0","and\0","or\0",
@@ -55,7 +67,7 @@ void printMedianCode(){
 		"if_greatereq\0","call\0","param\0",
 		"ret\0","getretval\0","funcstart\0",
 		"funcend\0","tablecreate\0","tablegetelem\0",    
-		"tablesetelem\0","jump\0"};
+		"tablesetelem\0","jump\0","return\0"};
 
     int line_for_print = 0;
     printf("quad#\t\t\topcdode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tlabel\n");
@@ -85,11 +97,18 @@ void printMedianCode(){
             		printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
 			printExpr(quads[i].arg2);
-        }else if(quads[i].op == call || quads[i].op == jump || quads[i].op == tablecreate || quads[i].op == funcend || quads[i].op == getretval || quads[i].op == funcstart || quads[i].op== param || quads[i].op== ret){
+        }else if(quads[i].op == call || quads[i].op == returnn || quads[i].op == jump || quads[i].op == tablecreate || quads[i].op == funcend || quads[i].op == getretval || quads[i].op== param || quads[i].op== ret){
 		    	printExpr(quads[i].result);
 			printf("%-*s \t",20,"\t");
 			printf("%-*s \t",5,"\t");
-	    }else if(quads[i].op == tablegetelem){
+	    }else if(quads[i].op == funcstart){
+			print_flag=1;	
+            		printExpr(quads[i].result);
+			printf("%-*s \t",20,"\t");
+			printf("%-*s \t",5,"\t");
+      
+        }else if(quads[i].op == tablegetelem){
+			
             		printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
 			printExpr(quads[i].arg2);       
@@ -282,7 +301,7 @@ expr* make_call(expr* lv, expr* reversed_elist){
 	emit(call,func,NULL,NULL, -1, currQuad); //2 teleftaia argument apla gia test
 	expr* result=newexpr(var_e);
 	result->sym=newtemp();
-	emit(getretval,NULL,NULL,result, -1, currQuad);
+	emit(getretval,result,NULL,NULL, -1, currQuad);
 
 	return result;
 }
@@ -366,7 +385,8 @@ expr* result_finder(expr* a1, expr* a2){
 }
 
 expr* emitBoolean(expr* ex){
-    if(ex->type == boolexpr_e || ex->type == constbool_e){
+	
+    if(ex->type == boolexpr_e ){
         patchlist(ex->truelist, nextquad());
         patchlist(ex->falselist, nextquad()+2);
 
@@ -381,12 +401,3 @@ expr* emitBoolean(expr* ex){
     }else  return ex;
 
 }
-
-int check_for_valid_loop_stop(int counter){
-	if(counter > 0)
-		return 1;
-	else 
-		return 0;
-}
-
-
