@@ -518,9 +518,12 @@ COMMENT1                "//".*
 <STRINGG>\"         {
                         yytokenno++;
                         BEGIN(INITIAL);
-                        *strbuffer = '\0';
+                        *strbuffer = '\"';
+			++strbuffer;
+			*strbuffer = '\0';
+			
                         insert_node("STRING",string_buf,NULL);
-                        yylval.stringValue = strdup(yytext);
+                        yylval.stringValue = strdup(string_buf);
                         return STRING;
                 }
 
