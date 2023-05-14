@@ -108,11 +108,12 @@ void printMedianCode(){
 			printf("%-*s \t",5,"\t");
       
         }else if(quads[i].op == tablegetelem){
-			
+			print_flag=1;
             		printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
 			printExpr(quads[i].arg2);       
         }else if(quads[i].op == tablesetelem){
+			print_flag=1;
            		 printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
 			printExpr(quads[i].arg2);  
