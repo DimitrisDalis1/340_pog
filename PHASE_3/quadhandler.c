@@ -9,6 +9,7 @@ unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
 int print_flag=0;
+
 int check_for_valid_loop_stop(int counter){
 	if(counter > 0)
 		return 1;
@@ -39,16 +40,19 @@ void printExpr(expr* argExpr){
 			}else if (argExpr->type == constint_e){
 				printf("%-*d \t",20,argExpr->intConst);
 			}else if (argExpr->type == constdouble_e){
-				printf("%-*d \t",20,argExpr->numConst);
+				printf("%-*f \t",20,argExpr->numConst);
 			}else if (argExpr->type == constbool_e){
 				char* tmp=malloc(10);
 				argExpr->boolConst=='t'? strcat(tmp,"true\0"):strcat(tmp,"false\0");
 				printf("%-*s \t",20,tmp);
 			}else if (argExpr->type == conststring_e && print_flag==0){
-				printf("\"%-*s \t",20,argExpr->strConst);
+								printf("\"%-*s \t",20,argExpr->strConst);
 				print_flag=0;
 			}else if (argExpr->type == conststring_e && print_flag==1){
-				printf("%-*s \t",20,argExpr->strConst);
+				if(strpbrk(argExpr->strConst,"\"")==NULL){
+				printf("%-*s \t",20,argExpr->strConst);}
+				else{ printf("\"%-*s \t",20,argExpr->strConst);}
+
 				print_flag=0;
 			}else if (argExpr->type == nil_e){
 				printf("%-*s \t",20,"NIL");
@@ -69,12 +73,12 @@ void printMedianCode(){
 		"funcend\0","tablecreate\0","tablegetelem\0",    
 		"tablesetelem\0","jump\0","return\0"};
 
-    int line_for_print = 0;
+    int line_for_print = 1;
     printf("quad#\t\t\topcdode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tlabel\n");
     printf("-------------------------------------------------------------------------------------------------------------------------------\n");    
     //quads[i].label = 0;
     
-    for(int i = 0; i < currQuad; i++){
+    for(int i = 1; i < currQuad; i++){
         printf("%-*d \t",20,line_for_print);
         printf("%-*s \t", 20, opcode_array[quads[i].op]);
 		 if(quads[i].op== assign){
@@ -88,7 +92,7 @@ void printMedianCode(){
 	    }else if(quads[i].op == uminus || quads[i].op == not){
             		printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
-			printf("%-*s \t",20,"\t");
+			printf("%-*s \t",15,"\t");
 	    }else if(quads[i].op == and ||quads[i].op== or ){
 		    	printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
@@ -108,18 +112,20 @@ void printMedianCode(){
 			printf("%-*s \t",5,"\t");
       
         }else if(quads[i].op == tablegetelem){
+			
 			print_flag=1;
+			
             		printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
 			printExpr(quads[i].arg2);       
         }else if(quads[i].op == tablesetelem){
 			print_flag=1;
-           		 printExpr(quads[i].result);
+           		printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
 			printExpr(quads[i].arg2);  
 	    }
-	
-		printf("%-*d \t",20,quads[i].label);
+		
+		(quads[i].label==-1  || quads[i].op == funcstart || quads[i].op == funcend)?printf("%-*s \t",20,""):printf("%-*d \t",20,quads[i].label);
         line_for_print++;
         printf("\n");
     }
@@ -196,7 +202,7 @@ void emit(
 	if(currQuad == total)
 		expand();
 
-	quad* p= quads+currQuad++;
+	quad* p= quads+(currQuad++);
 	p->arg1= arg1;
 	p->arg2= arg2;
 	p->result=result;
@@ -282,8 +288,8 @@ expr* emit_iftableitem(expr* e){
 		emit(
 			tablegetelem,
 			result,
-			e->index,
 			e,
+			e->index,
 			-1,
 			currQuad
 		);
@@ -315,8 +321,7 @@ void check_arith(expr*e, const char* context){
 		e->type == programfunc_e ||
 		e->type == libraryfunc_e ||
 		e->type == boolexpr_e )
-	printf("Illegal expr used in %s!", context); ////////////make new function for compiletime errorrs
-}
+	printf("Illegal expr used");}
 
 unsigned int istempname(char* s){
 	return *s=='_';
@@ -340,7 +345,9 @@ unsigned nextquad (void) { return currQuad; }
 
 
 void make_stmt (stmt_t* s){
-	 s->breaklist= s->returnlist = s->contlist = 0;  
+	 s->breaklist= 0;
+	s->returnlist = 0;
+	s->contlist = 0;  
 }
 
 int newlist (int i){ 
@@ -389,13 +396,14 @@ expr* emitBoolean(expr* ex){
 	
     if(ex->type == boolexpr_e ){
         patchlist(ex->truelist, nextquad());
-        patchlist(ex->falselist, nextquad()+2);
+       
 
         expr* tmp = newexpr(boolexpr_e);
         tmp->sym = newtemp();
         
         emit(assign, tmp, newexpr_constbool('t'), NULL, -1, currQuad);
         emit(jump, NULL, NULL, NULL, nextquad() + 2 , currQuad);
+	patchlist(ex->falselist, nextquad());
         emit(assign, tmp, newexpr_constbool('f'), NULL, -1, currQuad);
         
         return tmp;
