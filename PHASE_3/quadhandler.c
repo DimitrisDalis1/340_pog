@@ -74,8 +74,13 @@ void printMedianCode(){
 		"tablesetelem\0","jump\0","return\0"};
 
     int line_for_print = 1;
-    printf("quad#\t\t\topcdode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tlabel\n");
-    printf("-------------------------------------------------------------------------------------------------------------------------------\n");    
+        printf("\n----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
+
+    printf("\t\t\t\t\t\t\t\t\tQUADS\t\t\t\t\t\t\t\t\n");
+    printf("----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
+
+    printf("quad#\t\t\topcdode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tlabel\t\t\tline\n");
+    printf("----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
     //quads[i].label = 0;
     
     for(int i = 1; i < currQuad; i++){
@@ -126,6 +131,7 @@ void printMedianCode(){
 	    }
 		
 		(quads[i].label==-1  || quads[i].op == funcstart || quads[i].op == funcend)?printf("%-*s \t",20,""):printf("%-*d \t",20,quads[i].label);
+		printf("%-*d \t",20,quads[i].line);
         line_for_print++;
         printf("\n");
     }
