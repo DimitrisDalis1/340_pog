@@ -8,7 +8,7 @@ unsigned programVarOffset =0;
 unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
-int print_flag=0;
+int print_flag=0;//
 
 int check_for_valid_loop_stop(int counter){
 	if(counter > 0)
