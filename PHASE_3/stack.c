@@ -27,7 +27,7 @@ void push(stack* name,int data) {
         name->head  = temp_;
     }
     name->length++;
-    printf("Node is Inserted %d\n\n", name->head->data);
+    //printf("Node is Inserted %d\n\n", name->head->data);
 }
 
 int pop(stack* name) {
