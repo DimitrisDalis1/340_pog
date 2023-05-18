@@ -304,9 +304,21 @@ expr* emit_iftableitem(expr* e){
 }
 
 
-
-expr* make_call(expr* lv, expr* reversed_elist){
+expr* make_call(expr* lv, expr* head){
 	expr* func=emit_iftableitem(lv);
+	expr* prev=head;
+	expr* reversed_elist=head;
+    	expr* cur= head->next;
+	head=head->next;
+	prev->next=NULL;
+ 
+	while(reversed_elist){
+		reversed_elist=reversed_elist->next;
+		cur->next=prev;
+		prev=cur;
+		cur=reversed_elist;	
+	}
+	reversed_elist=prev;
 	while(reversed_elist){
 		emit(param,reversed_elist,NULL,NULL, -1, currQuad); //2 teleftaia oti na nai
 		reversed_elist=reversed_elist->next;
@@ -318,6 +330,7 @@ expr* make_call(expr* lv, expr* reversed_elist){
 
 	return result;
 }
+
 
 void check_arith(expr*e, const char* context){
 	if ( e->type == constbool_e ||
