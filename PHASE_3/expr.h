@@ -39,6 +39,7 @@ typedef struct expr{
 	enum expr_t type;
 	int truelist;
 	int falselist;
+	int iaddress;
 }expr;
 
 expr* newexpr(expr_t t);
