@@ -1,5 +1,5 @@
 #include "quadhandler.h"
-
+extern int  yylineno;
 quad*	quads = (quad*) 0;
 unsigned total = 0;
 int tempcounter=0;
@@ -8,7 +8,7 @@ unsigned programVarOffset =0;
 unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
-int print_flag=0;//
+int print_flag=0;
 
 int check_for_valid_loop_stop(int counter){
 	if(counter > 0)
@@ -303,22 +303,24 @@ expr* emit_iftableitem(expr* e){
 	}
 }
 
-
-expr* make_call(expr* lv, expr* head){
+expr* make_call(expr* lv, expr* reversed_elist){
 	expr* func=emit_iftableitem(lv);
-	expr* prev=head;
-	expr* reversed_elist=head;
-    	expr* cur= head->next;
-	head=head->next;
+	
+	if(reversed_elist!=NULL){
+	expr* prev=reversed_elist;
+    	expr* cur= reversed_elist->next;
+	reversed_elist=reversed_elist->next;
 	prev->next=NULL;
  
-	while(reversed_elist){
+	while(reversed_elist!=NULL){
 		reversed_elist=reversed_elist->next;
 		cur->next=prev;
 		prev=cur;
 		cur=reversed_elist;	
 	}
 	reversed_elist=prev;
+	}
+	else reversed_elist=NULL;
 	while(reversed_elist){
 		emit(param,reversed_elist,NULL,NULL, -1, currQuad); //2 teleftaia oti na nai
 		reversed_elist=reversed_elist->next;
@@ -330,7 +332,6 @@ expr* make_call(expr* lv, expr* head){
 
 	return result;
 }
-
 
 void check_arith(expr*e, const char* context){
 	if ( e->type == constbool_e ||
@@ -420,10 +421,10 @@ expr* emitBoolean(expr* ex){
         expr* tmp = newexpr(boolexpr_e);
         tmp->sym = newtemp();
         
-        emit(assign, tmp, newexpr_constbool('t'), NULL, -1, currQuad);
-        emit(jump, NULL, NULL, NULL, nextquad() + 2 , currQuad);
+        emit(assign, tmp, newexpr_constbool('t'), NULL, -1, yylineno);
+        emit(jump, NULL, NULL, NULL, nextquad() + 2 , yylineno);
 	patchlist(ex->falselist, nextquad());
-        emit(assign, tmp, newexpr_constbool('f'), NULL, -1, currQuad);
+        emit(assign, tmp, newexpr_constbool('f'), NULL, -1, yylineno);
         
         return tmp;
     }else  return ex;
