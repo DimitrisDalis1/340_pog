@@ -1,14 +1,13 @@
-#include <stdlib.h>
-#include "quadhandler.h"
 #include "target_producer.h"
 
-double* numConsts;
-unsigned totalNumConsts;
-char** stringConsts;
-unsigned totalStringConsts;
-char** namedLibfuncs;
-userfunc* userFuncs;
-unsigned totalUserFuncs;
+double* numConsts=(double*)0;
+unsigned totalNumConsts=0;
+char** stringConsts=(char**)0;
+unsigned totalStringConsts=0;
+char** namedLibfuncs=(char**)0;
+unsigned totalNamedFuncs=0;
+userfunc* userFuncs=(userfunc*)0;
+unsigned totalUserFuncs=0;
 
 unsigned int currInstruction = 0;
 unsigned int totalVmargs = 0;
@@ -16,6 +15,71 @@ unsigned int totalVmargs = 0;
 instruction* vmargs=(instruction*) 0;
 unsigned int currInstruction = 0;
 unsigned int totalVmargs = 0;
+
+unsigned consts_newstring(char* s){
+    unsigned indexx;
+    for(unsigned i=0; i<totalStringConsts; ++i) {
+        if(strcmp(stringConsts[i], s)==0)
+            return i;
+    }
+    if (totalStringConsts==0)
+        stringConsts = malloc(sizeof(char*));
+    else 
+        stringConsts = realloc(stringConsts, sizeof(char*)*(totalStringConsts+1));
+
+    string_consts[totalStringConsts] = strdup(s);
+    indexx=totalStringConsts++;
+    return indexx;
+}
+
+unsigned consts_newnumber(double n){
+    unsigned indexx;
+    for(unsigned i=0;i<totalNumConsts;i++){
+        if(numConsts[i]==n) return i;
+    }
+    if(totalNumConsts==0){
+        numConsts=malloc(sizeof(double));
+    }else numConsts= realloc(numConsts,sizeof(double*(totalNumConsts+1)));
+    
+    numConsts[totalNumConsts]=n;
+    indexx=totalNumConsts++;
+    return indexx;
+}
+
+unsigned libfuncs_newused(char* s){
+    unsigned indexx;
+    for(unsigned i=0; i<totalNamedFuncs; ++i) {
+        if(strcmp(namedLibfuncs[i], s)==0)
+            return i;
+    }
+    if (totalNamedFuncs==0)
+        namedLibfuncs = malloc(sizeof(char*));
+    else 
+        namedLibfuncs = realloc(namedLibfuncs, sizeof(char*)*(totalNamedFuncs+1));
+
+    namedLibfuncs[totalNamedFuncs] = strdup(s);
+    indexx=totalNamedFuncs++;
+    return indexx;
+}
+
+unsigned userfuncs_newfunc(SymbolTableEntry* sym){
+    unsigned indexx;
+    for(unsigned i=0; i<totalUserFuncs;i++){ 
+        if(userFuncs[i].address == sym->value.funcVal->iaddress)
+            return i;
+    } 
+    if (totalUserFuncs==0)
+        userFuncs = malloc(sizeof(userfunc));
+    else 
+        userFuncs = realloc(userFuncs, sizeof(userfunc)*(totalUserFuncs+1));
+    
+    userFuncs[totalUserFuncs].address = sym->value->iaddress; //na to valw sto funcprefix ston parser $$->sym->address= ..;
+    userFuncs[totalUserFuncs].localSize = sym->value.funcVal->totalLocals; 
+    userFuncs[totalUserFuncs].id = sym->value.funcVal->name;  
+    indexx=totalUserFuncs++;
+    return indexx;
+}
+
 
 void expand_v(){
 	assert(totalVmargs==currInstruction);
