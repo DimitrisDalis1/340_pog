@@ -277,69 +277,15 @@ void generate_IF_LESS (quad* q) { generate_relational(jlt_v, q); }
 void generate_IF_LESSEQ (quad* q) { generate_relational(jle_v, q); }
 
 void generate_NOT (quad* q) {
-    quad.taddress = nextinstructionlabel();
-    instruction t;
-    t.opcode = jeq;
-    make_operand(q->arg1, &t.arg1);
-    make_booloperand(&t.arg2, false);
-    t.result.type = label_a;
-    t.result.value = nextinstructionlabel()+3;
-    emit(t);
-    t.opcode = assign;
-    make_booloperand(&t.arg1, false);
-    reset_operand(&t.arg2);
-    make_operand(q->result, &t.result);
-    emit(t); 
-    t.opcode = jump;
-    reset_operand (&t.arg1);
-    reset_operand(&t.arg2);
-    t.result.type = label_a;
-    t.result.value = nextinstructionlabel()+2;
-    emit(t);
-    t.opcode = assign;
-    make_booloperand(&t.arg1, true);
-    reset_operand(&t.arg2);
-    make_operand(q->result, &t.result);
-    emit(t);
+    return;
 }
 
 void generate_OR (quad* q) {
-    q->taddress = nextinstructionlabel();
-    instruction *t=malloc(sizeof(instruction)); 
-    t->opcode = jeq_v;
-    t->srcLine=q->line;
-    if(q->arg1!=NULL){
-        t->arg1 = malloc(sizeof(vmarg));
-        make_operand(q->arg1, t->arg1);
-    }
-    
-    make_booloperand(t->arg2, true);
-    t->result->type = label_a;
-    t->result->value = nextinstructionlabel()+4;
-    emit_v(t);
+    return;
+} 
 
-    if(q->arg2!=NULL){
-        t->arg1 = malloc(sizeof(vmarg));
-        make_operand(q->arg2, t->arg1);
-    }
-    t->result->value = nextinstructionlabel()+3;
-    emit_v(t); 
-    t->opcode = assign_v;
-    make_booloperand(t->arg1, false);
-    reset_operand(t->arg2);
-    make_operand(q->result, t->result);
-    emit_v(t);
-    t->opcode = jump_v;
-    reset_operand (t->arg1);
-    reset_operand(t->arg2);
-    t->result->type = label_a;
-    t->result->value = nextinstructionlabel()+2;
-    emit_v(t);
-    t->opcode = assign;
-    make_booloperand(t->arg1, true);
-    reset_operand(t->arg2);
-    make_operand(q->result, t->result);
-    emit_v(t);
+void generate_NOT (quad* q) {
+    return;
 } 
 
 void generate_PARAM(quad* q) {
