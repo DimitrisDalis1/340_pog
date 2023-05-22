@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include "quadhandler.h"
 #define EXPAND_SIZE_V 1024
 #define CURR_SIZE_V 	(total*sizeof(instruction))
 #define NEW_SIZE_V	(EXPAND_SIZE_V*sizeof(instruction)+CURR_SIZE_V)
