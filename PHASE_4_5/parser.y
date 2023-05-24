@@ -1,6 +1,7 @@
 %{
     #include <stdio.h>
     #include "quadhandler.h"
+    #include "target_producer.h"
     #define for_each_time(item, list) \
 	for(T * item = list->head; item != NULL; item = item->next)
     int yyerror (char* yaccProvidedMessage);
@@ -15,7 +16,7 @@
     int scope=0;
     int block_count = 0;
     bool isFunct = false;
-    extern bool isError;
+    bool isError=false;
     int function_scope_count = 0;
     int unnamed_counter=0;
     int global_check = 0;
@@ -1490,6 +1491,7 @@ int main(int argc, char** argv)
     symtable_print(head_scope_node,hash);
     if(!isError){
     	printMedianCode();
+	generateF();
     }else{
 	printf("Could not produce Median Code because of compile time errors \n");
 	}
