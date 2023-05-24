@@ -1135,7 +1135,7 @@ funcprefix : FUNCTION funcname
 	int *tmp = malloc(sizeof(int));
 	*tmp = nextquadlabel();
 	push(func_stack, *tmp);
-	// emit(jump, NULL, NULL, NULL, 0, yylineno);
+	emit(jump, NULL, NULL, NULL, 0, yylineno);
 	emit(funcstart, newexpr_conststring($2), NULL, NULL, -1, yylineno);
 
 	push(stack_, offset_); 
@@ -1186,7 +1186,7 @@ funcblockend
 	sim_funcs--;
 	exitscopespace();
 	offset_ = pop(stack_);
-	// patchlabel(fof,nextquad());
+	patchlabel(fof,nextquad());
 	// printf("%d",fof);
 	fprintf(yyout_y, "funcdef -> funcblockend\n");
 };
