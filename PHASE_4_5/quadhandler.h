@@ -3,6 +3,7 @@
 #include "expr.h"
 #include "stack.h"
 #include "symtable.h"
+
 extern Scope_node *head_scope_node;
 extern SymTable_T* hash ;
 extern int current_scope;
@@ -12,6 +13,7 @@ extern FILE* yyin;
 #define EXPAND_SIZE 1024
 #define CURR_SIZE 	(total*sizeof(quad))
 #define NEW_SIZE	(EXPAND_SIZE*sizeof(quad)+CURR_SIZE)
+extern bool isError;
 
 typedef enum iopcode iopcode;
 typedef enum scopespace_t scopespace_t;
@@ -53,7 +55,9 @@ typedef struct quad{
 	expr* arg2;
 	unsigned int label;
 	unsigned int line;
+	unsigned int taddress;
 }quad;
+
 
 typedef struct call_t{
 	expr* elist;
