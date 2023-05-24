@@ -9,7 +9,6 @@ unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
 int print_flag=0;
-bool isError = false;
 
 int check_for_valid_loop_stop(int counter){
 	if(counter > 0)
@@ -107,7 +106,7 @@ void printMedianCode(){
             		printExpr(quads[i].result);
 			printExpr(quads[i].arg1);
 			printExpr(quads[i].arg2);
-        }else if(quads[i].op == call || quads[i].op == returnn || quads[i].op == jump || quads[i].op == tablecreate || quads[i].op == funcend || quads[i].op == getretval){
+        }else if(quads[i].op == call || quads[i].op == returnn || quads[i].op == jump || quads[i].op == tablecreate || quads[i].op == funcend || quads[i].op == getretval || quads[i].op== param ){
 		    	printExpr(quads[i].result);
 			printf("%-*s \t",20,"\t");
 			printf("%-*s \t",5,"\t");
