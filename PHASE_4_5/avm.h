@@ -93,7 +93,7 @@ extern void memclear_table(avm_memcell*);
 
 extern void avm_warning(char*,instruction*);
 
-extern execute_assign (instruction*);
+extern execute_assign(instruction*);
 
 void avm_assign(avm_memcell*, avm_memcell*);
 
@@ -127,7 +127,7 @@ void execute_funcenter (instruction* instr);
 
 unsigned avm_get_envvalue(unsigned i);
 
-void execute_funcexit(instuction*)
+void execute_funcexit(instuction*);
 
 void avm_calllibfunc(char* id);
 
@@ -182,7 +182,7 @@ tostring_func_t tostringFuncs[];
 char* avm_tostring(avm_memcell*);
 
 
-
+/*
 void avm_call_functor(avm_table* t){
     cx.type = string_m;
     cx.data.strVal = "()";
@@ -213,7 +213,7 @@ void avm_tablesetelem(
     avm_memcell*    index,
     avm_memcell* content
 );
-
+*/
 void execute_tablegetelem(instruction*);
 
 void execute_tablesetelem(instruction*);
