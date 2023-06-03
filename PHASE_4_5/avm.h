@@ -2,6 +2,7 @@
 #define AVM_HEADER
 #include <stdio.h>
 #include "table.h"
+#include "target_producer.h"
 
 
 #define AVM_STACKENV_SIZE 4
@@ -93,7 +94,7 @@ extern void memclear_table(avm_memcell*);
 
 extern void avm_warning(char*,instruction*);
 
-extern execute_assign(instruction*);
+/*extern execute_assign(instruction*); */
 
 void avm_assign(avm_memcell*, avm_memcell*);
 
@@ -127,7 +128,7 @@ void execute_funcenter (instruction* instr);
 
 unsigned avm_get_envvalue(unsigned i);
 
-void execute_funcexit(instuction*);
+void execute_funcexit(instruction*);
 
 void avm_calllibfunc(char* id);
 
@@ -158,6 +159,7 @@ void avm_warning(char*, instruction*);
 /* With the following every library functiion is manually
     added in the VM library function resolution map
 */
+typedef void (*library_func_t)(void);
 
 //void avm_registerlibfunc(char* id,library_func_t addr);
 
@@ -165,6 +167,7 @@ extern void avm_push_table_arg(avm_table*);
 
 void execute_pusharg(instruction*);
 
+extern char* typeStrings[];
 
 typedef char*(*tostring_func_t)(avm_memcell*);
 
@@ -221,5 +224,7 @@ void execute_tablesetelem(instruction*);
 void avm_initialize(void);
 
 void libfunc_totalarguments(void);
+
+extern int disable_remove_warning;
 
 #endif

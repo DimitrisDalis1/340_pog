@@ -1,3 +1,4 @@
+#include "avm.h"
 typedef unsigned char(*tobool_func_t)(avm_memcell*);
 
 unsigned char number_tobool(avm_memcell* m) { return m->data.numVal != 0; }

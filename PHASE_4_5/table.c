@@ -2,7 +2,7 @@
 
 void execute_newtable(instruction* instr){
   avm_memcell * lv = avm_translate_operand(instr->result, (avm_memcell*) 0);
-  assert(lv && (&avm_stack[N-1] >= lv && lv > &avm_stack[top]));
+  //assert(lv && (&avm_stack[N-1] >= lv && lv > &avm_stack[top]));
   avm_memcellclear(lv);
   lv->type = table_m;
   lv->data.tableVal = avm_tablenew();

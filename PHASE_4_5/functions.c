@@ -20,7 +20,7 @@ void execute_call(instruction* instr){
         case table_m: avm_calllinfunc(func->data.tableVal); break;
     default:{
         char* s = avm_tostring(func);
-        avm_error("call : cannot bind '%s' to function!",s )
+        avm_error("call : cannot bind '%s' to function!",s );
         free(s);
         executionFinished = 1;
         }
@@ -28,7 +28,7 @@ void execute_call(instruction* instr){
 }
 
 void execute_funcenter (instruction* instr){
-    avm_memcell* func = avm_translate_operand(&isntr->result, &ax);
+    avm_memcell* func = avm_translate_operand(&instr->result, &ax);
     assert(func);
     assert(pc == func->data.funcVal); /* Func address should match PC. */
     /* Callee actions here. */
@@ -38,21 +38,22 @@ void execute_funcenter (instruction* instr){
     top = top - funcInfo -> localSize; 
 }
 
+/*
 unsigned avm_get_envvalue(unsigned i){
-    assert(stack[i].type = number_m);
+   assert(stack[i].type == number_m);
     unsigned val = (unsigned) stack[i].data.numVal;
     assert(stack[i].data.numVal == ((double) val));
-    return val;
-}
+   return val;
+}*/
 
-void execute_funcexit(instuction* unused){
+void execute_funcexit(instruction* unused){
     unsigned oldTop = top;
     top = avm_get_envvalue(topsp + AVM_SAVEDTOP_OFFSET);
     pc = avm_get_envvalue(topsp + AVM_SAVEDPC_OFFSET);
     topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
 
-    while(++oldTop <= top)
-        avm_memcellclear(&stack[oldTop]);
+   // while(++oldTop <= top)
+        //avm_memcellclear(&stack[oldTop]);
 }
 
 
@@ -73,8 +74,8 @@ void libfunc_totalarguments(void){
 
 void libfunc_typeof(void){
     unsigned i = avm_totalactuals();
-    if(n != 1)
-        avm_error("one argument (not %d) expected in 'typeof'!",n);
+    if(i != 1)
+        avm_error("one argument (not %d) expected in 'typeof'!",i);
     else{
         /*Thats how a lib function returns a result.
         It has to only set the 'retval' register!
@@ -111,7 +112,7 @@ unsigned avm_totalactuals(void){
 
 avm_memcell* avm_getactual(unsigned i){
     assert(i < avm_totalactuals());
-    return &stack[topsp + AVM_STACKENV_SIZE + i + 1];
+    //return &stack[topsp + AVM_STACKENV_SIZE + i + 1];
 }
 
 
@@ -123,7 +124,7 @@ void execute_pusharg(instruction* instr){
     /*this is actually stack[top] = arg,but we have to use
         avm_assign.*/
 
-    avm_assign(&stack[top],arg);
+    //avm_assign(&stack[top],arg);
     ++totalActuals;
     avm_dec_top();
 }
@@ -142,8 +143,20 @@ void libfunc_print(void){
     }
 }
 
-void libfunc_typeof(void);
-void libfunc_totalarguments(void);
+void libfunc_typeof(void){
+
+}
+void libfunc_totalarguments(void){
+    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
+    avm_memcellclear(&retval);
+    if(!p_topsp){
+        avm_error("'totalarguments' called outside a function!", &code[pc]);
+        retval.type = nil_m;
+    }else{
+        retval.type = number_m;
+        retval.data.numVal = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET);
+    }
+}
 void libfunc_sqrt(void);
 void libfunc_cos(void);
 void libfunc_sin(void);

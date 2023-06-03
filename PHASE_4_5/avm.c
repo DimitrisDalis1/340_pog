@@ -1,5 +1,6 @@
 #include"avm.h"
 
+
 unsigned char   executionFinished = 0;
 unsigned        pc = 0;
 unsigned        currLine = 0;
@@ -11,6 +12,7 @@ avm_memcell ax, bx, cx;
 avm_memcell retval;
 int    top, topsp;
 
+/* needs binary file
 double  consts_getnumber(unsigned index){
     return number_consts[index];
 }
@@ -20,9 +22,11 @@ char*   consts_getstring(unsigned index) {
 char*   libfuncs_getused(unsigned index) {
     return libfuncs[index];
 }
-
+*/
 
 userfunc* avm_getfuncinfo(unsigned adress);
+
+extern char* typeStrings[];
 
 
 
@@ -102,7 +106,7 @@ void execute_cycle(void){
 
 void avm_memcellclear(avm_memcell* m){
     if(m->type != undef_m){
-        memclwar_func_t f = memclearFuncs[m->type];
+        memclear_func_t f = memclearFuncs[m->type];
         if(f)
             (*f)(m);
         m->type = undef_m;
@@ -146,12 +150,14 @@ extern void memclear_table(avm_memcell* m){
     avm_tabledecrefcounter(m->data.tableVal);
 }
 
+/*
 extern void avm_push_table_arg(avm_table* t){
     stack[top].type = table_m;
     avm_tableincerfcounter(stack[top].data.tale = t);
     ++totalActuals;
     avm_dec_top();
 }
+*/
 
 
 void avm_dec_top(void){
