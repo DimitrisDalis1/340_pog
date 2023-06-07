@@ -12,6 +12,7 @@ extern unsigned totalNumConsts;
 extern char** stringConsts;
 extern unsigned totalStringConsts;
 extern char** namedLibfuncs;
+extern int program_offset;
 
 extern unsigned totalUserFuncs;
 

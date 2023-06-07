@@ -1,5 +1,6 @@
 #include"avm.h"
 
+
 unsigned char   executionFinished = 0;
 unsigned        pc = 0;
 unsigned        currLine = 0;
@@ -11,6 +12,7 @@ avm_memcell ax, bx, cx;
 avm_memcell retval;
 int    top, topsp;
 
+/* needs binary file
 double  consts_getnumber(unsigned index){
     return number_consts[index];
 }
@@ -20,9 +22,15 @@ char*   consts_getstring(unsigned index) {
 char*   libfuncs_getused(unsigned index) {
     return libfuncs[index];
 }
+*/
 
+userfunc* avm_getfuncinfo(unsigned address){
+    //for(int i=0 ; i< totalUserFuncs; i++){
+       // if(address == address)
+    //}
+}
 
-userfunc* avm_getfuncinfo(unsigned adress);
+extern char* typeStrings[]; //done in bool.c
 
 
 
@@ -98,11 +106,9 @@ void execute_cycle(void){
     }
 }
 
-
-
 void avm_memcellclear(avm_memcell* m){
     if(m->type != undef_m){
-        memclwar_func_t f = memclearFuncs[m->type];
+        memclear_func_t f = memclearFuncs[m->type];
         if(f)
             (*f)(m);
         m->type = undef_m;
@@ -130,28 +136,46 @@ memclear_func_t memclearFuncs[] = {
      0   /* undef */
  };
 
-avm_memcell* avm_tablegetelem (
-            avm_table*  table,
-            avm_memcell*    index
-);
+avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
+    
+}
 
-void avm_tablesetelem(
-    avm_table*  table,
-    avm_memcell*    index,
-    avm_memcell* content
-);
+void avm_tablesetelem(avm_table*  table,avm_memcell* index,avm_memcell* content);
 
 extern void memclear_table(avm_memcell* m){
     assert(m->data.tableVal);
     avm_tabledecrefcounter(m->data.tableVal);
 }
 
+/*
 extern void avm_push_table_arg(avm_table* t){
     stack[top].type = table_m;
     avm_tableincerfcounter(stack[top].data.tale = t);
     ++totalActuals;
     avm_dec_top();
 }
+
+void avm_call_functor(avm_table* t){
+    cx.type = string_m;
+    cx.data.strVal = "()";
+    avm_memcell* f = avm_tablegetelem(t, &cx);
+    if(!f)
+        avm_error("in calling table: no '()' element found!");
+    else
+    if (f->type == table_m)
+        avm_call_functor(f->data,tableVal);
+    else
+    if(f->type == userfunc_a){
+        avm_push_table_arg(t);
+        avm_callsaveenvironment();
+        pc = f -> data.funcVal;
+        assert(pc < AVM_ENDING_PC && code[pc].opcode == funcenter_v);
+    }
+    else
+        avm_error("in calling table: illegal '()' element value!");
+}
+
+*/
 
 
 void avm_dec_top(void){
@@ -179,11 +203,55 @@ void avm_callsaveenvironment(void){
 }
 
 void avm_error(char* format,instruction* code){
-    printf("error");
+    fprintf(stderr, "Error is: %s in line %u\n", format, code->srcLine);
 }
 
 void avm_warning(char* warning, instruction* code){
-    printf("warning");
+    fprintf(stderr, "Warning is: %s in line %u\n", warning, code->srcLine);
+}
+
+int libfunc_hash(char* id){
+    assert(id);
+    int result;
+    if(strcmp("print",id)){
+        result = 0;
+    }else if (strcmp("typeof",id))
+    {
+         result = 1;
+    }else if (strcmp("totalarguments",id))
+    {
+         result = 2;
+    }else if (strcmp("sqrt",id))
+    {
+         result = 3;
+    }else if (strcmp("cos",id))
+    {
+         result = 4;
+    }else if (strcmp("sin",id))
+    {
+         result = 5;
+    }else if (strcmp("strtonum",id))
+    {
+         result = 6;
+    }else if (strcmp("input",id))
+    {
+         result = 7;
+    }else if (strcmp("argument",id))
+    {
+         result = 8;
+    }else if (strcmp("objecttotalmembers",id))
+    {
+         result = 9;
+    }else if (strcmp("objectmemberkeys",id))
+    {
+         result = 10;
+    }else if (strcmp("objectcopy",id))
+    {
+         result = 11;
+    }else{
+        result = 12;
+    }
+    return result;
 }
 
 tostring_func_t tostringFuncs[]={
@@ -203,3 +271,5 @@ char* avm_tostring(avm_memcell* m){
 }
 
 char* avm_tostring(avm_memcell* cell);
+
+
