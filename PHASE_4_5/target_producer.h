@@ -33,7 +33,6 @@ typedef struct instruction instruction;
 typedef struct userfunc userfunc;
 typedef struct incomplete_jump incomplete_jump;
 
-
 typedef enum vmarg_t{
     label_a     =0,
     global_a    =1,

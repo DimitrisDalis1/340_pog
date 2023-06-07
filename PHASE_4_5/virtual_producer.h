@@ -1,6 +1,3 @@
-#include "avm.h"
-
-
 avm_table* avm_tablenew (void);
 void avm_tabledestroy (avm_table* t);
 avm_memcell* avm_tablegetelem (avm_memcell* key);

@@ -1,0 +1,101 @@
+lvalue -> id
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+assignexpr -> lvalue = expr
+expr -> assignexpr
+stmt -> expr;
+stmts -> stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+assignexpr -> lvalue = expr
+expr -> assignexpr
+stmt -> expr;
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+idlist -> idlist , ID
+idlist -> idlist , id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+arithop -> expr + expr
+expr -> arithop
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+assignexpr -> lvalue = expr
+expr -> assignexpr
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+lvalue -> id
+const -> REAL
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+assignexpr -> lvalue = expr
+expr -> assignexpr
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+program -> stmt(asteraki)

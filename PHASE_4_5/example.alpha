@@ -1,0 +1,6 @@
+x = 10;
+y = "hello";
+function f(x,y){return x+y;}
+z = "word";
+w = cos(3.14);
+print(x,y,z,w);
