@@ -156,7 +156,17 @@ void avm_warning(char*, instruction*); //NEED IMPLEMENTATION
 */
 typedef void (*library_func_t)(void);
 
-//void avm_registerlibfunc(char* id,library_func_t addr);
+/*Struct wiht a counter and an array for the library functions*/
+typedef struct LibFuncHash{
+    unsigned counter;
+    library_func_t LibTable[12];
+}LibFuncHash;
+
+LibFuncHash* libfunc_hashtable;
+
+int libfunc_hash(char* id); // done in avm.c
+
+void avm_registerlibfunc(char* id,library_func_t addr); //done in avm.c
 
 extern void avm_push_table_arg(avm_table*);
 
@@ -166,13 +176,13 @@ extern char* typeStrings[]; //done in bool.c
 
 typedef char*(*tostring_func_t)(avm_memcell*);
 
-extern char* number_tostring(avm_memcell*);  //done in bool.c
-extern char* string_tostring(avm_memcell*); //done in bool.c
-extern char* bool_tostring(avm_memcell*); //done in bool.c
+extern char* number_tostring(avm_memcell*);   //done in bool.c
+extern char* string_tostring(avm_memcell*);  //done in bool.c
+extern char* bool_tostring(avm_memcell*);   //done in bool.c
 extern char* table_tostring(avm_memcell*); //done in bool.c
 extern char* userfunc_tostring(avm_memcell*); //done in bool.c
 extern char* libfunc_tostring(avm_memcell*); //done in bool.c
-extern char* nil_tostring(avm_memcell*); //done in bool.c
+extern char* nil_tostring(avm_memcell*);    //done in bool.c
 extern char* undef_tostring(avm_memcell*); //done in bool.c
 
 tostring_func_t tostringFuncs[];

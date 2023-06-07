@@ -693,4 +693,3 @@ void readBinary(){
 
 	fclose(executable);
 }
-

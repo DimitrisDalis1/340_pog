@@ -231,7 +231,6 @@ void execute_jne (instruction* instr) {
 }
 
 
-/*klemmeno*/
 void execute_jump (instruction* instr) {
     assert(instr->result->type == label_a);
 

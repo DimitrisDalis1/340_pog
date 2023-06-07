@@ -136,16 +136,11 @@ memclear_func_t memclearFuncs[] = {
      0   /* undef */
  };
 
-avm_memcell* avm_tablegetelem (
-            avm_table*  table,
-            avm_memcell*    index
-);
+avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
+    
+}
 
-void avm_tablesetelem(
-    avm_table*  table,
-    avm_memcell*    index,
-    avm_memcell* content
-);
+void avm_tablesetelem(avm_table*  table,avm_memcell* index,avm_memcell* content);
 
 extern void memclear_table(avm_memcell* m){
     assert(m->data.tableVal);
@@ -207,13 +202,56 @@ void avm_callsaveenvironment(void){
     avm_push_envvalue(topsp);
 }
 
-//IMPLEMENT
 void avm_error(char* format,instruction* code){
-    printf("error");
+    fprintf(stderr, "Error is: %s in line %u\n", format, code->srcLine);
 }
 
 void avm_warning(char* warning, instruction* code){
-    printf("warning");
+    fprintf(stderr, "Warning is: %s in line %u\n", warning, code->srcLine);
+}
+
+int libfunc_hash(char* id){
+    assert(id);
+    int result;
+    if(strcmp("print",id)){
+        result = 0;
+    }else if (strcmp("typeof",id))
+    {
+         result = 1;
+    }else if (strcmp("totalarguments",id))
+    {
+         result = 2;
+    }else if (strcmp("sqrt",id))
+    {
+         result = 3;
+    }else if (strcmp("cos",id))
+    {
+         result = 4;
+    }else if (strcmp("sin",id))
+    {
+         result = 5;
+    }else if (strcmp("strtonum",id))
+    {
+         result = 6;
+    }else if (strcmp("input",id))
+    {
+         result = 7;
+    }else if (strcmp("argument",id))
+    {
+         result = 8;
+    }else if (strcmp("objecttotalmembers",id))
+    {
+         result = 9;
+    }else if (strcmp("objectmemberkeys",id))
+    {
+         result = 10;
+    }else if (strcmp("objectcopy",id))
+    {
+         result = 11;
+    }else{
+        result = 12;
+    }
+    return result;
 }
 
 tostring_func_t tostringFuncs[]={
@@ -233,3 +271,5 @@ char* avm_tostring(avm_memcell* m){
 }
 
 char* avm_tostring(avm_memcell* cell);
+
+

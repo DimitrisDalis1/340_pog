@@ -16,9 +16,9 @@ void execute_call(instruction* instr){
         break;
     }
         /* code */
-        case string_m: avm_calllinfunc(func->data.strVal); break;
-        case libfunc_m: avm_calllinfunc(func->data.libfuncVal); break;
-        case table_m: avm_calllinfunc(func->data.tableVal); break;
+        case string_m: {avm_calllinfunc(func->data.strVal); break;}
+        case libfunc_m: {avm_calllinfunc(func->data.libfuncVal); break;}
+        case table_m:{ /*avm_calllinfunc(func->data.tableVal);*/ break;} //implement it ,we gettableelement and settableelement
     default:{
         char* s = avm_tostring(func);
         avm_error("call : cannot bind '%s' to function!",s );
@@ -113,11 +113,16 @@ unsigned avm_totalactuals(void){
 
 avm_memcell* avm_getactual(unsigned i){
     assert(i < avm_totalactuals());
-    //return &stack[topsp + AVM_STACKENV_SIZE + i + 1];
+    return &avm_stack[topsp + AVM_STACKENV_SIZE + i + 1];
 }
 
 
-void avm_registerlibfunc(char* id,library_func_t addr); //IMPLEMENTATION???
+void avm_registerlibfunc(char* id,library_func_t addr){
+    assert(id);
+    int index = libfunc_hash(id);
+    libfunc_hashtable->LibTable[index] = addr;
+    libfunc_hashtable->counter = libfunc_hashtable->counter + 1;
+}
 
 void execute_pusharg(instruction* instr){
     avm_memcell* arg = avm_translate_operand(&instr->arg1,&ax);
