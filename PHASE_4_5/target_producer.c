@@ -12,8 +12,8 @@ instruction* vmargs=(instruction*) 0;;
 unsigned int currInstruction = 0;
 unsigned int totalVmargs = 0;
 int print_flagg=0;
+extern int program_offset;
 extern int currQuad;
-
 
 generator_func_t generators[] = {
     generate_ASSIGN,
@@ -606,22 +606,18 @@ void instrToBinary(){
         	fwrite(&instr.srcLine, sizeof(unsigned), 1, executable);
 
 	}
-	//fwrite(&programVarOffset,sizeof(int),1,executable);
+	fwrite(&program_offset,sizeof(int),1,executable);
 
 	fclose(executable);
 }
-
-
-
-
 
 void readBinary(){
 
 	FILE *executable;
 	executable= fopen("executable.abc","r");
 	
+	int magic_number,user,str,num,fun,i,insr_s,length,poffset;
 	
-	int magic_number,i,insr_s,length;
     	fread(&magic_number, sizeof(int), 1, executable);
 
 	printf("Magic number: %ld\n", magic_number);
@@ -632,7 +628,7 @@ void readBinary(){
    	fread(&user, sizeof(int), 1, executable); printf("userfuncs %d\n", user);
 	if(user!=0){
 	
-		userfs =(userfunc*) malloc(user*sizeof(userfunc));
+		userfunc* userfs =(userfunc*) malloc(user*sizeof(userfunc));
 		for(i=0;i<user;i++){
 		
 			fread(&userfs[i].address, sizeof(int), 1, executable);
@@ -648,7 +644,7 @@ void readBinary(){
 	}
 	fread(&str, sizeof(int), 1, executable); printf("strings %d\n", str);
 	if(str!=0){
-		str_c = (char**) malloc(sizeof(char*)*str);
+		char** str_c = (char**) malloc(sizeof(char*)*str);
 		for(i=0;i<str;i++){
 			 fread(&length, sizeof(int), 1, executable);
         	str_c[i] = (char*) malloc(sizeof(char)*(length+1));
@@ -658,7 +654,7 @@ void readBinary(){
 	}
 	 fread(&num, sizeof(int), 1, executable); printf("numbers %d\n", num);
 	 if(num!=0){
-		numbers= (double*)malloc(sizeof(double) * num);
+		double* numbers= (double*)malloc(sizeof(double) * num);
 		for(i=0;i<num;i++){
 			fread(&numbers[i], sizeof(double), 1, executable);
             printf("%lf\n", numbers[i]);
@@ -668,7 +664,7 @@ void readBinary(){
 
 	fread(&fun, sizeof(int), 1, executable); printf("functions %d\n", fun); 
 	if(fun!=0){
-		lib_f = (char**) malloc(sizeof(char*)*fun);
+		char** lib_f = (char**) malloc(sizeof(char*)*fun);
 		for(i=0;i<fun;i++){
 			 fread(&length, sizeof(int), 1, executable);
        		 lib_f[i] = (char*) malloc(sizeof(char)*(length+1));
@@ -677,7 +673,7 @@ void readBinary(){
 	}
 	fread(&insr_s, sizeof(int), 1, executable); printf("instructions %d\n", insr_s); 
 	if(insr_s!=0){
-		instrs = (instruction*) malloc((insr_s+1)*sizeof(instruction));
+		instruction * instrs = (instruction*) malloc((insr_s+1)*sizeof(instruction));
 		for(i=1;i<=insr_s;i++){
 		
 			instrs[i].result =(vmarg*) malloc(sizeof(vmarg));
@@ -696,5 +692,9 @@ void readBinary(){
 		}
 	}
 
+	fread(&poffset,sizeof(int),1,executable);
+	printf("total globals %d\n", poffset); 
+
 	fclose(executable);
 }
+
