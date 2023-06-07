@@ -1,3 +1,4 @@
+
 %{
     #include <stdio.h>
     #include "quadhandler.h"
@@ -172,8 +173,7 @@ stmt : expr SEMICOLON
 }
 | returnstmt
 {
-	$$ = malloc(sizeof(stmt_t));
-	make_stmt($$);
+	$$ = $1;
 	fprintf(yyout_y, "stmt -> returnstmt\n");
 	tempcounter = 0;
 }
@@ -452,11 +452,12 @@ M expr
 };
 
 expr : assignexpr
-{
+{	//$$=$1;
 	fprintf(yyout_y, "expr -> assignexpr\n");
 }
 | term
 {
+	$$=$1;
 	fprintf(yyout_y, "expr -> term\n");
 }
 | arithop
@@ -651,10 +652,12 @@ assignexpr : lvalue ASSIGN expr
 		}
 	}
 	if (($1)->type == tableitem_e)
-	{
+	{   if($3->type== boolexpr_e){
+            $3 =emitBoolean($3);
+        }
 		emit(tablesetelem, $1, $1->index, $3, -1, yylineno);
 		$$ = emit_iftableitem($1);
-		($$)->type = assignexpr_e;
+		($$)->type = var_e;
 	}   
 	else
 	{
@@ -678,7 +681,7 @@ primary : lvalue
 | call
 {
 	fprintf(yyout_y, "primary -> call\n");
-	$$ = $1;
+	//$$ = $1;
 }
 | objectdef
 {
@@ -841,7 +844,6 @@ lvalue : ID
 }
 | member
 {
-	$$ = $1;
 	fprintf(yyout_y, "lvalue -> member\n");
 };
 
@@ -1133,11 +1135,17 @@ funcprefix : FUNCTION funcname
 		$$->sym = search;
 	}
 	$$->iaddress = nextquadlabel(); 
+
 	int *tmp = malloc(sizeof(int));
 	*tmp = nextquadlabel();
 	push(func_stack, *tmp);
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
-	emit(funcstart, newexpr_conststring($2), NULL, NULL, -1, yylineno);
+	expr* func=newexpr(programfunc_e);
+	func->sym=$$->sym;
+	func->sym->value.funcVal->name=$2;
+	func->sym->address=nextquadlabel()+1;
+	func->iaddress=nextquadlabel()+1;
+	emit(funcstart,func, NULL, NULL, -1, yylineno);
 
 	push(stack_, offset_); 
 	offset_ = -1;
@@ -1189,6 +1197,7 @@ funcblockend
 	offset_ = pop(stack_);
 	patchlabel(fof,nextquad());
 	// printf("%d",fof);
+	patchlist($3->returnlist,nextquad()-1);
 	fprintf(yyout_y, "funcdef -> funcblockend\n");
 };
 
@@ -1439,8 +1448,11 @@ SEMICOLON
 {
 	$$ = malloc(sizeof(stmt_t));
 	make_stmt($$);
-	$$->returnlist = newlist(nextquad());
+	
+	
 	emit(returnn, NULL, NULL, NULL, -1, nextquad());
+	emit(jump,NULL,NULL,NULL,0,currQuad);
+	$$->returnlist = newlist(nextquad()-1);
 	fprintf(yyout_y, "returnstmt -> return ;\n");
 }
 | RETURN
@@ -1456,8 +1468,9 @@ expr SEMICOLON
 	$3 = emitBoolean($3);
 	$$ = malloc(sizeof(stmt_t));
 	make_stmt($$);
-	$$->returnlist = newlist(nextquad());
 	emit(returnn, $3, NULL, NULL, -1, nextquad());
+	emit(jump,NULL,NULL,NULL,0,currQuad);
+	$$->returnlist = newlist(nextquad()-1);
 	fprintf(yyout_y, "returnstmt -> return expr ;\n");
 };
 
@@ -1484,7 +1497,7 @@ int main(int argc, char** argv)
         yyin= stdin;
 	
 	expand();
-
+	expand_v();
 	emit(jump,NULL,NULL,NULL,0,0);
 	
     yyparse();
@@ -1492,6 +1505,9 @@ int main(int argc, char** argv)
     if(!isError){
     	printMedianCode();
 	generateF();
+	printInstructions();
+	instrToBinary();
+	readBinary();
     }else{
 	printf("Could not produce Median Code because of compile time errors \n");
 	}
