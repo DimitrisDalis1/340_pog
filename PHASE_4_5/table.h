@@ -1,6 +1,10 @@
 #define AVM_TABLE_HASHSIZE  211
 #define HASH_MULTIPLIER 65599
 
+
+typedef struct avm_memcell avm_memcell;
+
+
 typedef enum avm_memcell_t {
     number_m    = 0,
     string_m    = 1,
@@ -14,8 +18,8 @@ typedef enum avm_memcell_t {
 
 /*klemeno*/
 typedef struct avm_table_bucket {
-    avm_memcell key;
-    avm_memcell value;
+    struct avm_memcell* key;
+    struct avm_memcell* value;
     struct avm_table_bucket* next;
 } avm_table_bucket;
 

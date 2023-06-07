@@ -24,7 +24,7 @@
     exit(1); \
 }; \
 
-
+unsigned char   executionFinished = 0;
 extern int user,str,num,fun;
 extern userfunc* userfs;
 extern char** str_c;
@@ -193,7 +193,7 @@ extern char* libfunc_tostring(avm_memcell*); //done in bool.c
 extern char* nil_tostring(avm_memcell*);    //done in bool.c
 extern char* undef_tostring(avm_memcell*); //done in bool.c
 
-tostring_func_t tostringFuncs[];
+//tostring_func_t tostringFuncs[];
 
 char* avm_tostring(avm_memcell*); //done in avm.c
 

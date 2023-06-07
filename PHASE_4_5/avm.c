@@ -1,7 +1,7 @@
 #include"avm.h"
 
 
-unsigned char   executionFinished = 0;
+extern unsigned char   executionFinished;
 unsigned        pc = 0;
 unsigned        currLine = 0;
 unsigned        codeSize = 0;

@@ -2,7 +2,7 @@
 %{
     #include <stdio.h>
     #include "quadhandler.h"
-    #include "target_producer.h"
+    #include "avm.h"
     #define for_each_time(item, list) \
 	for(T * item = list->head; item != NULL; item = item->next)
     int yyerror (char* yaccProvidedMessage);
@@ -31,6 +31,7 @@
     //extern unsigned functionLocalOffset;
     //extern unsigned formalArgOffset;
     extern int tempcounter;
+	extern unsigned char   executionFinished;
     extern unsigned formalArgOffset;  
         int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
@@ -1513,10 +1514,10 @@ int main(int argc, char** argv)
 	avm_initialize();
     while(executionFinished == 0)
         execute_cycle();
-    avm_memcellclear(&ax);
-    avm_memcellclear(&bx);
-    avm_memcellclear(&cx);
-    avm_memcellclear(&retval);
+    //avm_memcellclear(&ax);
+    //avm_memcellclear(&bx);
+   // avm_memcellclear(&cx);
+   // avm_memcellclear(&retval);
     return 100;
     }else{
 	printf("Could not produce Median Code because of compile time errors \n");

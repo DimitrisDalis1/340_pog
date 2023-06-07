@@ -71,7 +71,7 @@
 
     #include <stdio.h>
     #include "quadhandler.h"
-    #include "target_producer.h"
+    #include "avm.h"
     #define for_each_time(item, list) \
 	for(T * item = list->head; item != NULL; item = item->next)
     int yyerror (char* yaccProvidedMessage);
@@ -100,6 +100,7 @@
     //extern unsigned functionLocalOffset;
     //extern unsigned formalArgOffset;
     extern int tempcounter;
+	extern unsigned char   executionFinished;
     extern unsigned formalArgOffset;  
         int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
@@ -117,7 +118,7 @@
 	stack* loopcounterstack;
 
 
-#line 121 "parser.c"
+#line 122 "parser.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -634,18 +635,18 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   138,   138,   143,   145,   154,   160,   167,   174,   180,
-     195,   210,   216,   223,   230,   235,   245,   253,   260,   268,
-     276,   285,   299,   313,   328,   343,   343,   358,   358,   375,
-     374,   415,   414,   454,   458,   463,   468,   473,   479,   484,
-     511,   537,   562,   587,   611,   636,   642,   676,   681,   686,
-     690,   696,   702,   786,   834,   847,   852,   868,   887,   893,
-     903,   909,   939,   948,   953,   960,   971,   983,   991,  1008,
-    1009,  1014,  1019,  1024,  1029,  1034,  1040,  1050,  1066,  1069,
-    1077,  1086,  1092,  1099,  1159,  1159,  1172,  1180,  1185,  1184,
-    1207,  1234,  1267,  1272,  1271,  1302,  1301,  1331,  1341,  1347,
-    1359,  1366,  1371,  1375,  1380,  1385,  1385,  1394,  1406,  1412,
-    1417,  1417,  1429,  1442,  1441,  1461,  1460
+       0,   139,   139,   144,   146,   155,   161,   168,   175,   181,
+     196,   211,   217,   224,   231,   236,   246,   254,   261,   269,
+     277,   286,   300,   314,   329,   344,   344,   359,   359,   376,
+     375,   416,   415,   455,   459,   464,   469,   474,   480,   485,
+     512,   538,   563,   588,   612,   637,   643,   677,   682,   687,
+     691,   697,   703,   787,   835,   848,   853,   869,   888,   894,
+     904,   910,   940,   949,   954,   961,   972,   984,   992,  1009,
+    1010,  1015,  1020,  1025,  1030,  1035,  1041,  1051,  1067,  1070,
+    1078,  1087,  1093,  1100,  1160,  1160,  1173,  1181,  1186,  1185,
+    1208,  1235,  1268,  1273,  1272,  1303,  1302,  1332,  1342,  1348,
+    1360,  1367,  1372,  1376,  1381,  1386,  1386,  1395,  1407,  1413,
+    1418,  1418,  1430,  1443,  1442,  1462,  1461
 };
 #endif
 
@@ -1433,22 +1434,22 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: stmts  */
-#line 139 "parser.y"
+#line 140 "parser.y"
 {
 	(yyval.stmtNode) = (yyvsp[0].stmtNode);
 	fprintf(yyout_y, "program -> stmt(asteraki)\n");
 }
-#line 1442 "parser.c"
+#line 1443 "parser.c"
     break;
 
   case 3: /* program: %empty  */
-#line 143 "parser.y"
+#line 144 "parser.y"
   {}
-#line 1448 "parser.c"
+#line 1449 "parser.c"
     break;
 
   case 4: /* stmt: expr SEMICOLON  */
-#line 146 "parser.y"
+#line 147 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
@@ -1457,53 +1458,53 @@ yyreduce:
 	emitBoolean((yyvsp[-1].exprNode));
 	tempcounter = 0;
 }
-#line 1461 "parser.c"
+#line 1462 "parser.c"
     break;
 
   case 5: /* stmt: if  */
-#line 155 "parser.y"
+#line 156 "parser.y"
 {
 	(yyval.stmtNode) = (yyvsp[0].stmtNode);
 	fprintf(yyout_y, "stmt -> ifstmt\n");
 	tempcounter = 0;
 }
-#line 1471 "parser.c"
+#line 1472 "parser.c"
     break;
 
   case 6: /* stmt: whilestmt  */
-#line 161 "parser.y"
+#line 162 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
 	fprintf(yyout_y, "stmt -> whilestmt\n");
 	tempcounter = 0;
 }
-#line 1482 "parser.c"
+#line 1483 "parser.c"
     break;
 
   case 7: /* stmt: forstmt  */
-#line 168 "parser.y"
+#line 169 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
 	fprintf(yyout_y, "stmt -> forstmt\n");
 	tempcounter = 0;
 }
-#line 1493 "parser.c"
+#line 1494 "parser.c"
     break;
 
   case 8: /* stmt: returnstmt  */
-#line 175 "parser.y"
+#line 176 "parser.y"
 {
 	(yyval.stmtNode) = (yyvsp[0].stmtNode);
 	fprintf(yyout_y, "stmt -> returnstmt\n");
 	tempcounter = 0;
 }
-#line 1503 "parser.c"
+#line 1504 "parser.c"
     break;
 
   case 9: /* stmt: BREAK SEMICOLON  */
-#line 181 "parser.y"
+#line 182 "parser.y"
 {
 	if (check_for_valid_loop_stop(loopcounter) == 0){
 		fprintf(stderr,"Break not inside of loop in line %d\n", yylineno);
@@ -1518,11 +1519,11 @@ yyreduce:
 	fprintf(yyout_y, "stmt -> break;\n");
 	tempcounter = 0;
 }
-#line 1522 "parser.c"
+#line 1523 "parser.c"
     break;
 
   case 10: /* stmt: CONTINUE SEMICOLON  */
-#line 196 "parser.y"
+#line 197 "parser.y"
 {
 	if (check_for_valid_loop_stop(loopcounter) == 0){
 		fprintf(stderr,"Continue not inside of loop in line %d\n", yylineno);
@@ -1537,52 +1538,52 @@ yyreduce:
 	fprintf(yyout_y, "stmt -> continue;\n");
 	tempcounter = 0;
 }
-#line 1541 "parser.c"
+#line 1542 "parser.c"
     break;
 
   case 11: /* stmt: block  */
-#line 211 "parser.y"
+#line 212 "parser.y"
 {
 	(yyval.stmtNode) = (yyvsp[0].stmtNode);
 	fprintf(yyout_y, "stmt -> block\n");
 	tempcounter = 0;
 }
-#line 1551 "parser.c"
+#line 1552 "parser.c"
     break;
 
   case 12: /* stmt: funcdef  */
-#line 217 "parser.y"
+#line 218 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
 	fprintf(yyout_y, "stmt -> funcdef\n");
 	tempcounter = 0;
 }
-#line 1562 "parser.c"
+#line 1563 "parser.c"
     break;
 
   case 13: /* stmt: SEMICOLON  */
-#line 224 "parser.y"
+#line 225 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
 	fprintf(yyout_y, "stmt -> ;\n");
 	tempcounter = 0;
 }
-#line 1573 "parser.c"
+#line 1574 "parser.c"
     break;
 
   case 14: /* stmts: stmt  */
-#line 231 "parser.y"
+#line 232 "parser.y"
 {
 	(yyval.stmtNode) = (yyvsp[0].stmtNode);
 	fprintf(yyout_y, "stmts -> stmt\n");
 }
-#line 1582 "parser.c"
+#line 1583 "parser.c"
     break;
 
   case 15: /* stmts: stmts stmt  */
-#line 236 "parser.y"
+#line 237 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
@@ -1591,11 +1592,11 @@ yyreduce:
 	(yyval.stmtNode)->returnlist = mergelist((yyvsp[-1].stmtNode)->returnlist, (yyvsp[0].stmtNode)->returnlist);
 	fprintf(yyout_y, "stmts -> stmts stmt\n");
 }
-#line 1595 "parser.c"
+#line 1596 "parser.c"
     break;
 
   case 16: /* arithop: expr PLUS expr  */
-#line 246 "parser.y"
+#line 247 "parser.y"
 {
 	check_arith((yyvsp[-2].exprNode), "");
 	check_arith((yyvsp[0].exprNode), "");
@@ -1603,22 +1604,22 @@ yyreduce:
 	emit(add, (yyval.exprNode), (yyvsp[-2].exprNode), (yyvsp[0].exprNode), -1, yylineno);
 	fprintf(yyout_y, "arithop -> expr + expr\n");
 }
-#line 1607 "parser.c"
+#line 1608 "parser.c"
     break;
 
   case 17: /* arithop: expr MINUS expr  */
-#line 254 "parser.y"
+#line 255 "parser.y"
 {
 	check_arith((yyvsp[-2].exprNode), "");
 	check_arith((yyvsp[0].exprNode), "");
 	(yyval.exprNode) = result_finder((yyvsp[-2].exprNode), (yyvsp[0].exprNode));
 	emit(sub, (yyval.exprNode), (yyvsp[-2].exprNode), (yyvsp[0].exprNode), -1, yylineno);
 }
-#line 1618 "parser.c"
+#line 1619 "parser.c"
     break;
 
   case 18: /* arithop: expr MULT expr  */
-#line 261 "parser.y"
+#line 262 "parser.y"
 {
 	check_arith((yyvsp[-2].exprNode), "");
 	check_arith((yyvsp[0].exprNode), "");
@@ -1626,11 +1627,11 @@ yyreduce:
 	emit(mul, (yyval.exprNode), (yyvsp[-2].exprNode), (yyvsp[0].exprNode), -1, yylineno);
 	fprintf(yyout_y, "arithop -> expr - expr\n");
 }
-#line 1630 "parser.c"
+#line 1631 "parser.c"
     break;
 
   case 19: /* arithop: expr DIV expr  */
-#line 269 "parser.y"
+#line 270 "parser.y"
 {
 	check_arith((yyvsp[-2].exprNode), "");
 	check_arith((yyvsp[0].exprNode), "");
@@ -1638,11 +1639,11 @@ yyreduce:
 	emit(divi, (yyval.exprNode), (yyvsp[-2].exprNode), (yyvsp[0].exprNode), -1, yylineno);
 	fprintf(yyout_y, "arithop -> expr / expr\n");
 }
-#line 1642 "parser.c"
+#line 1643 "parser.c"
     break;
 
   case 20: /* arithop: expr PERC expr  */
-#line 277 "parser.y"
+#line 278 "parser.y"
 {
 	check_arith((yyvsp[-2].exprNode), "");
 	check_arith((yyvsp[0].exprNode), "");
@@ -1650,11 +1651,11 @@ yyreduce:
 	emit(mod, (yyval.exprNode), (yyvsp[-2].exprNode), (yyvsp[0].exprNode), -1, yylineno);
 	fprintf(yyout_y, "arithop -> expr % expr\n");
 }
-#line 1654 "parser.c"
+#line 1655 "parser.c"
     break;
 
   case 21: /* relop: expr BIGGER expr  */
-#line 286 "parser.y"
+#line 287 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr > expr\n");
 	(yyval.exprNode) = newexpr(boolexpr_e);
@@ -1667,11 +1668,11 @@ yyreduce:
 	emit(if_greater, NULL, (yyvsp[-2].exprNode), (yyvsp[0].exprNode), 0, yylineno);
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 1671 "parser.c"
+#line 1672 "parser.c"
     break;
 
   case 22: /* relop: expr SMALLER expr  */
-#line 300 "parser.y"
+#line 301 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr < expr\n");
 	(yyval.exprNode) = newexpr(boolexpr_e);
@@ -1685,11 +1686,11 @@ yyreduce:
 	emit(if_less, NULL, (yyvsp[-2].exprNode), (yyvsp[0].exprNode), 0, yylineno);
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 1689 "parser.c"
+#line 1690 "parser.c"
     break;
 
   case 23: /* relop: expr SMALLER_EQUAL expr  */
-#line 314 "parser.y"
+#line 315 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr <= expr\n");
 	(yyval.exprNode) = newexpr(boolexpr_e);
@@ -1704,11 +1705,11 @@ yyreduce:
 	emit(if_lesseq, NULL, (yyvsp[-2].exprNode), (yyvsp[0].exprNode), 0, yylineno);
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 1708 "parser.c"
+#line 1709 "parser.c"
     break;
 
   case 24: /* relop: expr BIGGER_EQUAL expr  */
-#line 329 "parser.y"
+#line 330 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr <= expr\n");
 	(yyval.exprNode) = newexpr(boolexpr_e);
@@ -1722,17 +1723,17 @@ yyreduce:
 	emit(if_greatereq, NULL, (yyvsp[-2].exprNode), (yyvsp[0].exprNode), 0, yylineno);
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 1726 "parser.c"
+#line 1727 "parser.c"
     break;
 
   case 25: /* $@1: %empty  */
-#line 343 "parser.y"
+#line 344 "parser.y"
              {}
-#line 1732 "parser.c"
+#line 1733 "parser.c"
     break;
 
   case 26: /* relop: expr EQUAL $@1 expr  */
-#line 345 "parser.y"
+#line 346 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr == expr\n");
 	(yyval.exprNode) = newexpr(boolexpr_e);
@@ -1746,17 +1747,17 @@ yyreduce:
 	emit(if_eq, NULL, (yyvsp[-3].exprNode), (yyvsp[0].exprNode), 0, yylineno);
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 1750 "parser.c"
+#line 1751 "parser.c"
     break;
 
   case 27: /* $@2: %empty  */
-#line 358 "parser.y"
+#line 359 "parser.y"
                  {}
-#line 1756 "parser.c"
+#line 1757 "parser.c"
     break;
 
   case 28: /* relop: expr NOT_EQUAL $@2 expr  */
-#line 360 "parser.y"
+#line 361 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr != expr\n");
 	(yyval.exprNode) = newexpr(boolexpr_e);
@@ -1770,11 +1771,11 @@ yyreduce:
 	emit(if_noteq, NULL, (yyvsp[-3].exprNode), (yyvsp[0].exprNode), 0, yylineno);
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 1774 "parser.c"
+#line 1775 "parser.c"
     break;
 
   case 29: /* $@3: %empty  */
-#line 375 "parser.y"
+#line 376 "parser.y"
 {
 	if ((yyvsp[-1].exprNode) == NULL)
 	{
@@ -1792,11 +1793,11 @@ yyreduce:
 		emit(jump, NULL, NULL, NULL, 0, yylineno);
 	}
 }
-#line 1796 "parser.c"
+#line 1797 "parser.c"
     break;
 
   case 30: /* boolexpr: expr AND $@3 M expr  */
-#line 393 "parser.y"
+#line 394 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr and expr\n");
 
@@ -1818,11 +1819,11 @@ yyreduce:
 	(yyval.exprNode)->truelist = (yyvsp[0].exprNode)->truelist;
 	(yyval.exprNode)->falselist = mergelist((yyvsp[-4].exprNode)->falselist, (yyvsp[0].exprNode)->falselist);
 }
-#line 1822 "parser.c"
+#line 1823 "parser.c"
     break;
 
   case 31: /* $@4: %empty  */
-#line 415 "parser.y"
+#line 416 "parser.y"
 {
 	if ((yyvsp[-1].exprNode) == NULL)
 	{
@@ -1838,11 +1839,11 @@ yyreduce:
 		emit(jump, NULL, NULL, NULL, 0, yylineno);
 	}
 }
-#line 1842 "parser.c"
+#line 1843 "parser.c"
     break;
 
   case 32: /* boolexpr: expr OR $@4 M expr  */
-#line 431 "parser.y"
+#line 432 "parser.y"
 {
 	fprintf(yyout_y, "expr -> expr or expr\n");
 
@@ -1865,64 +1866,64 @@ yyreduce:
 	(yyval.exprNode)->falselist = (yyvsp[0].exprNode)->falselist;
 	fprintf(yyout_y, "boolexpr -> expr OR\n");
 }
-#line 1869 "parser.c"
+#line 1870 "parser.c"
     break;
 
   case 33: /* expr: assignexpr  */
-#line 455 "parser.y"
+#line 456 "parser.y"
 {	//$$=$1;
 	fprintf(yyout_y, "expr -> assignexpr\n");
 }
-#line 1877 "parser.c"
+#line 1878 "parser.c"
     break;
 
   case 34: /* expr: term  */
-#line 459 "parser.y"
+#line 460 "parser.y"
 {
 	(yyval.exprNode)=(yyvsp[0].exprNode);
 	fprintf(yyout_y, "expr -> term\n");
 }
-#line 1886 "parser.c"
+#line 1887 "parser.c"
     break;
 
   case 35: /* expr: arithop  */
-#line 464 "parser.y"
+#line 465 "parser.y"
 {
 	(yyval.exprNode) = (yyvsp[0].exprNode);
 	fprintf(yyout_y, "expr -> arithop\n");
 }
-#line 1895 "parser.c"
+#line 1896 "parser.c"
     break;
 
   case 36: /* expr: relop  */
-#line 469 "parser.y"
+#line 470 "parser.y"
 {
 	(yyval.exprNode) = (yyvsp[0].exprNode);
 	fprintf(yyout_y, "expr -> relop\n");
 }
-#line 1904 "parser.c"
+#line 1905 "parser.c"
     break;
 
   case 37: /* expr: boolexpr  */
-#line 474 "parser.y"
+#line 475 "parser.y"
 {
 	(yyval.exprNode) = (yyvsp[0].exprNode);
 	fprintf(yyout_y, "expr -> boolexpr\n");
 }
-#line 1913 "parser.c"
+#line 1914 "parser.c"
     break;
 
   case 38: /* term: LEFTPAR expr RIGHTPAR  */
-#line 480 "parser.y"
+#line 481 "parser.y"
 {
 	(yyval.exprNode) = (yyvsp[-1].exprNode);
 	fprintf(yyout_y, "term -> ( expr )\n");
 }
-#line 1922 "parser.c"
+#line 1923 "parser.c"
     break;
 
   case 39: /* term: MINUS expr  */
-#line 485 "parser.y"
+#line 486 "parser.y"
 {
 	if ((yyvsp[0].exprNode) == NULL)
 	{
@@ -1949,11 +1950,11 @@ yyreduce:
 	}
 	fprintf(yyout_y, "term -> -expr\n");
 }
-#line 1953 "parser.c"
+#line 1954 "parser.c"
     break;
 
   case 40: /* term: NOT expr  */
-#line 512 "parser.y"
+#line 513 "parser.y"
 {
 	if ((yyvsp[0].exprNode) == NULL)
 	{
@@ -1979,11 +1980,11 @@ yyreduce:
 	}
 	fprintf(yyout_y, "term -> not expr\n");
 }
-#line 1983 "parser.c"
+#line 1984 "parser.c"
     break;
 
   case 41: /* term: PLUS2 lvalue  */
-#line 538 "parser.y"
+#line 539 "parser.y"
 {
 	check_arith((yyvsp[0].exprNode), "");
 	if (((yyvsp[0].exprNode)) != NULL && (((yyvsp[0].exprNode))->sym->type == USERFUNC || ((yyvsp[0].exprNode))->sym->type == LIBFUNC))
@@ -2008,11 +2009,11 @@ yyreduce:
 
 	fprintf(yyout_y, "term -> ++lvalue\n");
 }
-#line 2012 "parser.c"
+#line 2013 "parser.c"
     break;
 
   case 42: /* term: lvalue PLUS2  */
-#line 563 "parser.y"
+#line 564 "parser.y"
 {
 	check_arith((yyvsp[-1].exprNode), "");
 	if (((yyvsp[-1].exprNode)) != NULL && (((yyvsp[-1].exprNode))->sym->type == USERFUNC || ((yyvsp[-1].exprNode))->sym->type == LIBFUNC))
@@ -2037,11 +2038,11 @@ yyreduce:
 
 	fprintf(yyout_y, "term -> lvalue++\n");
 }
-#line 2041 "parser.c"
+#line 2042 "parser.c"
     break;
 
   case 43: /* term: MINUS2 lvalue  */
-#line 588 "parser.y"
+#line 589 "parser.y"
 {
 	check_arith((yyvsp[0].exprNode), "");
 	if (((yyvsp[0].exprNode)) != NULL && (((yyvsp[0].exprNode))->sym->type == USERFUNC || ((yyvsp[0].exprNode))->sym->type == LIBFUNC))
@@ -2065,11 +2066,11 @@ yyreduce:
 	}
 	fprintf(yyout_y, "term -> --lvalue\n");
 }
-#line 2069 "parser.c"
+#line 2070 "parser.c"
     break;
 
   case 44: /* term: lvalue MINUS2  */
-#line 612 "parser.y"
+#line 613 "parser.y"
 {
 	check_arith((yyvsp[-1].exprNode), "");
 	if (((yyvsp[-1].exprNode)) != NULL && (((yyvsp[-1].exprNode))->sym->type == USERFUNC || ((yyvsp[-1].exprNode))->sym->type == LIBFUNC))
@@ -2094,20 +2095,20 @@ yyreduce:
 
 	fprintf(yyout_y, "term -> lvalue--\n");
 }
-#line 2098 "parser.c"
+#line 2099 "parser.c"
     break;
 
   case 45: /* term: primary  */
-#line 637 "parser.y"
+#line 638 "parser.y"
 {
 	(yyval.exprNode) = (yyvsp[0].exprNode);
 	fprintf(yyout_y, "term -> primary\n");
 }
-#line 2107 "parser.c"
+#line 2108 "parser.c"
     break;
 
   case 46: /* assignexpr: lvalue ASSIGN expr  */
-#line 643 "parser.y"
+#line 644 "parser.y"
 {
 	fprintf(yyout_y, "assignexpr -> lvalue = expr\n");
 	if (call_flag == false)
@@ -2140,56 +2141,56 @@ yyreduce:
 		emit(assign, (yyval.exprNode), (yyvsp[-2].exprNode), NULL, -1, yylineno);
 	}
 }
-#line 2144 "parser.c"
+#line 2145 "parser.c"
     break;
 
   case 47: /* primary: lvalue  */
-#line 677 "parser.y"
+#line 678 "parser.y"
 {
 	fprintf(yyout_y, "primary -> lvalue\n");
 	(yyval.exprNode) = emit_iftableitem((yyvsp[0].exprNode));
 }
-#line 2153 "parser.c"
+#line 2154 "parser.c"
     break;
 
   case 48: /* primary: call  */
-#line 682 "parser.y"
+#line 683 "parser.y"
 {
 	fprintf(yyout_y, "primary -> call\n");
 	//$$ = $1;
 }
-#line 2162 "parser.c"
+#line 2163 "parser.c"
     break;
 
   case 49: /* primary: objectdef  */
-#line 687 "parser.y"
+#line 688 "parser.y"
 {
 	fprintf(yyout_y, "primary -> objectdef\n");
 	}
-#line 2170 "parser.c"
+#line 2171 "parser.c"
     break;
 
   case 50: /* primary: LEFTPAR funcdef RIGHTPAR  */
-#line 691 "parser.y"
+#line 692 "parser.y"
 {
 	(yyval.exprNode) = newexpr(programfunc_e);
 	(yyval.exprNode)->sym = (yyvsp[-1].exprNode)->sym;
 	fprintf(yyout_y, "primary -> ( funcdef )\n");
 }
-#line 2180 "parser.c"
+#line 2181 "parser.c"
     break;
 
   case 51: /* primary: const  */
-#line 697 "parser.y"
+#line 698 "parser.y"
 {
 	fprintf(yyout_y, "primary -> const\n");
 	(yyval.exprNode) = (yyvsp[0].exprNode);
 }
-#line 2189 "parser.c"
+#line 2190 "parser.c"
     break;
 
   case 52: /* lvalue: ID  */
-#line 703 "parser.y"
+#line 704 "parser.y"
 {
 	fprintf(yyout_y, "lvalue -> id\n");
 	int temp_scope = current_scope;
@@ -2273,11 +2274,11 @@ yyreduce:
 	else 
 	(yyval.exprNode) = lvalue_expr(entry);
 }
-#line 2277 "parser.c"
+#line 2278 "parser.c"
     break;
 
   case 53: /* lvalue: LOCAL ID  */
-#line 787 "parser.y"
+#line 788 "parser.y"
 {
 	// edw tha psaksw an exoume sto IDIO SCOPE ksanaorismenh me to idio onoma mia metablhth
 	fprintf(yyout_y, "lvalue -> local id\n");
@@ -2325,11 +2326,11 @@ yyreduce:
 	
 	(yyval.exprNode) = lvalue_expr(entry);
 }
-#line 2329 "parser.c"
+#line 2330 "parser.c"
     break;
 
   case 54: /* lvalue: COLON2 ID  */
-#line 835 "parser.y"
+#line 836 "parser.y"
 {
 	SymbolTableEntry *entry = lookup_inScope(hash, (char *)(yyvsp[0].stringValue), 0);
 	if (entry == NULL)
@@ -2342,19 +2343,19 @@ yyreduce:
 		(yyval.exprNode) = lvalue_expr(entry);
 	fprintf(yyout_y, "lvalue -> ::id\n");
 }
-#line 2346 "parser.c"
+#line 2347 "parser.c"
     break;
 
   case 55: /* lvalue: member  */
-#line 848 "parser.y"
+#line 849 "parser.y"
 {
 	fprintf(yyout_y, "lvalue -> member\n");
 }
-#line 2354 "parser.c"
+#line 2355 "parser.c"
     break;
 
   case 56: /* member: lvalue PERIOD ID  */
-#line 853 "parser.y"
+#line 854 "parser.y"
 {
 	if ((yyvsp[-2].exprNode) == NULL)
 	{
@@ -2370,11 +2371,11 @@ yyreduce:
 	(yyval.exprNode) = member_item((yyvsp[-2].exprNode), (yyvsp[0].stringValue));
 	
 }
-#line 2374 "parser.c"
+#line 2375 "parser.c"
     break;
 
   case 57: /* member: lvalue LEFTBRACE expr RIGHTBRACE  */
-#line 869 "parser.y"
+#line 870 "parser.y"
 {
 	if ((yyvsp[-3].exprNode) == NULL)
 	{
@@ -2393,21 +2394,21 @@ yyreduce:
 	(yyval.exprNode)->index = (yyvsp[-1].exprNode);
 	
 }
-#line 2397 "parser.c"
+#line 2398 "parser.c"
     break;
 
   case 58: /* member: call PERIOD ID  */
-#line 888 "parser.y"
+#line 889 "parser.y"
 {
 	(yyval.exprNode) = member_item((yyvsp[-2].exprNode), (yyvsp[0].stringValue));
 	call_flag = true;
 	fprintf(yyout_y, "member -> call.id\n");
 }
-#line 2407 "parser.c"
+#line 2408 "parser.c"
     break;
 
   case 59: /* member: call LEFTBRACE expr RIGHTBRACE  */
-#line 894 "parser.y"
+#line 895 "parser.y"
 {
 	(yyvsp[-3].exprNode) = emit_iftableitem((yyvsp[-3].exprNode));
 	(yyval.exprNode) = newexpr(tableitem_e);
@@ -2416,21 +2417,21 @@ yyreduce:
 
 	fprintf(yyout_y, "member -> call [ expr ]\n");
 }
-#line 2420 "parser.c"
+#line 2421 "parser.c"
     break;
 
   case 60: /* call: call LEFTPAR elist RIGHTPAR  */
-#line 904 "parser.y"
+#line 905 "parser.y"
 {
 	(yyval.exprNode) = make_call((yyvsp[-3].exprNode), (yyvsp[-1].exprNode));
 	call_flag = false;
 	fprintf(yyout_y, "call -> call ( elist )\n");
 }
-#line 2430 "parser.c"
+#line 2431 "parser.c"
     break;
 
   case 61: /* call: lvalue callsuffix  */
-#line 910 "parser.y"
+#line 911 "parser.y"
 {
 
 	(yyvsp[-1].exprNode) = emit_iftableitem((yyvsp[-1].exprNode));
@@ -2460,11 +2461,11 @@ yyreduce:
 	(yyval.exprNode) = make_call((yyvsp[-1].exprNode), (yyvsp[0].callNode)->elist);
 	fprintf(yyout_y, "call -> lvalue callsuffix\n");
 }
-#line 2464 "parser.c"
+#line 2465 "parser.c"
     break;
 
   case 62: /* call: LEFTPAR funcdef RIGHTPAR LEFTPAR elist RIGHTPAR  */
-#line 940 "parser.y"
+#line 941 "parser.y"
 {
 	expr *func = newexpr(programfunc_e);
 	func->sym = (yyvsp[-4].exprNode)->sym;
@@ -2472,30 +2473,30 @@ yyreduce:
 	call_flag = false;
 	fprintf(yyout_y, "call -> ( funcdef ) ( elist )\n");
 }
-#line 2476 "parser.c"
+#line 2477 "parser.c"
     break;
 
   case 63: /* callsuffix: normcall  */
-#line 949 "parser.y"
+#line 950 "parser.y"
 {
 	(yyval.callNode) = (yyvsp[0].callNode);
 	fprintf(yyout_y, "callsuffix -> normcall\n");
 }
-#line 2485 "parser.c"
+#line 2486 "parser.c"
     break;
 
   case 64: /* callsuffix: methodcall  */
-#line 954 "parser.y"
+#line 955 "parser.y"
 {
 	(yyval.callNode) = (yyvsp[0].callNode);
 
 	fprintf(yyout_y, "callsuffix -> methodcall\n");
 }
-#line 2495 "parser.c"
+#line 2496 "parser.c"
     break;
 
   case 65: /* normcall: LEFTPAR elist RIGHTPAR  */
-#line 961 "parser.y"
+#line 962 "parser.y"
 {
 	(yyval.callNode) = malloc(sizeof(call_t));
 	(yyval.callNode)->elist = (yyvsp[-1].exprNode);
@@ -2503,11 +2504,11 @@ yyreduce:
 	(yyval.callNode)->name = NULL;
 	fprintf(yyout_y, "normcall -> ( elist )\n");
 }
-#line 2507 "parser.c"
+#line 2508 "parser.c"
     break;
 
   case 66: /* methodcall: PERIOD2 ID LEFTPAR elist RIGHTPAR  */
-#line 972 "parser.y"
+#line 973 "parser.y"
 {
 
 	(yyval.callNode) = malloc(sizeof(call_t));
@@ -2516,11 +2517,11 @@ yyreduce:
 	(yyval.callNode)->name = (yyvsp[-3].stringValue);
 	fprintf(yyout_y, "methodcall -> ..id ( elist )\n");
 }
-#line 2520 "parser.c"
+#line 2521 "parser.c"
     break;
 
   case 67: /* elist: expr  */
-#line 983 "parser.y"
+#line 984 "parser.y"
               {
 		if((yyvsp[0].exprNode)->type==boolexpr_e){
 				(yyvsp[0].exprNode)=emitBoolean((yyvsp[0].exprNode));
@@ -2529,11 +2530,11 @@ yyreduce:
 		(yyval.exprNode)=(yyvsp[0].exprNode);
 		(yyval.exprNode)->next=NULL;
 		fprintf(yyout_y,"elist -> expr\n");}
-#line 2533 "parser.c"
+#line 2534 "parser.c"
     break;
 
   case 68: /* elist: elist COMMA expr  */
-#line 991 "parser.y"
+#line 992 "parser.y"
                            { 
 		expr* tmp;
 			if((yyvsp[-2].exprNode)!=NULL && (yyvsp[0].exprNode)!=NULL){
@@ -2551,71 +2552,71 @@ yyreduce:
 			}
             fprintf(yyout_y,"elist -> elist , expr\n");
 		}
-#line 2555 "parser.c"
+#line 2556 "parser.c"
     break;
 
   case 69: /* elist: %empty  */
-#line 1008 "parser.y"
+#line 1009 "parser.y"
           {(yyval.exprNode)=NULL;fprintf(yyout_y,"elist -> NULL\n");}
-#line 2561 "parser.c"
+#line 2562 "parser.c"
     break;
 
   case 70: /* const: INT  */
-#line 1010 "parser.y"
+#line 1011 "parser.y"
 {
 	fprintf(yyout_y, "const -> INT\n");
 	(yyval.exprNode) = newexpr_constint((yyvsp[0].intValue));
 }
-#line 2570 "parser.c"
+#line 2571 "parser.c"
     break;
 
   case 71: /* const: REAL  */
-#line 1015 "parser.y"
+#line 1016 "parser.y"
 {
 	fprintf(yyout_y, "const -> REAL\n");
 	(yyval.exprNode) = newexpr_constdouble((yyvsp[0].doubleValue));
 }
-#line 2579 "parser.c"
+#line 2580 "parser.c"
     break;
 
   case 72: /* const: STRING  */
-#line 1020 "parser.y"
+#line 1021 "parser.y"
 {
 	fprintf(yyout_y, "const -> STRING\n");
 	(yyval.exprNode) = newexpr_conststring((yyvsp[0].stringValue));
 }
-#line 2588 "parser.c"
+#line 2589 "parser.c"
     break;
 
   case 73: /* const: NIL  */
-#line 1025 "parser.y"
+#line 1026 "parser.y"
 {
 	fprintf(yyout_y, "const -> nil\n");
 	(yyval.exprNode) = newexpr_constnil();
 }
-#line 2597 "parser.c"
+#line 2598 "parser.c"
     break;
 
   case 74: /* const: TRUE  */
-#line 1030 "parser.y"
+#line 1031 "parser.y"
 {
 	fprintf(yyout_y, "const -> TRUE\n");
 	(yyval.exprNode) = newexpr_constbool('t');
 }
-#line 2606 "parser.c"
+#line 2607 "parser.c"
     break;
 
   case 75: /* const: FALSE  */
-#line 1035 "parser.y"
+#line 1036 "parser.y"
 {
 	fprintf(yyout_y, "const -> FALSE\n");
 	(yyval.exprNode) = newexpr_constbool('f');
 }
-#line 2615 "parser.c"
+#line 2616 "parser.c"
     break;
 
   case 76: /* objectdef: LEFTBRACE elist RIGHTBRACE  */
-#line 1041 "parser.y"
+#line 1042 "parser.y"
 {
 	expr *t = newexpr(newtable_e);
 	t->sym = newtemp();
@@ -2625,11 +2626,11 @@ yyreduce:
 	(yyval.exprNode) = t;
 	fprintf(yyout_y, "objectdef -> { elist }\n");
 }
-#line 2629 "parser.c"
+#line 2630 "parser.c"
     break;
 
   case 77: /* objectdef: LEFTBRACE indexed RIGHTBRACE  */
-#line 1051 "parser.y"
+#line 1052 "parser.y"
 {
 	expr *t = newexpr(newtable_e);
 	t->sym = newtemp();
@@ -2643,30 +2644,30 @@ yyreduce:
 
 	fprintf(yyout_y, "objectdef -> { indexed }\n");
 }
-#line 2647 "parser.c"
+#line 2648 "parser.c"
     break;
 
   case 78: /* indexed: indexedelem  */
-#line 1066 "parser.y"
+#line 1067 "parser.y"
                     {
 		(yyval.exprNode)=(yyvsp[0].exprNode);
 		fprintf(yyout_y,"indexed -> indexedelem\n");}
-#line 2655 "parser.c"
+#line 2656 "parser.c"
     break;
 
   case 79: /* indexed: indexed COMMA indexedelem  */
-#line 1069 "parser.y"
+#line 1070 "parser.y"
                                    {
 		 while((yyvsp[-2].exprNode)->next){  
                    (yyvsp[-2].exprNode) = (yyvsp[-2].exprNode)->next;
                  }        
                  (yyvsp[-2].exprNode)->next = (yyvsp[0].exprNode);
 		fprintf(yyout_y,"indexed -> indexed , indexedelem\n");}
-#line 2666 "parser.c"
+#line 2667 "parser.c"
     break;
 
   case 80: /* indexedelem: LEFTCURLY expr COLON expr RIGHTCURLY  */
-#line 1078 "parser.y"
+#line 1079 "parser.y"
 {
 	(yyvsp[-3].exprNode)=emitBoolean((yyvsp[-3].exprNode));
 	(yyvsp[-1].exprNode)=emitBoolean((yyvsp[-1].exprNode));
@@ -2674,31 +2675,31 @@ yyreduce:
 	fprintf(yyout_y, "indexedelem -> { expr : expr }\n");
 	(yyval.exprNode) = (yyvsp[-1].exprNode);
 }
-#line 2678 "parser.c"
+#line 2679 "parser.c"
     break;
 
   case 81: /* funcname: ID  */
-#line 1087 "parser.y"
+#line 1088 "parser.y"
 {
 	(yyval.stringValue) = (yyvsp[0].stringValue);
 	fprintf(yyout_y, "funcname -> ID\n");
 }
-#line 2687 "parser.c"
+#line 2688 "parser.c"
     break;
 
   case 82: /* funcname: %empty  */
-#line 1092 "parser.y"
+#line 1093 "parser.y"
 {
 	char *my_name = malloc(50 * (sizeof(char)));
 	sprintf(my_name, "_myfync%d", unnamed_counter++);
 	(yyval.stringValue) = my_name;
 	fprintf(yyout_y, "funcname -> NULL\n");
 }
-#line 2698 "parser.c"
+#line 2699 "parser.c"
     break;
 
   case 83: /* funcprefix: FUNCTION funcname  */
-#line 1100 "parser.y"
+#line 1101 "parser.y"
 {
 	SymbolTableEntry *search = lookup_inScope(hash, (char *)(yyvsp[0].stringValue), 0);
 	if (search != NULL)
@@ -2756,58 +2757,58 @@ yyreduce:
 	enterscopespace();
 	resetformalargoffset(); // Start formals from zero
 	fprintf(yyout_y, "funcprefix -> FUNCTION funcname\n");}
-#line 2760 "parser.c"
+#line 2761 "parser.c"
     break;
 
   case 84: /* $@5: %empty  */
-#line 1159 "parser.y"
+#line 1160 "parser.y"
                             {
 	increase_scope();
 	isFunct1 = true;
 	isFunct = true;
 }
-#line 2770 "parser.c"
+#line 2771 "parser.c"
     break;
 
   case 85: /* funcargs: funcprefix M LEFTPAR $@5 idlist RIGHTPAR  */
-#line 1165 "parser.y"
+#line 1166 "parser.y"
 {
 	(yyvsp[-5].exprNode)->sym->value.funcVal->args = (yyvsp[-1].listId);
 	enterscopespace();		
 	resetfunctionlocaloffset(); 
 	fprintf(yyout_y, "funcargs -> funcprefix M ( idlist )\n");}
-#line 2780 "parser.c"
+#line 2781 "parser.c"
     break;
 
   case 86: /* funcblockstart: %empty  */
-#line 1172 "parser.y"
+#line 1173 "parser.y"
 {
 	offset_ = -1;
 	sim_funcs++;
 	push(loopcounterstack, loopcounter); 
 	loopcounter = 0;
 	fprintf(yyout_y, "funcblockstart -> NULL\n");}
-#line 2791 "parser.c"
+#line 2792 "parser.c"
     break;
 
   case 87: /* funcblockend: %empty  */
-#line 1180 "parser.y"
+#line 1181 "parser.y"
 {
 	fprintf(yyout_y, "funcblockend -> NULL\n");}
-#line 2798 "parser.c"
+#line 2799 "parser.c"
     break;
 
   case 88: /* $@6: %empty  */
-#line 1185 "parser.y"
+#line 1186 "parser.y"
 {
 	int curr_scope_offset = currscopeoffset();
 	fprintf(yyout_y, "funcdef -> funcargs funcblockstart block\n");
 }
-#line 2807 "parser.c"
+#line 2808 "parser.c"
     break;
 
   case 89: /* funcdef: funcargs funcblockstart block $@6 funcblockend  */
-#line 1190 "parser.y"
+#line 1191 "parser.y"
 {
 	int fof = pop(func_stack);
 	assert((yyval.exprNode));
@@ -2823,11 +2824,11 @@ yyreduce:
 	patchlist((yyvsp[-2].stmtNode)->returnlist,nextquad()-1);
 	fprintf(yyout_y, "funcdef -> funcblockend\n");
 }
-#line 2827 "parser.c"
+#line 2828 "parser.c"
     break;
 
   case 90: /* idlist: ID  */
-#line 1208 "parser.y"
+#line 1209 "parser.y"
         {
 		//check if it's a gloabal lib function
 		if (lookup_inScope(hash,(yyvsp[0].stringValue),0) != NULL && lookup_inScope(hash,(yyvsp[0].stringValue),0)->type == LIBFUNC)
@@ -2854,11 +2855,11 @@ yyreduce:
 		temp->space = formalarg;
 		fprintf(yyout_y,"idlist -> id\n");}
 	}
-#line 2858 "parser.c"
+#line 2859 "parser.c"
     break;
 
   case 91: /* idlist: idlist COMMA ID  */
-#line 1235 "parser.y"
+#line 1236 "parser.y"
         {
 	//check if it's a gloabal lib function
     if (lookup_inScope(hash,(const char *)(yyvsp[0].stringValue),0) != NULL && lookup_inScope(hash,(const char*)(yyvsp[0].stringValue),0)->type == LIBFUNC)
@@ -2890,20 +2891,20 @@ yyreduce:
     fprintf(yyout_y,"idlist -> idlist , id\n");
 	
 	}
-#line 2894 "parser.c"
+#line 2895 "parser.c"
     break;
 
   case 92: /* idlist: %empty  */
-#line 1267 "parser.y"
+#line 1268 "parser.y"
         {    
 		(yyval.listId) = create_id_list();
  		fprintf(yyout_y,"idlist ->  \n"); 
 	}
-#line 2903 "parser.c"
+#line 2904 "parser.c"
     break;
 
   case 93: /* $@7: %empty  */
-#line 1272 "parser.y"
+#line 1273 "parser.y"
 {
 	if (sim_funcs != 0)
 	{
@@ -2918,11 +2919,11 @@ yyreduce:
 		increase_scope();
 	}
 }
-#line 2922 "parser.c"
+#line 2923 "parser.c"
     break;
 
   case 94: /* block: LEFTCURLY $@7 RIGHTCURLY  */
-#line 1287 "parser.y"
+#line 1288 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
@@ -2937,11 +2938,11 @@ yyreduce:
 		b_af--;
 	}
 }
-#line 2941 "parser.c"
+#line 2942 "parser.c"
     break;
 
   case 95: /* $@8: %empty  */
-#line 1302 "parser.y"
+#line 1303 "parser.y"
 {
 	if (sim_funcs != 0)
 	{
@@ -2956,11 +2957,11 @@ yyreduce:
 		increase_scope();
 	}
 }
-#line 2960 "parser.c"
+#line 2961 "parser.c"
     break;
 
   case 96: /* block: LEFTCURLY $@8 stmts RIGHTCURLY  */
-#line 1317 "parser.y"
+#line 1318 "parser.y"
 {
 	(yyval.stmtNode) = (yyvsp[-1].stmtNode);
 	fprintf(yyout_y, "block -> { stmts }\n");
@@ -2974,11 +2975,11 @@ yyreduce:
 		b_af--;
 	}
 }
-#line 2978 "parser.c"
+#line 2979 "parser.c"
     break;
 
   case 97: /* ifprefix: IF LEFTPAR expr RIGHTPAR  */
-#line 1332 "parser.y"
+#line 1333 "parser.y"
 {
 	(yyvsp[-1].exprNode) = emitBoolean((yyvsp[-1].exprNode));
 	emit(if_eq, NULL, (yyvsp[-1].exprNode), newexpr_constbool('t'), nextquad() + 2, yylineno);
@@ -2986,21 +2987,21 @@ yyreduce:
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 	fprintf(yyout_y, "ifprefix -> IF ( expr )\n");
 }
-#line 2990 "parser.c"
+#line 2991 "parser.c"
     break;
 
   case 98: /* if: ifprefix stmt  */
-#line 1342 "parser.y"
+#line 1343 "parser.y"
         {
 		(yyval.stmtNode) = (yyvsp[0].stmtNode);
 		patchlabel((yyvsp[-1].uns), nextquad());
 		fprintf(yyout_y, "if -> ifprefix stmt\n");
 	}
-#line 3000 "parser.c"
+#line 3001 "parser.c"
     break;
 
   case 99: /* if: ifprefix stmt elseprefix stmt  */
-#line 1348 "parser.y"
+#line 1349 "parser.y"
 {
 	patchlabel((yyvsp[-3].uns), (yyvsp[-1].uns) + 1);
 	patchlabel((yyvsp[-1].uns), nextquad());
@@ -3011,69 +3012,69 @@ yyreduce:
 	(yyval.stmtNode)->returnlist = mergelist((yyvsp[-2].stmtNode)->returnlist, (yyvsp[0].stmtNode)->returnlist);
 	fprintf(yyout_y, "if -> ifprefix stmt elseprefix stmt\n");
 }
-#line 3015 "parser.c"
+#line 3016 "parser.c"
     break;
 
   case 100: /* elseprefix: ELSE  */
-#line 1360 "parser.y"
+#line 1361 "parser.y"
 {
 	(yyval.uns) = nextquad();
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 3024 "parser.c"
+#line 3025 "parser.c"
     break;
 
   case 101: /* loopstart: %empty  */
-#line 1366 "parser.y"
+#line 1367 "parser.y"
 {
 	++loopcounter;
 }
-#line 3032 "parser.c"
+#line 3033 "parser.c"
     break;
 
   case 102: /* loopend: %empty  */
-#line 1371 "parser.y"
+#line 1372 "parser.y"
 {
 	--loopcounter;
 }
-#line 3040 "parser.c"
+#line 3041 "parser.c"
     break;
 
   case 103: /* loopstmt: loopstart stmt loopend  */
-#line 1376 "parser.y"
+#line 1377 "parser.y"
 {
 	(yyval.stmtNode) = (yyvsp[-1].stmtNode);
 }
-#line 3048 "parser.c"
+#line 3049 "parser.c"
     break;
 
   case 104: /* whilestart: WHILE  */
-#line 1381 "parser.y"
+#line 1382 "parser.y"
 {
 	(yyval.uns) = nextquad();
 }
-#line 3056 "parser.c"
+#line 3057 "parser.c"
     break;
 
   case 105: /* $@9: %empty  */
-#line 1385 "parser.y"
+#line 1386 "parser.y"
                     { sim_loops++; }
-#line 3062 "parser.c"
+#line 3063 "parser.c"
     break;
 
   case 106: /* whilecond: LEFTPAR $@9 expr RIGHTPAR  */
-#line 1387 "parser.y"
+#line 1388 "parser.y"
 {
 	(yyvsp[-1].exprNode) = emitBoolean((yyvsp[-1].exprNode));
 	emit(if_eq, NULL, (yyvsp[-1].exprNode), newexpr_constbool('t'), nextquad() + 2, yylineno);
 	(yyval.uns) = nextquad();
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 }
-#line 3073 "parser.c"
+#line 3074 "parser.c"
     break;
 
   case 107: /* whilestmt: whilestart whilecond loopstmt  */
-#line 1395 "parser.y"
+#line 1396 "parser.y"
 {
 	fprintf(yyout_y, "whilestmt -> while ( expr ) stmt\n");
 	emit(jump, NULL, NULL, NULL, (yyvsp[-2].uns), yylineno);
@@ -3083,36 +3084,36 @@ yyreduce:
 	patchlist((yyvsp[0].stmtNode)->contlist, (yyvsp[-2].uns));
 	(yyval.stmtNode) = (yyvsp[0].stmtNode);
 }
-#line 3087 "parser.c"
+#line 3088 "parser.c"
     break;
 
   case 108: /* N: %empty  */
-#line 1406 "parser.y"
+#line 1407 "parser.y"
 {
 	(yyval.uns) = nextquad();
 	emit(jump, NULL, NULL, NULL, 0, yylineno);
 	fprintf(yyout_y, "N -> NULL \n");
 }
-#line 3097 "parser.c"
+#line 3098 "parser.c"
     break;
 
   case 109: /* M: %empty  */
-#line 1412 "parser.y"
+#line 1413 "parser.y"
 {
 	(yyval.uns) = nextquad();
 	fprintf(yyout_y, "M -> NULL\n");
 }
-#line 3106 "parser.c"
+#line 3107 "parser.c"
     break;
 
   case 110: /* $@10: %empty  */
-#line 1417 "parser.y"
+#line 1418 "parser.y"
                         { sim_loops++; }
-#line 3112 "parser.c"
+#line 3113 "parser.c"
     break;
 
   case 111: /* forprefix: FOR LEFTPAR $@10 elist SEMICOLON M expr SEMICOLON  */
-#line 1419 "parser.y"
+#line 1420 "parser.y"
 {
 	(yyval.forNode) = malloc(sizeof(for_t));
 	(yyval.forNode)->test = (yyvsp[-2].uns);
@@ -3122,11 +3123,11 @@ yyreduce:
 	emit(if_eq, NULL, (yyvsp[-1].exprNode), newexpr_constbool('t'), 0, yylineno);
 	fprintf(yyout_y, "forprefix -> for ( \n");
 }
-#line 3126 "parser.c"
+#line 3127 "parser.c"
     break;
 
   case 112: /* forstmt: forprefix N elist RIGHTPAR N loopstmt N  */
-#line 1430 "parser.y"
+#line 1431 "parser.y"
 {
 	patchlabel((yyvsp[-6].forNode)->enter, (yyvsp[-2].uns) + 1); // true jump
 	patchlabel((yyvsp[-5].uns), nextquad());	   // false jump
@@ -3138,11 +3139,11 @@ yyreduce:
 	(yyval.stmtNode) = (yyvsp[-1].stmtNode);
 	fprintf(yyout_y, "forstmt -> forprefix N elist ( N loopstmt N \n");
 }
-#line 3142 "parser.c"
+#line 3143 "parser.c"
     break;
 
   case 113: /* $@11: %empty  */
-#line 1442 "parser.y"
+#line 1443 "parser.y"
 {
 	if (sim_funcs == 0)
 	{
@@ -3150,11 +3151,11 @@ yyreduce:
 		isError = true;
 	}
 }
-#line 3154 "parser.c"
+#line 3155 "parser.c"
     break;
 
   case 114: /* returnstmt: RETURN $@11 SEMICOLON  */
-#line 1450 "parser.y"
+#line 1451 "parser.y"
 {
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
 	make_stmt((yyval.stmtNode));
@@ -3165,11 +3166,11 @@ yyreduce:
 	(yyval.stmtNode)->returnlist = newlist(nextquad()-1);
 	fprintf(yyout_y, "returnstmt -> return ;\n");
 }
-#line 3169 "parser.c"
+#line 3170 "parser.c"
     break;
 
   case 115: /* $@12: %empty  */
-#line 1461 "parser.y"
+#line 1462 "parser.y"
 {
 	if (sim_funcs == 0)
 	{
@@ -3177,11 +3178,11 @@ yyreduce:
 		isError = true;
 	}
 }
-#line 3181 "parser.c"
+#line 3182 "parser.c"
     break;
 
   case 116: /* returnstmt: RETURN $@12 expr SEMICOLON  */
-#line 1469 "parser.y"
+#line 1470 "parser.y"
 {
 	(yyvsp[-1].exprNode) = emitBoolean((yyvsp[-1].exprNode));
 	(yyval.stmtNode) = malloc(sizeof(stmt_t));
@@ -3191,11 +3192,11 @@ yyreduce:
 	(yyval.stmtNode)->returnlist = newlist(nextquad()-1);
 	fprintf(yyout_y, "returnstmt -> return expr ;\n");
 }
-#line 3195 "parser.c"
+#line 3196 "parser.c"
     break;
 
 
-#line 3199 "parser.c"
+#line 3200 "parser.c"
 
       default: break;
     }
@@ -3389,7 +3390,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 1481 "parser.y"
+#line 1482 "parser.y"
 
 int main(int argc, char** argv)
 {
@@ -3422,6 +3423,14 @@ int main(int argc, char** argv)
 	printInstructions();
 	instrToBinary();
 	readBinary();
+	avm_initialize();
+    while(executionFinished == 0)
+        execute_cycle();
+    //avm_memcellclear(&ax);
+    //avm_memcellclear(&bx);
+   // avm_memcellclear(&cx);
+   // avm_memcellclear(&retval);
+    return 100;
     }else{
 	printf("Could not produce Median Code because of compile time errors \n");
 	}
