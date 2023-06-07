@@ -15,6 +15,7 @@ extern FILE* yyin;
 #define NEW_SIZE	(EXPAND_SIZE*sizeof(quad)+CURR_SIZE)
 extern bool isError;
 
+
 typedef enum iopcode iopcode;
 typedef enum scopespace_t scopespace_t;
 typedef enum symbol_t symbol_t;
