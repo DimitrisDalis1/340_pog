@@ -24,9 +24,13 @@ char*   libfuncs_getused(unsigned index) {
 }
 */
 
-userfunc* avm_getfuncinfo(unsigned adress);
+userfunc* avm_getfuncinfo(unsigned address){
+    //for(int i=0 ; i< totalUserFuncs; i++){
+       // if(address == address)
+    //}
+}
 
-extern char* typeStrings[];
+extern char* typeStrings[]; //done in bool.c
 
 
 
@@ -102,8 +106,6 @@ void execute_cycle(void){
     }
 }
 
-
-
 void avm_memcellclear(avm_memcell* m){
     if(m->type != undef_m){
         memclear_func_t f = memclearFuncs[m->type];
@@ -157,6 +159,27 @@ extern void avm_push_table_arg(avm_table* t){
     ++totalActuals;
     avm_dec_top();
 }
+
+void avm_call_functor(avm_table* t){
+    cx.type = string_m;
+    cx.data.strVal = "()";
+    avm_memcell* f = avm_tablegetelem(t, &cx);
+    if(!f)
+        avm_error("in calling table: no '()' element found!");
+    else
+    if (f->type == table_m)
+        avm_call_functor(f->data,tableVal);
+    else
+    if(f->type == userfunc_a){
+        avm_push_table_arg(t);
+        avm_callsaveenvironment();
+        pc = f -> data.funcVal;
+        assert(pc < AVM_ENDING_PC && code[pc].opcode == funcenter_v);
+    }
+    else
+        avm_error("in calling table: illegal '()' element value!");
+}
+
 */
 
 
@@ -184,6 +207,7 @@ void avm_callsaveenvironment(void){
     avm_push_envvalue(topsp);
 }
 
+//IMPLEMENT
 void avm_error(char* format,instruction* code){
     printf("error");
 }

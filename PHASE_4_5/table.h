@@ -12,7 +12,24 @@ typedef enum avm_memcell_t {
     undef_m     = 7
 } avm_memcell_t;
 
-typedef struct avm_table avm_table;
+/*klemeno*/
+typedef struct avm_table_bucket {
+    avm_memcell key;
+    avm_memcell value;
+    struct avm_table_bucket* next;
+} avm_table_bucket;
+
+/*klemeno*/
+typedef struct avm_table{
+    unsigned refCounter;
+    avm_table_bucket* strIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* numIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* boolIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* userfuncIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* libfuncIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* tableIndexed[AVM_TABLE_HASHSIZE];
+    unsigned total;
+}avm_table;
 
 typedef struct avm_memcell {
     avm_memcell_t type;

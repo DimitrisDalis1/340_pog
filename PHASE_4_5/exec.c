@@ -59,7 +59,7 @@ void execute_cycle(void){
     }
 }
 
-// USELESS, i.e. will never be used by the program
+// never used
 void execute_nop (instruction* instr) { assert(0); return; }
 void execute_getretval (instruction* instr) { assert(0); return; }
 void execute_return (instruction* instr) { assert(0); return; }

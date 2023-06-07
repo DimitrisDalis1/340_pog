@@ -35,41 +35,41 @@ char*   libfuncs_getused(unsigned);
 
 
 
-userfunc* avm_getfuncinfo(unsigned);
+userfunc* avm_getfuncinfo(unsigned); //NEEDS IMPLEMENTATION IN avm.c
 
-avm_memcell* avm_translate_operand(vmarg*, avm_memcell*);
+avm_memcell* avm_translate_operand(vmarg*, avm_memcell*); //done in avm.c
 
 
 typedef void (*execute_func_t) (instruction*);
 
 
-void execute_assign(instruction*);
-void execute_add(instruction*);
-void execute_sub(instruction*);
-void execute_mul(instruction*);
-void execute_div(instruction*);
-void execute_mod(instruction*);
+void execute_assign(instruction*); //done in assign.c
+void execute_add(instruction*); //done in arithm.c
+void execute_sub(instruction*); //done in arithm.c
+void execute_mul(instruction*); //done in arithm.c
+void execute_div(instruction*); //done in arithm.c
+void execute_mod(instruction*); //done in arithm.c
 void execute_uminus(instruction*);      // USELESS
 void execute_and(instruction*);         // USELESS
 void execute_or(instruction*);          // USELESS
 void execute_not(instruction*);         // USELESS
-void execute_jeq(instruction*); 
-void execute_jne(instruction*);
-void execute_jle(instruction*);
-void execute_jge(instruction*);
-void execute_jlt(instruction*);
-void execute_jgt(instruction*);
-void execute_call(instruction*);
-void execute_pusharg(instruction*);
+void execute_jeq(instruction*); //done in bool.c
+void execute_jne(instruction*); //done in bool.c
+void execute_jle(instruction*); //done in bool.c
+void execute_jge(instruction*); //done in bool.c
+void execute_jlt(instruction*); //done in bool.c
+void execute_jgt(instruction*); //done in bool.c
+void execute_call(instruction*); //done in function.c
+void execute_pusharg(instruction*); //done in function.c
 void execute_return(instruction*);      // USELESS
 void execute_getretval(instruction*);   // USELESS
-void execute_funcenter(instruction*);
-void execute_funcexit(instruction*);
-void execute_newtable(instruction*);
-void execute_tablegetelem(instruction*);
-void execute_tablesetelem(instruction*);
-void execute_jump(instruction*);
-void execute_nop(instruction*);   
+void execute_funcenter(instruction*); //done in function.c
+void execute_funcexit(instruction*); //done in function.c
+void execute_newtable(instruction*); //done in table.c
+void execute_tablegetelem(instruction*); //done in table.c
+void execute_tablesetelem(instruction*); //done in table.c
+void execute_jump(instruction*); //done in bool.c
+void execute_nop(instruction*);   //USELESS
 
 extern execute_func_t executeFuncs[];
 typedef void (*memclear_func_t) (avm_memcell*);
@@ -81,80 +81,75 @@ extern unsigned        codeSize ;
 extern instruction*    code ;
 unsigned totalActuals = 0;
 
-void execute_cycle(void);
+void execute_cycle(void); //done in exec.c
 
-extern memclear_func_t memclearFuncs[];
+extern memclear_func_t memclearFuncs[]; 
 
-void avm_memcellclear(avm_memcell*);
+void avm_memcellclear(avm_memcell*); //done in avm.c
 
 
-extern void memclear_string (avm_memcell*);
+extern void memclear_string (avm_memcell*); //done in avm.c
 
-extern void memclear_table(avm_memcell*);
+extern void memclear_table(avm_memcell*); //done in avm.c
 
-extern void avm_warning(char*,instruction*);
+//avm.c
+void avm_error(char*,instruction*); // NEEDS IMPLEMENTATION
+extern void avm_warning(char*,instruction*); // NEEDS IMPLEMENTATION
 
 /*extern execute_assign(instruction*); */
 
-void avm_assign(avm_memcell*, avm_memcell*);
+void avm_assign(avm_memcell*, avm_memcell*); //done in assign.c
 
-void execute_call(instruction*);
-
-void avm_error(char*,instruction*);
-
-char* avm_tostring(avm_memcell*);
-
-
-void avm_calllibfunv(char* funcName);
-void avm_callseveenvironment(void);
-void avm_call_functor(avm_table* t);
-
-extern void avm_push_table_arg(avm_table* t);
-
-void avm_call_functor(avm_table* t);
+void execute_call(instruction*); //done in functions.c
 
 
 
+char* avm_tostring(avm_memcell*);  //done in avm.c
 
-void avm_dec_top(void);
 
-void avm_push_envvalue(unsigned val);
+void avm_calllibfunc(char*); //done in functions.c
+void avm_callsaveenvironment(void);  //done in avm.c
+void avm_call_functor(avm_table*); //in avm.c bit in comments
 
-void avm_callsaveenvironment(void);
+extern void avm_push_table_arg(avm_table* t); // In avm.c NOT IMPLEMENTED
 
-extern userfunc* avm_getfuncinfo(unsigned address);
+void avm_call_functor(avm_table* t); // In avm.c NOT IMPLEMENTED
 
-void execute_funcenter (instruction* instr);
+void avm_dec_top(void); //done in avm.c
 
-unsigned avm_get_envvalue(unsigned i);
+void avm_push_envvalue(unsigned); //done in avm.c
 
-void execute_funcexit(instruction*);
+void avm_callsaveenvironment(void); //done in avm.c
 
-void avm_calllibfunc(char* id);
 
-unsigned avm_totalactuals(void);
+extern userfunc* avm_getfuncinfo(unsigned address); //NEEDS IMPLEMENTATION IN  avm.c
 
-avm_memcell* avm_getactual(unsigned i);
 
-/* Implemantation of the library function 'print'.
-    it displays every argumnet at the console.
-*/
+unsigned avm_get_envvalue(unsigned); //done in functions.c
 
-void libfunc_print(void);
-void libfunc_typeof(void);
-void libfunc_totalarguments(void);
-void libfunc_sqrt(void);
-void libfunc_cos(void);
-void libfunc_sin(void);
-void libfunc_strtonum(void);
-void libfunc_input(void);
-void libfunc_argument(void);
-void libfunc_objecttotalmembers(void);
-void libfunc_objectmemberkeys(void);
-void libfunc_objectcopy(void);
 
-void avm_error(char*, instruction*);
-void avm_warning(char*, instruction*);
+void avm_calllibfunc(char*); //done in functions.c
+
+unsigned avm_totalactuals(void); //done in functions.c
+
+avm_memcell* avm_getactual(unsigned i); //done in functions.c
+
+
+void libfunc_print(void);  //done in function.c
+void libfunc_typeof(void); //done in function.c
+void libfunc_totalarguments(void); //done in function.c
+void libfunc_sqrt(void); //done in function.c
+void libfunc_cos(void); //done in function.c
+void libfunc_sin(void); //done in function.c
+void libfunc_strtonum(void); //done in function.c
+void libfunc_input(void); //done in function.c
+void libfunc_argument(void); //done in function.c
+void libfunc_objecttotalmembers(void); //done in function.c
+void libfunc_objectmemberkeys(void); //done in function.c
+void libfunc_objectcopy(void); //done in function.c
+
+void avm_error(char*, instruction*); //NEEDS IMPEMENTATION
+void avm_warning(char*, instruction*); //NEED IMPLEMENTATION
 
 /* With the following every library functiion is manually
     added in the VM library function resolution map
@@ -165,65 +160,32 @@ typedef void (*library_func_t)(void);
 
 extern void avm_push_table_arg(avm_table*);
 
-void execute_pusharg(instruction*);
+void execute_pusharg(instruction*); //done in function.c
 
-extern char* typeStrings[];
+extern char* typeStrings[]; //done in bool.c
 
 typedef char*(*tostring_func_t)(avm_memcell*);
 
-extern char* number_tostring(avm_memcell*);
-extern char* string_tostring(avm_memcell*);
-extern char* bool_tostring(avm_memcell*);
-extern char* table_tostring(avm_memcell*);
-extern char* userfunc_tostring(avm_memcell*);
-extern char* libfunc_tostring(avm_memcell*);
-extern char* nil_tostring(avm_memcell*);
-extern char* undef_tostring(avm_memcell*);
+extern char* number_tostring(avm_memcell*);  //done in bool.c
+extern char* string_tostring(avm_memcell*); //done in bool.c
+extern char* bool_tostring(avm_memcell*); //done in bool.c
+extern char* table_tostring(avm_memcell*); //done in bool.c
+extern char* userfunc_tostring(avm_memcell*); //done in bool.c
+extern char* libfunc_tostring(avm_memcell*); //done in bool.c
+extern char* nil_tostring(avm_memcell*); //done in bool.c
+extern char* undef_tostring(avm_memcell*); //done in bool.c
 
 tostring_func_t tostringFuncs[];
 
-char* avm_tostring(avm_memcell*);
+char* avm_tostring(avm_memcell*); //done in avm.c
 
+void execute_tablegetelem(instruction*); //done in table.c
 
-/*
-void avm_call_functor(avm_table* t){
-    cx.type = string_m;
-    cx.data.strVal = "()";
-    avm_memcell* f = avm_tablegetelem(t, &cx);
-    if(!f)
-        avm_error("in calling table: no '()' element found!");
-    else
-    if (f->type == table_m)
-        avm_call_functor(f->data,tableVal);
-    else
-    if(f->type == userfunc_a){
-        avm_push_table_arg(t);
-        avm_callsaveenvironment();
-        pc = f -> data.funcVal;
-        assert(pc < AVM_ENDING_PC && code[pc].opcode == funcenter_v);
-    }
-    else
-        avm_error("in calling table: illegal '()' element value!");
-}
+void execute_tablesetelem(instruction*); //done in table.c
 
-avm_memcell* avm_tablegetelem (
-            avm_table*  table,
-            avm_memcell*    index
-);
+void avm_initialize(void); //done in avm_main.c
 
-void avm_tablesetelem(
-    avm_table*  table,
-    avm_memcell*    index,
-    avm_memcell* content
-);
-*/
-void execute_tablegetelem(instruction*);
-
-void execute_tablesetelem(instruction*);
-
-void avm_initialize(void);
-
-void libfunc_totalarguments(void);
+void libfunc_totalarguments(void); //done in functions.c
 
 extern int disable_remove_warning;
 
