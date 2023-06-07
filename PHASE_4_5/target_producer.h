@@ -24,8 +24,8 @@ extern unsigned int totalVmargs;
 
 typedef void (*generator_func_t) (quad*);
 
-
-
+void printInstructions();
+void readBinary();
 typedef enum vmarg_t vmarg_t;
 typedef enum vmopcode vmopcode;
 typedef struct vmarg vmarg;
@@ -65,6 +65,7 @@ typedef struct incomplete_jump {
         unsigned iaddress;
         incomplete_jump* next;
 }incomplete_jump;
+
 typedef struct vmarg{ 
     vmarg_t type;
     unsigned int val;
@@ -127,4 +128,5 @@ void generate_GETRETVAL (quad*);
 void generate_FUNCSTART (quad*);
 void generate_RETURN (quad*);
 void generate_FUNCEND (quad*);
+void instrToBinary();
 #endif

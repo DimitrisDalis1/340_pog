@@ -9,7 +9,7 @@ unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
 int print_flag=0;
-
+extern int program_offset;
 int check_for_valid_loop_stop(int counter){
 	if(counter > 0)
 		return 1;
@@ -233,7 +233,10 @@ SymbolTableEntry* newtemp(){
 	if(sym==NULL){
 		if(current_scope==0)
 		{
+			program_offset++;
+			
 			return SymTable_insert(hash,name,yylineno,NULL,current_scope,GLOBAL);
+
 
 		}else{
 			return SymTable_insert(hash,name,yylineno,NULL,current_scope,LOCALV);

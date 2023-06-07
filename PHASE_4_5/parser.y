@@ -25,14 +25,14 @@
     int sim_funcs = 0;
     int currQuad=0;
     int offset=-1;
+	int program_offset=0;
     int loopcounter=0;
 	int offset_= -1; 
     //extern unsigned functionLocalOffset;
     //extern unsigned formalArgOffset;
     extern int tempcounter;
     extern unsigned formalArgOffset;  
-    
-    int b_n_b = 0; //before loop
+        int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
     int b_n_bf = 0; //before func
     int b_af = 0; //after func
@@ -729,6 +729,7 @@ lvalue : ID
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, GLOBAL);
 					entry->space = programvar;
+					 program_offset++;
 					entry->offset = offset_;
 				}
 				else
@@ -806,6 +807,7 @@ lvalue : ID
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, GLOBAL);
 				entry->space = programvar;
 				entry->offset = offset_++;
+				program_offset++;
 				//incurrscopeoffset();
 			}
 			else
