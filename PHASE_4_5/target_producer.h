@@ -2,6 +2,7 @@
 #define TARGET_H
 #include <stdlib.h>
 #include "quadhandler.h"
+#include "avm.h"
 #define EXPAND_SIZE_V 1024
 #define CURR_SIZE_V 	(totalVmargs*sizeof(instruction))
 #define NEW_SIZE_V	(EXPAND_SIZE_V*sizeof(instruction)+CURR_SIZE_V)
@@ -21,6 +22,13 @@ extern unsigned int totalVmargs;
 
 extern unsigned int currInstruction;
 extern unsigned int totalVmargs;
+
+int user,str,num,fun;
+userfunc* userfs;
+char** str_c;
+double* numbers;
+char** lib_f;
+instruction * instrs;
 
 typedef void (*generator_func_t) (quad*);
 

@@ -14,6 +14,7 @@ unsigned int totalVmargs = 0;
 int print_flagg=0;
 extern int currQuad;
 
+
 generator_func_t generators[] = {
     generate_ASSIGN,
     generate_ADD,
@@ -610,13 +611,17 @@ void instrToBinary(){
 	fclose(executable);
 }
 
+
+
+
+
 void readBinary(){
 
 	FILE *executable;
 	executable= fopen("executable.abc","r");
 	
-	int magic_number,user,str,num,fun,i,insr_s,length;
 	
+	int magic_number,i,insr_s,length;
     	fread(&magic_number, sizeof(int), 1, executable);
 
 	printf("Magic number: %ld\n", magic_number);
@@ -627,7 +632,7 @@ void readBinary(){
    	fread(&user, sizeof(int), 1, executable); printf("userfuncs %d\n", user);
 	if(user!=0){
 	
-		userfunc* userfs =(userfunc*) malloc(user*sizeof(userfunc));
+		userfs =(userfunc*) malloc(user*sizeof(userfunc));
 		for(i=0;i<user;i++){
 		
 			fread(&userfs[i].address, sizeof(int), 1, executable);
@@ -643,7 +648,7 @@ void readBinary(){
 	}
 	fread(&str, sizeof(int), 1, executable); printf("strings %d\n", str);
 	if(str!=0){
-		char** str_c = (char**) malloc(sizeof(char*)*str);
+		str_c = (char**) malloc(sizeof(char*)*str);
 		for(i=0;i<str;i++){
 			 fread(&length, sizeof(int), 1, executable);
         	str_c[i] = (char*) malloc(sizeof(char)*(length+1));
@@ -653,7 +658,7 @@ void readBinary(){
 	}
 	 fread(&num, sizeof(int), 1, executable); printf("numbers %d\n", num);
 	 if(num!=0){
-		double* numbers= (double*)malloc(sizeof(double) * num);
+		numbers= (double*)malloc(sizeof(double) * num);
 		for(i=0;i<num;i++){
 			fread(&numbers[i], sizeof(double), 1, executable);
             printf("%lf\n", numbers[i]);
@@ -663,7 +668,7 @@ void readBinary(){
 
 	fread(&fun, sizeof(int), 1, executable); printf("functions %d\n", fun); 
 	if(fun!=0){
-		char** lib_f = (char**) malloc(sizeof(char*)*fun);
+		lib_f = (char**) malloc(sizeof(char*)*fun);
 		for(i=0;i<fun;i++){
 			 fread(&length, sizeof(int), 1, executable);
        		 lib_f[i] = (char*) malloc(sizeof(char)*(length+1));
@@ -672,7 +677,7 @@ void readBinary(){
 	}
 	fread(&insr_s, sizeof(int), 1, executable); printf("instructions %d\n", insr_s); 
 	if(insr_s!=0){
-		instruction * instrs = (instruction*) malloc((insr_s+1)*sizeof(instruction));
+		instrs = (instruction*) malloc((insr_s+1)*sizeof(instruction));
 		for(i=1;i<=insr_s;i++){
 		
 			instrs[i].result =(vmarg*) malloc(sizeof(vmarg));

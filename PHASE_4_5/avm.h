@@ -24,6 +24,14 @@
     exit(1); \
 }; \
 
+
+extern int user,str,num,fun;
+extern userfunc* userfs;
+extern char** str_c;
+extern double* numbers;
+extern char** lib_f;
+extern instruction * instrs;
+
 extern avm_memcell avm_stack[AVM_STACKSIZE];
 extern avm_memcell ax, bx, cx;
 extern avm_memcell retval;

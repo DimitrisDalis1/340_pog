@@ -19,7 +19,7 @@ typedef struct avm_table_bucket {
     struct avm_table_bucket* next;
 } avm_table_bucket;
 
-/*klemeno*/
+
 typedef struct avm_table{
     unsigned refCounter;
     avm_table_bucket* strIndexed[AVM_TABLE_HASHSIZE];
@@ -44,13 +44,14 @@ typedef struct avm_memcell {
 } avm_memcell;
 
 
-avm_memcell* avm_tablegetelem(avm_table*  table,avm_memcell* index){
-    assert(table);
-    assert(index);
-}
+avm_table* avm_tablenew (void);
+void avm_tabledestroy (avm_table* t);
+avm_memcell* avm_tablegetelem(avm_table*  table,avm_memcell* index);
+void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content);
+void avm_tableincrefcounter (avm_table* );
+void avm_tabledecrefcounter (avm_table* );
+void avm_tablebucketsinit (avm_table_bucket** );
+avm_table* avm_tablenew(void);
+void avm_memcellclear(avm_memcell* m);
+void avm_tablebucketsdestroy (avm_table_bucket**);
 
-void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
-    assert(table);
-    assert(index);
-    assert(content);
-}
