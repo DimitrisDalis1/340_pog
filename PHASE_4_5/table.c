@@ -82,7 +82,7 @@ void avm_tablebucketsinit (avm_table_bucket ** p){
 
 avm_table* avm_tablenew(void){
     avm_table* t = (avm_table*) malloc (sizeof(avm_table));
-    AVM_WIPEOUT(*t);
+     memset(&(*t), 0, sizeof(*t));
 
     t->refCounter = t->total = 0;
     avm_tablebucketsinit(t->numIndexed);
@@ -96,8 +96,8 @@ void avm_tablebucketsdestroy(avm_table_bucket** p){
         for(avm_table_bucket* b = *p; b;){
             avm_table_bucket* del = b;
             b = b->next;
-            avm_memcellclear(&del->key);
-            avm_memcellclear(&del->value);
+            avm_memcellclear(del->key); //had &
+            avm_memcellclear(del->value); //had &
             free(del);
         }
         p[i] = (avm_table_bucket*) 0;

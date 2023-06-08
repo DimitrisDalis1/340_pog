@@ -12,17 +12,17 @@ avm_memcell ax, bx, cx;
 avm_memcell retval;
 int    top, topsp;
 
-/* needs binary file
+/* needs binary file*/
 double  consts_getnumber(unsigned index){
-    return number_consts[index];
+    return numConsts[index]; //numConsts?
 }
 char*   consts_getstring(unsigned index) {
-    return string_consts[index];
+    return stringConsts[index];
 }
 char*   libfuncs_getused(unsigned index) {
-    return libfuncs[index];
+    return lib_f[index];
 }
-*/
+
 
 userfunc* avm_getfuncinfo(unsigned address){
     //for(int i=0 ; i< totalUserFuncs; i++){
@@ -120,10 +120,6 @@ extern void memclear_string (avm_memcell* m){
     free(m-> data.strVal);
 }
 
-extern void memclear_table(avm_memcell* m){
-    assert(m->data.tableVal);
-    avm_tabledecrefcounter(m->data.tableVal);
-}
 
 memclear_func_t memclearFuncs[] = {
      0,  /* number */
@@ -142,7 +138,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
 
 void avm_tablesetelem(avm_table*  table,avm_memcell* index,avm_memcell* content);
 
-extern void memclear_table(avm_memcell* m){
+void memclear_table(avm_memcell* m){
     assert(m->data.tableVal);
     avm_tabledecrefcounter(m->data.tableVal);
 }

@@ -6,7 +6,7 @@ bison:
 	bison -v -Wno-yacc --defines --output=parser.c parser.y
 
 compile:
-	gcc -o calc scanner.c parser.c symtablehash.c target_producer.c expr.c quadhandler.c stack.c avm.c avm_main.c assign.c arithm.c avm_stack.c
+	gcc -o calc scanner.c parser.c symtablehash.c target_producer.c expr.c quadhandler.c stack.c avm.c avm_main.c assign.c arithm.c avm_stack.c table.c bool.c exec.c functions.c
 
 run:
 	calc example.alpha

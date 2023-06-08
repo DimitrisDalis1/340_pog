@@ -2,7 +2,7 @@
 
 void avm_initialize(void) {
     avm_initstack();
-    avm_init_libfuncs_hash();
+    //avm_init_libfuncs_hash();
     topsp = AVM_STACKSIZE-1;
     top   = AVM_STACKSIZE-1;
 

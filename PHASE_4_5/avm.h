@@ -87,7 +87,7 @@ extern unsigned        pc ;
 extern unsigned        currLine ;
 extern unsigned        codeSize ;
 extern instruction*    code ;
-unsigned totalActuals = 0;
+extern unsigned totalActuals;
 
 void execute_cycle(void); //done in exec.c
 
@@ -201,7 +201,9 @@ void execute_tablegetelem(instruction*); //done in table.c
 
 void execute_tablesetelem(instruction*); //done in table.c
 
-void avm_initialize(void); //done in avm_main.c
+void avm_initialize(void); //done in avm_main.c, uparxei kapou auth?
+
+void avm_initstack(void);
 
 void libfunc_totalarguments(void); //done in functions.c
 

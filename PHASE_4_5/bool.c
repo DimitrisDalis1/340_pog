@@ -1,4 +1,6 @@
 #include "avm.h"
+
+
 typedef unsigned char(*tobool_func_t)(avm_memcell*);
 
 unsigned char number_tobool(avm_memcell* m) { return m->data.numVal != 0; }
@@ -29,11 +31,36 @@ unsigned char avm_tobool (avm_memcell* m) {
     return (*toboolFuncs[m->type])(m);
 }
 
-/*
+
+typedef double (*toarithm_func_t)(avm_memcell*);
+
+double number_toarithm(avm_memcell* m) { return m->data.numVal; }
+double string_toarithm(avm_memcell* m) { size_t length= strlen(m->data.strVal); return length;}
+double bool_toarithm(avm_memcell* m) { return m->data.boolVal; } 
+double table_toarithm(avm_memcell* m) { return 1; }
+double userfunc_toarithm(avm_memcell* m) { return 1; }
+double libfunc_toarithm(avm_memcell* m) { return 1; }
+double nil_toarithm(avm_memcell* m) { return 0; }
+double undef_toarithm(avm_memcell* m) { assert(0); return 0; }
+
+
+toarithm_func_t toarithmFuncs[]={
+    number_toarithm,
+    string_toarithm,
+    bool_toarithm,
+    table_toarithm,
+    userfunc_toarithm,
+    libfunc_toarithm,
+    nil_toarithm,
+    undef_toarithm
+};
+
+
+
 int avm_toarithm (avm_memcell* m) {
     assert(m->type >= 0 && m->type < undef_m);
     return (*toarithmFuncs[m->type])(m);
-}*/
+}
 
 char* typeStrings[] = {
     "number",

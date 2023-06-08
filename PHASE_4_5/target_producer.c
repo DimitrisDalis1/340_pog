@@ -5,6 +5,7 @@ unsigned totalNumConsts=0;
 char** stringConsts=(char**)0;
 unsigned totalStringConsts=0;
 char** namedLibfuncs=(char**)0;
+char**lib_f=(char**)0;
 unsigned totalNamedFuncs=0;
 userfunc* userFuncs=(userfunc*) 0;;
 unsigned totalUserFuncs=0;
@@ -664,7 +665,7 @@ void readBinary(){
 
 	fread(&fun, sizeof(int), 1, executable); printf("functions %d\n", fun); 
 	if(fun!=0){
-		char** lib_f = (char**) malloc(sizeof(char*)*fun);
+		lib_f = (char**) malloc(sizeof(char*)*fun);
 		for(i=0;i<fun;i++){
 			 fread(&length, sizeof(int), 1, executable);
        		 lib_f[i] = (char*) malloc(sizeof(char)*(length+1));

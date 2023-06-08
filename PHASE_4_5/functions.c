@@ -1,10 +1,9 @@
-#include"avm.h"
-//#include"../read_binary/read_binary.h"
+#include "avm.h"
 #include<math.h>
 #include<ctype.h>
 #define PI 3.141592654
 void execute_call(instruction* instr){
-    avm_memcell* func = avm_translate_operand(&instr->result,&ax);
+    avm_memcell* func = avm_translate_operand(instr->result,&ax);
     assert(func);
     switch (func->type)
     {
@@ -16,12 +15,12 @@ void execute_call(instruction* instr){
         break;
     }
         /* code */
-        case string_m: {avm_calllinfunc(func->data.strVal); break;}
-        case libfunc_m: {avm_calllinfunc(func->data.libfuncVal); break;}
-        case table_m:{ /*avm_calllinfunc(func->data.tableVal);*/ break;} //implement it ,we gettableelement and settableelement
+        case string_m: {avm_calllibfunc(func->data.strVal); break;}
+        case libfunc_m: {avm_calllibfunc(func->data.libfuncVal); break;}
+        case table_m:{ /*avm_calllibfunc(func->data.tableVal);*/ break;} //implement it ,we gettableelement and settableelement
     default:{
         char* s = avm_tostring(func);
-        avm_error("call : cannot bind '%s' to function!",s );
+        fprintf(stderr,"call : cannot bind '%s' to function!",s );
         free(s);
         executionFinished = 1;
         }
@@ -29,7 +28,7 @@ void execute_call(instruction* instr){
 }
 
 void execute_funcenter (instruction* instr){
-    avm_memcell* func = avm_translate_operand(&instr->result, &ax);
+    avm_memcell* func = avm_translate_operand(instr->result, &ax);
     assert(func);
     assert(pc == func->data.funcVal); /* Func address should match PC. */
     /* Callee actions here. */
@@ -60,38 +59,27 @@ void execute_funcexit(instruction* unused){
 
 
 
-
-void libfunc_totalarguments(void){
-    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
-    avm_memcellclear(&retval);
-    if(!p_topsp){
-        avm_error("'totalarguments' called outside a function!", &code[pc]);
-        retval.type = nil_m;
-    }else{
-        retval.type = number_m;
-        retval.data.numVal = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET);
-    }
+void avm_registerlibfunc(char* id,library_func_t addr){
+    assert(id);
+    int index = libfunc_hash(id);
+    libfunc_hashtable->LibTable[index] = addr;
+    libfunc_hashtable->counter = libfunc_hashtable->counter + 1;
 }
 
-void libfunc_typeof(void){
-    unsigned i = avm_totalactuals();
-    if(i != 1)
-        avm_error("one argument (not %d) expected in 'typeof'!",i);
-    else{
-        /*Thats how a lib function returns a result.
-        It has to only set the 'retval' register!
-        */
-        avm_memcellclear(&retval);/*don't forget to clean-it up!*/
-        retval.type = string_m;
-        retval.data.strVal = strdup(typeStrings[avm_getactual(0)->type]);
+library_func_t avm_getlibraryfunc(char* id){
+    assert(id);
+    int index = libfunc_hash(id);
+    if (libfunc_hashtable->LibTable[index] != NULL) {
+        return libfunc_hashtable->LibTable[index];
     }
+    return NULL;
 }
 
 
 void avm_calllibfunc(char* id){
     library_func_t f = avm_getlibraryfunc(id);
     if(!f){
-        avm_error("unsupported lib func '%s' called!",id);
+        fprintf(stderr,"unsupported lib func '%s' called!",id); //is it wrong?
         executionFinished = 1;
     }
     else{
@@ -117,15 +105,9 @@ avm_memcell* avm_getactual(unsigned i){
 }
 
 
-void avm_registerlibfunc(char* id,library_func_t addr){
-    assert(id);
-    int index = libfunc_hash(id);
-    libfunc_hashtable->LibTable[index] = addr;
-    libfunc_hashtable->counter = libfunc_hashtable->counter + 1;
-}
 
 void execute_pusharg(instruction* instr){
-    avm_memcell* arg = avm_translate_operand(&instr->arg1,&ax);
+    avm_memcell* arg = avm_translate_operand(instr->arg1,&ax);
     assert(arg);
     /*this is actually stack[top] = arg,but we have to use
         avm_assign.*/
@@ -176,7 +158,7 @@ void libfunc_totalarguments(void){
     }
 }
 void libfunc_sqrt(void){
-    if(avm_totalActuals() == 1 ){
+    if(avm_totalactuals() == 1 ){
         if(avm_getactual(0)->type != number_a){
             avm_error("Error : the parameter should be a number in sqrt!",&code[pc]);
         }else if(avm_getactual(0)->data.numVal < 0){
@@ -196,8 +178,7 @@ void libfunc_sqrt(void){
 
 void libfunc_cos(void){
     double result;
-    unsigned int n = avm_totalactuals();
-    if(n == 1)
+    if(avm_totalactuals() == 1)
     {
         if(avm_getactual(0)->type != number_m){
             avm_error("In function cos, given input is not of type: number_m", &code[pc]);
@@ -212,8 +193,7 @@ void libfunc_cos(void){
             retval.data.numVal = cos(dummy);
         }
     }
-    else
-    if(n!= 1){
+    else{
         avm_error("Only one parameter is allowed in function cos!\n", &code[pc]);
     }
 }
@@ -242,7 +222,7 @@ void libfunc_sin(void){
 }
 
 void libfunc_strtonum(void){
-     if(avm_totalActuals() == 1 ){
+     if(avm_totalactuals() == 1 ){
         if(avm_getactual(0)->type != string_m){
             avm_error("Error : the parameter should be a string in strtonum!",&code[pc]);
             retval.type = nil_m;
@@ -361,7 +341,7 @@ void libfunc_input(void){
 }
 
 void libfunc_argument(void){
-    if(avm_totalActuals() == 1){
+    if(avm_totalactuals() == 1){
         if (avm_getactual(0)->type == number_m)
         {
             if(avm_getactual(0)->data.numVal >  avm_get_envvalue(avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET) + AVM_NUMACTUALS_OFFSET)-1 ){ //klemmeno full
@@ -392,7 +372,7 @@ void libfunc_argument(void){
 }
 
 void libfunc_objecttotalmembers(void){
-    if(avm_totalActuals() == 1){
+    if(avm_totalactuals() == 1){
         if(avm_getactual(0)->type == table_m){
             avm_table* temp = avm_getactual(0)->data.tableVal;
             unsigned total = temp->total;
@@ -410,17 +390,17 @@ void libfunc_objecttotalmembers(void){
 void libfunc_objectmemberkeys(void){
     int i;
     int j = 0;
-    if(avm_totalActuals() == 1){
+    if(avm_totalactuals() == 1){
         if(avm_getactual(0)->type == table_m){
             avm_table* temp = avm_getactual(0)->data.tableVal;
             avm_table* temp_new = avm_tablenew();
             unsigned temp_size = temp->total;
-            avm_memcell new_key;
+            avm_memcell *new_key;
         for (i = 0; i < AVM_TABLE_HASHSIZE; i++) {
         avm_table_bucket* temp_loop = temp->strIndexed[i];
 
         while (temp_loop != NULL) {
-            new_key.data.numVal = j;
+            new_key->data.numVal = j;
             avm_table_bucket* new_bucket = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
             new_bucket->key = new_key;
             new_bucket->value = temp_loop->key;
@@ -433,7 +413,7 @@ void libfunc_objectmemberkeys(void){
 
         temp_loop = temp->numIndexed[i];
         while (temp_loop != NULL) {
-            new_key.data.numVal = j;
+            new_key->data.numVal = j;
             avm_table_bucket* new_bucket = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
             new_bucket->key = new_key;
             new_bucket->value = temp_loop->key;
@@ -446,7 +426,7 @@ void libfunc_objectmemberkeys(void){
 
         temp_loop = temp->boolIndexed[i];
         while (temp != NULL) {
-            new_key.data.numVal = j;
+            new_key->data.numVal = j;
             avm_table_bucket* new_bucket = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
             new_bucket->key = new_key;
             new_bucket->value = temp_loop->key;
@@ -457,9 +437,9 @@ void libfunc_objectmemberkeys(void){
             temp_loop = temp_loop->next;
         }
 
-        temp = temp->userfuncIndexed[i];
+        temp_loop = temp->userfuncIndexed[i];
         while (temp != NULL) {
-            new_key.data.numVal = j;
+            new_key->data.numVal = j;
             avm_table_bucket* new_bucket = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
             new_bucket->key = new_key;
             new_bucket->value = temp_loop->key;
@@ -470,9 +450,9 @@ void libfunc_objectmemberkeys(void){
             temp_loop = temp_loop->next;
         }
 
-        temp = temp->libfuncIndexed[i];
+        temp_loop  = temp->libfuncIndexed[i];
         while (temp != NULL) {
-            new_key.data.numVal = j;
+            new_key->data.numVal = j;
             avm_table_bucket* new_bucket = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
             new_bucket->key = new_key;
             new_bucket->value = temp_loop->key;
@@ -484,9 +464,9 @@ void libfunc_objectmemberkeys(void){
         }
 
 
-        temp = temp->tableIndexed[i];
+        temp_loop  = temp->tableIndexed[i];
         while (temp != NULL) {
-            new_key.data.numVal = j;
+            new_key->data.numVal = j;
             avm_table_bucket* new_bucket = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
             new_bucket->key = new_key;
             new_bucket->value = temp_loop->key;
@@ -521,33 +501,33 @@ void libfunc_objectcopy(void){
                 avm_table_bucket* temp_bucket = temp->strIndexed[i];
 
                 while (temp != NULL) {
-                    avm_tablesetelem(new_table, &temp_bucket->key, avm_tablegetelem(temp, &temp_bucket->key));
+                    avm_tablesetelem(new_table, temp_bucket->key, avm_tablegetelem(temp, temp_bucket->key));
                     temp_bucket = temp_bucket->next;
                 }
                 temp_bucket = temp ->numIndexed[i];
                 while (temp != NULL) {
-                    avm_tablesetelem(new_table, &temp_bucket->key, avm_tablegetelem(temp, &temp_bucket->key));
+                    avm_tablesetelem(new_table, temp_bucket->key, avm_tablegetelem(temp, temp_bucket->key));
                     temp_bucket = temp_bucket->next;
                 }
 
                 temp_bucket = temp ->boolIndexed[i];
                 while (temp != NULL) {
-                    avm_tablesetelem(new_table, &temp_bucket->key, avm_tablegetelem(temp, &temp_bucket->key));
+                    avm_tablesetelem(new_table, temp_bucket->key, avm_tablegetelem(temp, temp_bucket->key));
                     temp_bucket = temp_bucket->next;
                 }
                 temp_bucket = temp ->userfuncIndexed[i];
                 while (temp != NULL) {
-                    avm_tablesetelem(new_table, &temp_bucket->key, avm_tablegetelem(temp, &temp_bucket->key));
+                    avm_tablesetelem(new_table, temp_bucket->key, avm_tablegetelem(temp, temp_bucket->key));
                     temp_bucket = temp_bucket->next;
                 }
                 temp_bucket = temp ->libfuncIndexed[i];
                 while (temp != NULL) {
-                    avm_tablesetelem(new_table, &temp_bucket->key, avm_tablegetelem(temp, &temp_bucket->key));
+                    avm_tablesetelem(new_table, temp_bucket->key, avm_tablegetelem(temp, temp_bucket->key));
                     temp_bucket = temp_bucket->next;
                 }
                 temp_bucket = temp ->tableIndexed[i];
                 while (temp != NULL) {
-                    avm_tablesetelem(new_table, &temp_bucket->key, avm_tablegetelem(temp, &temp_bucket->key));
+                    avm_tablesetelem(new_table, temp_bucket->key, avm_tablegetelem(temp, temp_bucket->key));
                     temp_bucket = temp_bucket->next;
                 }
 
