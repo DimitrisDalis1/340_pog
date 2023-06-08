@@ -1,4 +1,4 @@
-#include"avm.h"
+#include "avm.h"
 
 execute_func_t executeFuncs[] = {
     execute_assign,         //0
@@ -35,12 +35,13 @@ void execute_cycle(void){
         return;
     }
     else if(pc == AVM_ENDING_PC){
+        printf("tellos\n");
         executionFinished = 1;
         return;
     }
     else{
         assert(pc < AVM_ENDING_PC);
-        instruction* instr = &code[pc]; // NA DW GIATI KANW &
+        instruction* instr = &code[pc];
         assert(
             instr->opcode >= 0 &&
             instr->opcode <= AVM_MAX_INSTRUCTIONS
@@ -59,7 +60,8 @@ void execute_cycle(void){
     }
 }
 
-// USELESS, i.e. will never be used by the program
+
+// never used
 void execute_nop (instruction* instr) { assert(0); return; }
 void execute_getretval (instruction* instr) { assert(0); return; }
 void execute_return (instruction* instr) { assert(0); return; }

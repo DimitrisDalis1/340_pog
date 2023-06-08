@@ -3,6 +3,7 @@
     #include <stdio.h>
     #include "quadhandler.h"
     #include "target_producer.h"
+    #include "avm.h"
     #define for_each_time(item, list) \
 	for(T * item = list->head; item != NULL; item = item->next)
     int yyerror (char* yaccProvidedMessage);
@@ -25,14 +26,15 @@
     int sim_funcs = 0;
     int currQuad=0;
     int offset=-1;
+	int program_offset=0;
     int loopcounter=0;
 	int offset_= -1; 
     //extern unsigned functionLocalOffset;
     //extern unsigned formalArgOffset;
     extern int tempcounter;
+	extern unsigned char   executionFinished;
     extern unsigned formalArgOffset;  
-    
-    int b_n_b = 0; //before loop
+        int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
     int b_n_bf = 0; //before func
     int b_af = 0; //after func
@@ -148,7 +150,7 @@ stmt : expr SEMICOLON
 	make_stmt($$);
 
 	fprintf(yyout_y, "stmt -> expr;\n");
-	emitBoolean($1);
+	$1=emitBoolean($1);
 	tempcounter = 0;
 }
 | if
@@ -229,16 +231,20 @@ stmt : expr SEMICOLON
 };
 stmts : stmt
 {
-	$$ = $1;
+	//
+	$$ = malloc(sizeof(stmt_t));
+	make_stmt($$);
+	$$->breaklist =$1->breaklist;
+	$$->contlist = $1->contlist;
+	$$->returnlist =$1->returnlist,
 	fprintf(yyout_y, "stmts -> stmt\n");
 }
 | stmts stmt
 {
-	$$ = malloc(sizeof(stmt_t));
-	make_stmt($$);
-	$$->breaklist = mergelist($1->breaklist, $2->breaklist);
-	$$->contlist = mergelist($1->contlist, $2->contlist);
-	$$->returnlist = mergelist($1->returnlist, $2->returnlist);
+	$1->breaklist = mergelist($1->breaklist, $2->breaklist);
+	$1->contlist = mergelist($1->contlist, $2->contlist);
+	$1->returnlist = mergelist($1->returnlist, $2->returnlist);
+	$$ = $1;
 	fprintf(yyout_y, "stmts -> stmts stmt\n");
 };
 
@@ -452,7 +458,7 @@ M expr
 };
 
 expr : assignexpr
-{	//$$=$1;
+{	$$=$1;
 	fprintf(yyout_y, "expr -> assignexpr\n");
 }
 | term
@@ -515,9 +521,13 @@ term : LEFTPAR expr RIGHTPAR
 		$$ = NULL;
 	}
 	else
-	{
+	{$$ = newexpr(boolexpr_e);
+			$$->sym = $2->sym;
 		if ($2->type == boolexpr_e)
 		{
+			$$->truelist = $2->falselist;
+			$$->falselist = $2->truelist;
+
 		}
 		else
 		{
@@ -526,8 +536,7 @@ term : LEFTPAR expr RIGHTPAR
 			emit(if_eq, NULL, $2, newexpr_constbool('t'), 0, yylineno);
 			emit(jump, NULL, NULL, NULL, 0, yylineno);
 
-			$$ = newexpr(boolexpr_e);
-			$$->sym = $2->sym;
+			
 			$$->truelist = $2->falselist;
 			$$->falselist = $2->truelist;
 		}
@@ -651,23 +660,22 @@ assignexpr : lvalue ASSIGN expr
 			isError = true;
 		}
 	}
-	if (($1)->type == tableitem_e)
-	{   if($3->type== boolexpr_e){
+	if($3->type== boolexpr_e){
             $3 =emitBoolean($3);
         }
+	if (($1)->type == tableitem_e)
+	{   
 		emit(tablesetelem, $1, $1->index, $3, -1, yylineno);
 		$$ = emit_iftableitem($1);
-		($$)->type = var_e;
+		($$)->type = assignexpr_e;
 	}   
 	else
-	{
-		expr *tmp = $3;
-		assert($3);
-		if ($3->type == boolexpr_e)
-			tmp = emitBoolean($3);
-		emit(assign, $1, tmp, NULL, -1, yylineno);
+	{	assert($1);
+		emit(assign, $1, $3, NULL, -1, yylineno);
+		$$=newexpr(assignexpr_e);
+		
 		SymbolTableEntry *temp = newtemp();
-		$$ = newexpr(assignexpr_e);
+		
 		$$->sym = temp;
 		emit(assign, $$, $1, NULL, -1, yylineno);
 	}
@@ -681,10 +689,10 @@ primary : lvalue
 | call
 {
 	fprintf(yyout_y, "primary -> call\n");
-	//$$ = $1;
+	$$ = $1;
 }
 | objectdef
-{
+{	$$=$1;
 	fprintf(yyout_y, "primary -> objectdef\n");
 	}
 | LEFTPAR funcdef RIGHTPAR
@@ -729,6 +737,7 @@ lvalue : ID
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, GLOBAL);
 					entry->space = programvar;
+					 program_offset++;
 					entry->offset = offset_;
 				}
 				else
@@ -806,6 +815,7 @@ lvalue : ID
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, GLOBAL);
 				entry->space = programvar;
 				entry->offset = offset_++;
+				program_offset++;
 				//incurrscopeoffset();
 			}
 			else
@@ -836,6 +846,7 @@ lvalue : ID
 	{
 		fprintf(stderr, "Global not found in line %d and scope %d \n", yylineno, current_scope);
 		isError = true;
+		$$=newexpr(nil_e);
 	}
 	else
 
@@ -843,7 +854,7 @@ lvalue : ID
 	fprintf(yyout_y, "lvalue -> ::id\n");
 }
 | member
-{
+{	$$=$1;
 	fprintf(yyout_y, "lvalue -> member\n");
 };
 
@@ -876,6 +887,7 @@ member : lvalue PERIOD ID
 		isError = true;
 	}
 	fprintf(yyout_y, "member -> lvalue [ expr ]\n");
+	$3=emitBoolean($3);
 	$1 = emit_iftableitem($1);
 	$$ = newexpr(tableitem_e);
 	$$->sym = $1->sym;
@@ -889,7 +901,7 @@ member : lvalue PERIOD ID
 	fprintf(yyout_y, "member -> call.id\n");
 }
 | call LEFTBRACE expr RIGHTBRACE
-{
+{	$3=emitBoolean($3);
 	$1 = emit_iftableitem($1);
 	$$ = newexpr(tableitem_e);
 	$$->sym = $1->sym;
@@ -1118,6 +1130,7 @@ funcprefix : FUNCTION funcname
 	{
 		$$ = newexpr(programfunc_e);
 		$$->sym = SymTable_insert(hash, (char *)$2, yylineno, NULL, temp, USERFUNC);
+		$$->sym->space=currscopespace();
 	}
 	else
 	{
@@ -1338,7 +1351,10 @@ ifprefix : IF LEFTPAR expr RIGHTPAR
 if:	
 	ifprefix stmt
 	{
+		if($2!=NULL){
 		$$ = $2;
+		}else { $$ = malloc(sizeof(stmt_t));
+make_stmt($$);}
 		patchlabel($1, nextquad());
 		fprintf(yyout_y, "if -> ifprefix stmt\n");
 	}
@@ -1508,6 +1524,14 @@ int main(int argc, char** argv)
 	printInstructions();
 	instrToBinary();
 	readBinary();
+	avm_initialize();
+    while(executionFinished == 0)
+        execute_cycle();
+    avm_memcellclear(&ax);
+    avm_memcellclear(&bx);
+    avm_memcellclear(&cx);
+    avm_memcellclear(&retval);
+    return 100;
     }else{
 	printf("Could not produce Median Code because of compile time errors \n");
 	}

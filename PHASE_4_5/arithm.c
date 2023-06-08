@@ -1,4 +1,4 @@
-#include"avm.h"
+#include "avm.h"
 
 
 typedef double (*arithmetic_func_t)(double x, double y);
@@ -27,7 +27,7 @@ void execute_arithmetic (instruction* instr) {
     avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
     avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
 
-    assert(lv && (&stack[N-1] >= lv && lv > &stack[top] || lv==&retval));
+    //assert(lv && (&stack[N-1] >= lv && lv > &stack[top] || lv==&retval));
     assert(rv1 && rv2);
 
     if(rv1->type != number_m || rv2->type != number_m) {
@@ -42,8 +42,9 @@ void execute_arithmetic (instruction* instr) {
     }
 }
 
-void execute_add (instruction* instr) { execute_arithmetic(instr); return; }
-void execute_sub (instruction* instr) { execute_arithmetic(instr); return; }
-void execute_mul (instruction* instr) { execute_arithmetic(instr); return; }
-void execute_div (instruction* instr) { execute_arithmetic(instr); return; }
-void execute_mod (instruction* instr) { execute_arithmetic(instr); return; }
+void execute_add(instruction* instr) { execute_arithmetic(instr); return; }
+void execute_sub(instruction* instr) { execute_arithmetic(instr); return; }
+void execute_mul(instruction* instr) { execute_arithmetic(instr); return; }
+void execute_div(instruction* instr) { execute_arithmetic(instr); return; }
+void execute_mod(instruction* instr) { execute_arithmetic(instr); return; }
+void execute_uminus(instruction* instr) {assert(0); return;}

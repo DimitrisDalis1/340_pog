@@ -9,7 +9,7 @@ unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
 unsigned scopeSpaceCounter=1;
 int print_flag=0;
-
+extern int program_offset;
 int check_for_valid_loop_stop(int counter){
 	if(counter > 0)
 		return 1;
@@ -233,10 +233,17 @@ SymbolTableEntry* newtemp(){
 	if(sym==NULL){
 		if(current_scope==0)
 		{
-			return SymTable_insert(hash,name,yylineno,NULL,current_scope,GLOBAL);
+			program_offset++;
+			sym= SymTable_insert(hash,name,yylineno,NULL,current_scope,GLOBAL);
+			sym->space=programvar;
+			return sym;
+
 
 		}else{
-			return SymTable_insert(hash,name,yylineno,NULL,current_scope,LOCALV);
+			sym=SymTable_insert(hash,name,yylineno,NULL,current_scope,LOCALV);
+			sym->space=functionlocal;
+			return sym;
+
 		}
 		
 	}else{
@@ -278,7 +285,7 @@ void patchlabel(unsigned int quadNo, unsigned int label){
 expr* member_item(expr* lv, char* name){
 	lv=emit_iftableitem(lv);
 	expr* ti=newexpr(tableitem_e);
-	ti->sym=lv->sym;
+	ti->sym=lv->sym; 
 	ti->index= newexpr_conststring(name);
 	return ti;
 }
@@ -294,8 +301,8 @@ expr* emit_iftableitem(expr* e){
 		emit(
 			tablegetelem,
 			result,
-			e,
 			e->index,
+			e,
 			-1,
 			currQuad
 		);

@@ -1,8 +1,10 @@
 #include"avm.h"
 
+int disable_remove_warning = 0;
+
 void execute_newtable(instruction* instr){
   avm_memcell * lv = avm_translate_operand(instr->result, (avm_memcell*) 0);
-  assert(lv && (&avm_stack[N-1] >= lv && lv > &avm_stack[top]));
+  //assert(lv && (&avm_stack[N-1] >= lv && lv > &avm_stack[top]));
   avm_memcellclear(lv);
   lv->type = table_m;
   lv->data.tableVal = avm_tablenew();
@@ -62,4 +64,54 @@ void execute_tablesetelem(instruction* instr) {
     else
         avm_tablesetelem(t->data.tableVal, i, c);
 
+}
+
+
+void avm_tableincrefcounter (avm_table* t){
+    ++t->refCounter;
+}
+
+void avm_tabledecrefcounter (avm_table* t){
+    assert(t->refCounter > 0);
+    if(!--t->refCounter)
+        avm_tabledestroy(t);
+}
+
+void avm_tablebucketsinit (avm_table_bucket ** p){
+    for(unsigned i = 0; i < AVM_TABLE_HASHSIZE; ++i)
+        p[i] = (avm_table_bucket*) 0;
+}
+
+avm_table* avm_tablenew(void){
+    avm_table* t = (avm_table*) malloc (sizeof(avm_table));
+     memset(&(*t), 0, sizeof(*t));
+
+    t->refCounter = t->total = 0;
+    avm_tablebucketsinit(t->numIndexed);
+    avm_tablebucketsinit(t->strIndexed);
+
+    return t;
+}
+
+void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
+	return;
+}
+
+void avm_tablebucketsdestroy(avm_table_bucket** p){
+    for(unsigned i =0; i < AVM_TABLE_HASHSIZE; ++i, ++p){
+        for(avm_table_bucket* b = *p; b;){
+            avm_table_bucket* del = b;
+            b = b->next;
+            avm_memcellclear(del->key); //had &
+            avm_memcellclear(del->value); //had &
+            free(del);
+        }
+        p[i] = (avm_table_bucket*) 0;
+    }
+}
+
+void avm_tabledestroy (avm_table* t){
+    avm_tablebucketsdestroy(t->strIndexed);
+    avm_tablebucketsdestroy(t->numIndexed);
+    free(t);
 }

@@ -2,8 +2,15 @@
 
 void avm_initialize(void) {
     avm_initstack();
-    avm_init_libfuncs_hash();
+    libfunc_hashtable = malloc(sizeof(LibFuncHash));
+    topsp = AVM_STACKSIZE-1;
+    top   = AVM_STACKSIZE-1;
 
+    for(int i=0; i < program_offset;i++){
+        avm_stack[top].data.numVal = i;
+        avm_dec_top();
+        topsp--;
+    }
     avm_registerlibfunc("print", libfunc_print);
     avm_registerlibfunc("typeof", libfunc_typeof);
     avm_registerlibfunc("totalarguments", libfunc_totalarguments);
@@ -17,8 +24,5 @@ void avm_initialize(void) {
     avm_registerlibfunc("objectmemberkeys",libfunc_objectmemberkeys);
     avm_registerlibfunc("objectcopy",libfunc_objectcopy);
 
-
-    topsp = AVM_STACKSIZE-1;
-    top   = AVM_STACKSIZE-1-total_global_var;
     pc = 1;
 }

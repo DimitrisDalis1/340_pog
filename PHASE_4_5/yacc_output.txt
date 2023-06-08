@@ -1,0 +1,15 @@
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+program -> stmt(asteraki)

@@ -18,7 +18,6 @@ avm_memcell pop_avm_stack(){
         printf("Avm stack underflow");
         exit(0);
     }else{
-        //code that pops and returns the memcell
         --current_index;
     }
 }
@@ -28,12 +27,17 @@ void push_avm_stack(avm_memcell m){
         printf("Avm stack overflow");
         exit(0);
     }else{
-        //code that pops and returns the memcell
         avm_stack[++current_index] = m;
     }
 }
 
-//stole that
+void avm_initstack(void){
+    for(unsigned i = 0; i < AVM_STACKSIZE; i++){
+        memset(&(avm_stack[i]), 0, sizeof(avm_stack[i]));
+        avm_stack[i].type = undef_m;
+    }
+}
+
 TEST_MAIN_START{
     avm_initstack();
     return 0;

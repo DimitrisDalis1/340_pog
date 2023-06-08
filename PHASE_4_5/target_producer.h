@@ -12,6 +12,7 @@ extern unsigned totalNumConsts;
 extern char** stringConsts;
 extern unsigned totalStringConsts;
 extern char** namedLibfuncs;
+extern int program_offset;
 
 extern unsigned totalUserFuncs;
 
@@ -24,8 +25,8 @@ extern unsigned int totalVmargs;
 
 typedef void (*generator_func_t) (quad*);
 
-
-
+void printInstructions();
+void readBinary();
 typedef enum vmarg_t vmarg_t;
 typedef enum vmopcode vmopcode;
 typedef struct vmarg vmarg;
@@ -33,6 +34,10 @@ typedef struct instruction instruction;
 typedef struct userfunc userfunc;
 typedef struct incomplete_jump incomplete_jump;
 
+extern char** lib_f;
+extern char** str_c;
+extern userfunc* userfs;
+extern instruction * instrs;
 
 typedef enum vmarg_t{
     label_a     =0,
@@ -65,6 +70,7 @@ typedef struct incomplete_jump {
         unsigned iaddress;
         incomplete_jump* next;
 }incomplete_jump;
+
 typedef struct vmarg{ 
     vmarg_t type;
     unsigned int val;
@@ -127,4 +133,5 @@ void generate_GETRETVAL (quad*);
 void generate_FUNCSTART (quad*);
 void generate_RETURN (quad*);
 void generate_FUNCEND (quad*);
+void instrToBinary();
 #endif
