@@ -52,9 +52,12 @@ void execute_cycle(void){
         unsigned oldPC = pc;
         STACK_CHECK //checks for stack over flow or under flow
         executeFuncs[instr->opcode](instr);
+	
+
         if(pc == oldPC){
             ++pc;
         }
+
     }
 }
 
@@ -69,18 +72,18 @@ void execute_return (instruction* instr) { assert(0); return; }
 void execute_call(instruction* instr){
     avm_memcell* func = avm_translate_operand(instr->result,&ax);
     assert(func);
+    avm_callsaveenvironment(); 
     switch (func->type)
     {
     case userfunc_m :{
-        avm_callsaveenvironment();
-        pc = func->data.funcVal;
+        pc = userfs[func->data.funcVal].address;
         assert(pc < AVM_ENDING_PC);
         assert(instrs[pc].opcode == funcenter_v);
         break;
     }
         /* code */
         case string_m: {avm_calllibfunc(func->data.strVal); break;}
-        case libfunc_m: {avm_calllibfunc(func->data.libfuncVal); break;}
+        case libfunc_m: { avm_calllibfunc(func->data.libfuncVal); break;}
         case table_m:{ /*avm_calllibfunc(func->data.tableVal);*/ break;} //implement it ,we gettableelement and settableelement
     default:{
         char* s = avm_tostring(func);
@@ -113,14 +116,15 @@ void execute_funcexit(instruction* unused){
 }
 
 void execute_pusharg(instruction* instr){
-    avm_memcell* arg = avm_translate_operand(instr->arg1,&ax);
+    avm_memcell* arg = avm_translate_operand(instr->result,&ax);
     assert(arg);
     /*this is actually stack[top] = arg,but we have to use
         avm_assign.*/
 
-    //avm_assign(&stack[top],arg);
+    avm_assign(&avm_stack[top],arg);
     ++totalActuals;
     avm_dec_top();
+	
 }
 
 double add_impl (double x, double y) { return x+y; }
@@ -161,8 +165,7 @@ void execute_arithmetic (instruction* instr) {
         avm_memcellclear(lv);
         lv->type            = number_m;
         lv->data.numVal     = (*op)(rv1->data.numVal, rv2->data.numVal);
-	printf("apotelesmas %lf",lv->data.numVal );
-    }
+	    }
 }
 
 
@@ -241,7 +244,7 @@ extern void execute_assign (instruction* instr){
     avm_memcell* lv = avm_translate_operand(instr->result,(avm_memcell*)0);
     avm_memcell* rv = avm_translate_operand(instr->arg1,&ax);
 
-    //assert(lv && (&stack[N-1] >= lv && lv > &stack[top] || lv==&retval));
+    //assert(lv && (&avm_stack[AVM_STACKSIZE-1] >= lv && lv > &avm_stack[top] || lv==&retval));
     assert(rv);
     avm_assign(lv,rv);
 }
@@ -282,8 +285,7 @@ void execute_jeq (instruction* instr) {
         //equality check with dispatching 
     }
     if(!executionFinished && result)
-        pc = instr->result->val; printf("result egine: %d",result);
-
+        pc = instr->result->val-1; 
 }
 
 void execute_jge (instruction* instr) {
@@ -313,7 +315,7 @@ void execute_jge (instruction* instr) {
     }
 
     if(!executionFinished && result)
-        pc = instr->result->val;
+        pc = instr->result->val-1;
 }
 
 void execute_jgt (instruction* instr) {
@@ -343,7 +345,7 @@ void execute_jgt (instruction* instr) {
     }
 
     if(!executionFinished && result)
-        pc = instr->result->val;
+        pc = instr->result->val-1;
 }
 
 void execute_jle (instruction* instr) {
@@ -373,7 +375,7 @@ void execute_jle (instruction* instr) {
     }
 
     if(!executionFinished && result)
-        pc = instr->result->val;
+        pc = instr->result->val-1;
 }
 
 void execute_jlt (instruction* instr) {
@@ -403,7 +405,7 @@ void execute_jlt (instruction* instr) {
     }
 
     if(!executionFinished && result)
-        pc = instr->result->val;
+        pc = instr->result->val-1;
 }
 
 void execute_jne (instruction* instr) {
@@ -433,7 +435,7 @@ void execute_jne (instruction* instr) {
     }
 
     if(!executionFinished && result)
-        pc = instr->result->val;
+        pc = instr->result->val-1;
 }
 
 
@@ -441,5 +443,5 @@ void execute_jump (instruction* instr) {
     assert(instr->result->type == label_a);
 
     if(!executionFinished)
-        pc = instr->result->val;
+        pc = instr->result->val-1;
 }

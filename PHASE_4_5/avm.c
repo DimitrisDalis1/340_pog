@@ -129,7 +129,7 @@ avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
 
         case userfunc_a:{
             reg->type = userfunc_m;
-            reg->data.funcVal = arg->val;
+            reg->data.funcVal = userfuncs_getfunc(arg->val)->address;
             return reg;
         }
 
@@ -323,7 +323,7 @@ void avm_push_envvalue(unsigned val){
 
 void avm_callsaveenvironment(void){
     avm_push_envvalue(totalActuals);
-    //assert(code[pc].opcode == call_v);
+    assert(instrs[pc].opcode == call_v);
     avm_push_envvalue(pc+1);
     avm_push_envvalue(top + totalActuals + 2);
     avm_push_envvalue(topsp);
@@ -340,45 +340,48 @@ void avm_warning(char* warning, instruction* code){
 int libfunc_hash(char* id){
     assert(id);
     int result;
-    if(strcmp("print",id)){
+	
+    if(!strcmp("print",id)){
         result = 0;
-    }else if (strcmp("typeof",id))
+    }else if (!strcmp("typeof",id))
     {
          result = 1;
-    }else if (strcmp("totalarguments",id))
+    }else if (!strcmp("totalarguments",id))
     {
          result = 2;
-    }else if (strcmp("sqrt",id))
+    }else if (!strcmp("sqrt",id))
     {
          result = 3;
-    }else if (strcmp("cos",id))
+    }else if (!strcmp("cos",id))
     {
          result = 4;
-    }else if (strcmp("sin",id))
+    }else if (!strcmp("sin",id))
     {
          result = 5;
-    }else if (strcmp("strtonum",id))
+    }else if (!strcmp("strtonum",id))
     {
          result = 6;
-    }else if (strcmp("input",id))
+    }else if (!strcmp("input",id))
     {
          result = 7;
-    }else if (strcmp("argument",id))
+    }else if (!strcmp("argument",id))
     {
          result = 8;
-    }else if (strcmp("objecttotalmembers",id))
+    }else if (!strcmp("objecttotalmembers",id))
     {
          result = 9;
-    }else if (strcmp("objectmemberkeys",id))
+    }else if (!strcmp("objectmemberkeys",id))
     {
          result = 10;
-    }else if (strcmp("objectcopy",id))
+    }else if (!strcmp("objectcopy",id))
     {
          result = 11;
     }else{
         result = 12;
     }
     return result;
+	
+
 }
 
 char* number_tostring(avm_memcell* a){
@@ -386,6 +389,7 @@ char* number_tostring(avm_memcell* a){
 	n = getNumberOfDigits(a->data.numVal);
 	char* buffer = malloc(32*sizeof(char));
 	sprintf(buffer,"%f",a->data.numVal);
+	return buffer;
 }
 
 int getNumberOfDigits(int a){
@@ -401,9 +405,9 @@ char* string_tostring(avm_memcell* a){
 	return buffer;}
 char* bool_tostring(avm_memcell* a){
 	if(a->data.boolVal == 0)
-		return "false";
+		return strdup("false");
 	else
-		return "true";
+		return strdup("true");
 }
 char* table_tostring(avm_memcell* a){
 	char *buffer = malloc(12 * sizeof(char*));
@@ -474,33 +478,36 @@ char* avm_tostring(avm_memcell* m){
 }
 
 
-
-
-
-
-
 unsigned avm_get_envvalue(unsigned i){
-    assert(avm_stack[i].type == number_m);
+   assert(avm_stack[i].type == number_m);
     unsigned val = (unsigned) avm_stack[i].data.numVal;
-    assert(avm_stack[i].data.numVal == ((double) val));
+   assert(avm_stack[i].data.numVal == ((double) val));
    return val;
 }
 
 
-void avm_registerlibfunc(char* id,library_func_t addr){
-    assert(id);
-    int index = libfunc_hash(id);
-    libfunc_hashtable->LibTable[index] = addr;
-    libfunc_hashtable->counter = libfunc_hashtable->counter + 1;
-}
+typedef void (*library_func_t)(void);
+library_func_t libraryFuncs[] = {
+   	libfunc_print,
+	libfunc_typeof,
+    	libfunc_totalarguments,
+    	libfunc_sqrt,
+   	libfunc_cos,
+   	libfunc_sin,
+	libfunc_strtonum,
+	libfunc_input,
+	libfunc_argument,
+	libfunc_objecttotalmembers,
+	libfunc_objectmemberkeys,
+	libfunc_objectcopy
+};
 
-library_func_t avm_getlibraryfunc(char* id){
-    assert(id);
-    int index = libfunc_hash(id);
-    if (libfunc_hashtable->LibTable[index] != NULL) {
-        return libfunc_hashtable->LibTable[index];
-    }
-    return NULL;
+library_func_t avm_getlibraryfunc(char* id) {
+	int i=libfunc_hash(id);
+   if(i<12){
+            return libraryFuncs[i];
+	}
+    return (library_func_t) 0;
 }
 
 
@@ -511,10 +518,8 @@ void avm_calllibfunc(char* id){
         executionFinished = 1;
     }
     else{
-        /*Notice that enter function and  exit function
-        are called manually!*/
-
-        avm_callsaveenvironment();
+        
+        ///////////////////////////////avm_callsaveenvironment();
         topsp = top; /*enter function sequence . no stack locals.*/
         totalActuals = 0;
         (*f)(); /*call lib function*/
@@ -542,9 +547,11 @@ avm_memcell* avm_getactual(unsigned i){
 */
 
 void libfunc_print(void){
+
     unsigned n = avm_totalactuals();
+	//printf("%d",n);
     for(unsigned i = 0; i<n; i++){
-        char*s = avm_tostring(avm_getactual(i));
+        char* s = avm_tostring(avm_getactual(i));
         puts(s);
         free(s);
     }
@@ -562,14 +569,14 @@ void libfunc_typeof(void){
     }
 }
 void libfunc_totalarguments(void){
-    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
+    unsigned env = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
     avm_memcellclear(&retval);
-    if(!p_topsp){
-        avm_error("Error : 'totalarguments' called outside a function!", &instrs[pc]);
+    if(!env){
+        avm_error("Error : 'totalarguments' called outside a funct!", &instrs[pc]);
         retval.type = nil_m;
     }else{
         retval.type = number_m;
-        retval.data.numVal = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET);
+        retval.data.numVal = avm_get_envvalue(env + AVM_NUMACTUALS_OFFSET);
     }
 }
 void libfunc_sqrt(void){
@@ -586,6 +593,8 @@ void libfunc_sqrt(void){
         }
     }else{
         avm_error("Error : only one parameter in function sqrt!",&instrs[pc]);
+	retval.type = nil_m;
+
     }
 }
 
@@ -593,6 +602,7 @@ void libfunc_sqrt(void){
 
 void libfunc_cos(void){
     double result;
+	double dummy;
     if(avm_totalactuals() == 1)
     {
         if(avm_getactual(0)->type != number_m){
@@ -602,7 +612,7 @@ void libfunc_cos(void){
         {
             avm_memcellclear(&retval);
             retval.type = number_m;
-            double dummy = avm_getactual(0)->data.numVal;
+            dummy = avm_getactual(0)->data.numVal;
 
             dummy = (dummy*PI)/180;
             retval.data.numVal = cos(dummy);
@@ -610,6 +620,8 @@ void libfunc_cos(void){
     }
     else{
         avm_error("Only one parameter is allowed in function cos!\n", &instrs[pc]);
+	retval.type = nil_m;
+
     }
 }
 
@@ -633,6 +645,7 @@ void libfunc_sin(void){
     else
     if(n!= 1){
         avm_error("Only one parameter is allowed in function cos!\n", &instrs[pc]);
+	retval.type = nil_m;
     }
 }
 
@@ -671,6 +684,8 @@ void libfunc_strtonum(void){
         }
     }else{
         avm_error("Error : only one parameter in function strtonum!",&instrs[pc]);
+	retval.type=nil_m;
+
     }
 }
 
@@ -779,10 +794,14 @@ void libfunc_argument(void){
             } 
         }else{
             avm_error("Error : only one parameter in libfunc_argument",&instrs[pc]);
+		retval.type=nil_m;
+
         } 
         
     }else{
         avm_error("Error : only one parameter in libfunc_argument",&instrs[pc]);
+	retval.type=nil_m;
+
     }
 }
 
@@ -796,9 +815,13 @@ void libfunc_objecttotalmembers(void){
             retval.data.numVal = total;
         }else{
             avm_error("Error : only table type parameter in libfunc_objecttotalmembers",&instrs[pc]);
-        }
+		retval.type=nil_m;
+       
+ }
     }else{
         avm_error("Error : only one parameter in libfunc_objecttotalmembers",&instrs[pc]);
+	retval.type=nil_m;
+
     }
 }
 
@@ -899,10 +922,14 @@ void libfunc_objectmemberkeys(void){
 
         }else{
             avm_error("Error : only table type parameter in libfunc_objecttotalmembers",&instrs[pc]);
-        }
+       		retval.type=nil_m;
+
+	 }
     }else{
         avm_error("Error : only one parameter in libfunc_objecttotalmembers",&instrs[pc]);
-    }
+   		retval.type=nil_m;
+
+	 }
 
 }
 
@@ -953,9 +980,13 @@ void libfunc_objectcopy(void){
             retval.data.tableVal = new_table;
         }else{
             avm_error("Error : only table type parameter in libfunc_objectcopy",&instrs[pc]);
-        }
+       		retval.type=nil_m;
+
+	 }
     }else{
         avm_error("Error : only one parameter in libfunc_objectcopy",&instrs[pc]);
+	retval.type=nil_m;
+
     }
 }
 
@@ -989,7 +1020,7 @@ void avm_initialize(void) {
     //libfunc_hashtable = malloc(sizeof(LibFuncHash));
     top = AVM_STACKSIZE-1-program_offset;
     topsp   = top;
-}
+	}
 
 typedef unsigned int(*tobool_func_t)(avm_memcell*);
 

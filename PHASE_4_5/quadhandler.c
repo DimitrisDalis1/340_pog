@@ -304,7 +304,7 @@ expr* emit_iftableitem(expr* e){
 			e->index,
 			e,
 			-1,
-			currQuad
+			yylineno
 		);
 		return result;
 	}
