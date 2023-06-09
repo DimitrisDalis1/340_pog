@@ -97,7 +97,7 @@ void execute_funcenter (instruction* instr){
     assert(pc == func->data.funcVal); /* Func address should match PC. */
     /* Callee actions here. */
     totalActuals = 0;
-    userfunc* funcInfo = avm_getfuncinfo(pc);
+    userfunc* funcInfo = userfuncs_getfunc(pc);
     topsp = top;
     top = top - funcInfo -> localSize; 
 }
