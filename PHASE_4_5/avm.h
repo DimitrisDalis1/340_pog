@@ -117,7 +117,9 @@ char*   libfuncs_getused(unsigned);
 
 
 
-userfunc* avm_getfuncinfo(unsigned); //NEEDS IMPLEMENTATION IN avm.c
+
+userfunc* userfuncs_getfunc(unsigned);
+
 
 avm_memcell* avm_translate_operand(vmarg*, avm_memcell*); //done in avm.c
 
