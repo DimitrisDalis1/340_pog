@@ -271,11 +271,12 @@ void make_operand(expr* e, vmarg* arg){
             break;
         }
 
-        case constbool_e: {
-            arg->val = e->boolConst;
+       case constbool_e: {
+            arg->val =((e->boolConst=='t')?1:0);
             arg->type = bool_a;
             break;
         }
+
 
         case conststring_e: {
             arg->val = consts_newstring(e->strConst);
