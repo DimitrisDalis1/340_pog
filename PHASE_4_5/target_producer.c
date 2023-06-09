@@ -8,7 +8,7 @@ char** namedLibfuncs=(char**)0;
 unsigned totalNamedFuncs=0;
 userfunc* userFuncs=(userfunc*) 0;;
 unsigned totalUserFuncs=0;
-instruction* vmargs=(instruction*) 0;;
+instruction* vmargs=(instruction*) 0;
 unsigned int currInstruction = 0;
 unsigned int totalVmargs = 0;
 int print_flagg=0;
@@ -18,7 +18,8 @@ char** lib_f;
 char** str_c;
 userfunc* userfs;
 instruction * instrs;
-
+double* numbers;
+int user=0,str=0,num=0,fun=0,insr_s=0,poffset=0;
 
 generator_func_t generators[] = {
     generate_ASSIGN,
@@ -598,7 +599,7 @@ void instrToBinary(){
 	}
 
 	fwrite(&currInstruction,sizeof(int),1,executable);
-	int c=0;
+	
 	for (i = 0; i < currInstruction; i++) {
 	
 		int rv=-1,rt=-1,av1=-1,at1=-1,av2=-1,at2=-1;
@@ -621,9 +622,9 @@ void instrToBinary(){
 
 		}
 		if(instr.arg2){
-			c++;
+			
         		fwrite(&instr.arg2->type, sizeof(int), 1, executable);
-        		fwrite(&instr.arg2->val, sizeof(unsigned), 1, executable);
+        		fwrite(&instr.arg2->val, sizeof(int), 1, executable);
 		}else{
 			fwrite(&at2, sizeof(int), 1, executable);
         		fwrite(&av2, sizeof(int), 1, executable);
@@ -642,7 +643,7 @@ void readBinary(){
 	FILE *executable;
 	executable= fopen("executable.abc","r");
 	
-	int magic_number,user,str,num,fun,i,insr_s,length,poffset;
+	int magic_number,i,length;
 	
     	fread(&magic_number, sizeof(int), 1, executable);
 
@@ -680,10 +681,10 @@ void readBinary(){
 	}
 	 fread(&num, sizeof(int), 1, executable); printf("numbers %d\n", num);
 	 if(num!=0){
-		double* numbers= (double*)malloc(sizeof(double) * num);
+		numbers= (double*)malloc(sizeof(double) * num);
 		for(i=0;i<num;i++){
 			fread(&numbers[i], sizeof(double), 1, executable);
-            printf("%lf\n", numbers[i]);
+            		printf("%lf\n", numbers[i]);
 
 		}
 	}
@@ -700,22 +701,31 @@ void readBinary(){
 	fread(&insr_s, sizeof(int), 1, executable); printf("instructions %d\n", insr_s); 
 	if(insr_s!=0){
 		instrs = (instruction*) malloc((insr_s+1)*sizeof(instruction));
-		for(i=1;i<=insr_s;i++){
+		for(i=0;i<insr_s;i++){
 		
 			instrs[i].result =(vmarg*) malloc(sizeof(vmarg));
 			instrs[i].arg1 =(vmarg*) malloc(sizeof(vmarg));
 			instrs[i].arg2 =(vmarg*) malloc(sizeof(vmarg));
-
+			
 			fread(&instrs[i].opcode, sizeof(int), 1, executable);
+			printf("opcode %d\n", instrs[i].opcode); 
 			fread(&instrs[i].result->type, sizeof(int), 1, executable);
-			fread(&instrs[i].result->val, sizeof(unsigned), 1, executable);
+			printf("res type %d\n", instrs[i].result->type); 
+			fread(&instrs[i].result->val, sizeof(int), 1, executable);
+			printf("res val %d\n", instrs[i].result->val); 
 			fread(&instrs[i].arg1->type, sizeof(int), 1, executable);
-			fread(&instrs[i].arg1->val, sizeof(unsigned), 1, executable);
+			printf("arg1 type %d\n", instrs[i].arg1->type);
+			fread(&instrs[i].arg1->val, sizeof(int), 1, executable);
+			printf("arg1 val %d\n", instrs[i].arg1->val);
 			fread(&instrs[i].arg2->type, sizeof(int), 1, executable);
-			fread(&instrs[i].arg2->val, sizeof(unsigned), 1, executable);
+			printf("arg2 type %d\n", instrs[i].arg2->type);
+			fread(&instrs[i].arg2->val, sizeof(int), 1, executable);
+			printf("arg2 val %d\n",instrs[i].arg2->val);
 			fread(&instrs[i].srcLine, sizeof(unsigned), 1, executable);
+			printf("srcline type %d\n", instrs[i].srcLine);
 
 		}
+		
 	}
 
 	fread(&poffset,sizeof(int),1,executable);
