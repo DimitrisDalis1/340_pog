@@ -253,20 +253,21 @@ void execute_not (instruction* instr) { assert(0); return; }
 
 void execute_jeq (instruction* instr) {
     assert(instr->result->type == label_a);
-    
+
     avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
     avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
 
-    unsigned char result = 0;
+    unsigned int result = 0;
 
     if (rv1->type == undef_m || rv2->type == undef_m)
         avm_error("\'undef\' involved in equality", &instrs[pc]);
     else
     if (rv1->type == nil_m || rv2->type == nil_m)
-        result = rv1->type == nil_m && rv2->type == nil_m;
+        result = ((rv1->type == nil_m && rv2->type == nil_m)?1:0);
     else
-    if (rv1->type == bool_m || rv2->type == bool_m)
-        result = (avm_tobool(rv1) == avm_tobool(rv2));
+    if (rv1->type == bool_m || rv2->type == bool_m){
+        result = ((avm_tobool(rv1) == avm_tobool(rv2))?1:0);
+	}
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
@@ -274,14 +275,15 @@ void execute_jeq (instruction* instr) {
         avm_error(tmp, &instrs[pc]);
     }
     else if(rv1->type == string_m && rv2->type == string_m){
-        result = !strcmp(rv1->data.strVal, rv2->data.strVal);
+        result = (!strcmp(rv1->data.strVal, rv2->data.strVal))?1:0;
     }
     else {
-        result = (avm_toarithm(rv1) == avm_toarithm(rv2));
+        result = ((avm_toarithm(rv1) == avm_toarithm(rv2))?1:0);
         //equality check with dispatching 
     }
     if(!executionFinished && result)
-        pc = instr->result->val;
+        pc = instr->result->val; printf("result egine: %d",result);
+
 }
 
 void execute_jge (instruction* instr) {
@@ -290,16 +292,16 @@ void execute_jge (instruction* instr) {
     avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
     avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
 
-    unsigned char result = 0;
+    unsigned int  result = 0;
 
     if (rv1->type == undef_m || rv2->type == undef_m)
         avm_error("\'undef\' involved in jge", &code[pc]);
     else
     if (rv1->type == nil_m || rv2->type == nil_m)
-        result = rv1->type == nil_m && rv2->type == nil_m;
+        result = ((rv1->type == nil_m && rv2->type == nil_m)?1:0);
     else
     if (rv1->type == bool_m || rv2->type == bool_m)
-        result = (avm_tobool(rv1) >= avm_tobool(rv2));
+        result =((avm_tobool(rv1) >= avm_tobool(rv2))?1:0);
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
@@ -307,7 +309,7 @@ void execute_jge (instruction* instr) {
         avm_error(tmp, &code[pc]);
     }
     else {
-        result = (avm_toarithm(rv1) >= avm_toarithm(rv2));
+        result = ((avm_toarithm(rv1) == avm_toarithm(rv2))?1:0);
     }
 
     if(!executionFinished && result)
@@ -320,16 +322,16 @@ void execute_jgt (instruction* instr) {
     avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
     avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
 
-    unsigned char result = 0;
+    unsigned int result = 0;
 
     if (rv1->type == undef_m || rv2->type == undef_m)
         avm_error("\'undef\' involved in jgt", &instrs[pc]);
     else
     if (rv1->type == nil_m || rv2->type == nil_m)
-        result = rv1->type == nil_m && rv2->type == nil_m;
+        result = ((rv1->type == nil_m && rv2->type == nil_m)?1:0);
     else
     if (rv1->type == bool_m || rv2->type == bool_m)
-        result = (avm_tobool(rv1) > avm_tobool(rv2));
+        result =  ((avm_tobool(rv1)> avm_tobool(rv2))?1:0);
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
@@ -337,7 +339,7 @@ void execute_jgt (instruction* instr) {
         avm_error(tmp, &instrs[pc]);
     }
     else {
-        result = (avm_toarithm(rv1) > avm_toarithm(rv2));
+        result = ((avm_toarithm(rv1) >avm_toarithm(rv2))?1:0);
     }
 
     if(!executionFinished && result)
@@ -350,16 +352,16 @@ void execute_jle (instruction* instr) {
     avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
     avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
 
-    unsigned char result = 0;
+    unsigned int result = 0;
 
     if (rv1->type == undef_m || rv2->type == undef_m)
         avm_error("\'undef\' involved in jle", &instrs[pc]);
     else
     if (rv1->type == nil_m || rv2->type == nil_m)
-        result = rv1->type == nil_m && rv2->type == nil_m;
+        result = ((rv1->type == nil_m && rv2->type == nil_m)?1:0);
     else
     if (rv1->type == bool_m || rv2->type == bool_m)
-        result = (avm_tobool(rv1) <= avm_tobool(rv2));
+        result =((avm_tobool(rv1) <= avm_tobool(rv2))?1:0);
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
@@ -367,7 +369,7 @@ void execute_jle (instruction* instr) {
         avm_error(tmp, &instrs[pc]);
     }
     else {
-        result = (avm_toarithm(rv1) <= avm_toarithm(rv2));
+        result = ((avm_toarithm(rv1) <= avm_toarithm(rv2))?1:0);
     }
 
     if(!executionFinished && result)
@@ -380,16 +382,16 @@ void execute_jlt (instruction* instr) {
     avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
     avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
 
-    unsigned char result = 0;
+    unsigned int result = 0;
 
     if (rv1->type == undef_m || rv2->type == undef_m)
         avm_error("\'undef\' involved in jlt", &instrs[pc]);
     else
     if (rv1->type == nil_m || rv2->type == nil_m)
-        result = rv1->type == nil_m && rv2->type == nil_m;
+        result =((rv1->type == nil_m && rv2->type == nil_m)?1:0);
     else
     if (rv1->type == bool_m || rv2->type == bool_m)
-        result = (avm_tobool(rv1) < avm_tobool(rv2));
+        result = ((avm_tobool(rv1)< avm_tobool(rv2))?1:0);
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
@@ -397,7 +399,7 @@ void execute_jlt (instruction* instr) {
         avm_error(tmp, &instrs[pc]);
     }
     else {
-        result = (avm_toarithm(rv1) < avm_toarithm(rv2));
+        result = ((avm_toarithm(rv1) < avm_toarithm(rv2))?1:0); 
     }
 
     if(!executionFinished && result)
@@ -416,10 +418,10 @@ void execute_jne (instruction* instr) {
         avm_error("\'undef\' involved in inequality",&instrs[pc]);
     else
     if (rv1->type == nil_m || rv2->type == nil_m)
-        result = rv1->type == nil_m && rv2->type == nil_m;
+        result = ((rv1->type == nil_m && rv2->type == nil_m)?1:0);
     else
     if (rv1->type == bool_m || rv2->type == bool_m)
-        result = (avm_tobool(rv1) != avm_tobool(rv2));
+        result = ((avm_tobool(rv1) !=avm_tobool(rv2))?1:0); 
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
@@ -427,7 +429,7 @@ void execute_jne (instruction* instr) {
         avm_error(tmp,&instrs[pc]);
     }
     else {
-        result = (avm_toarithm(rv1) != avm_toarithm(rv2));
+        result = ((avm_toarithm(rv1) != avm_toarithm(rv2))?1:0); 
     }
 
     if(!executionFinished && result)
