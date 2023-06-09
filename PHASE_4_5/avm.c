@@ -28,9 +28,9 @@ char*   libfuncs_getused(unsigned index) {
 
 
 
-userfunc* avm_getfuncinfo(unsigned address){
+userfunc* userfuncs_getfunc(unsigned address){
     for(int i=0 ; i < user; i++){
-        userfunc* temp = userfs[i];
+        userfunc* temp = &userfs[i];
         if(address == temp->address){
             return temp;
         }
