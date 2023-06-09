@@ -200,8 +200,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
         }
         avm_warning("Table element cannot be found",&code[pc]);
         return NULL;
-    }else if(index-> string_m){
-        if(index->type == string_m){
+    }else if(index->type == string_m){
         int key = strHash(index->data.strVal);
         avm_table_bucket *temp = table->strIndexed[key];
         while(!temp){
@@ -213,7 +212,6 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
         avm_warning("Table element cannot be found",&code[pc]);
         return NULL;
         }
-}
 }
 
 void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
@@ -239,8 +237,8 @@ void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
         if(!found){
             avm_table_bucket *start = table->numIndexed[key];
             avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
-            new_bucket->value = *content;
-            new_bucket->key = *index;
+            new_bucket->value = content;
+            new_bucket->key = index;
             new_bucket->next = start;
             start = new_bucket;
             table->total++;
@@ -259,8 +257,8 @@ void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
         if(!found){
             avm_table_bucket *start = table->strIndexed[key];
             avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
-            new_bucket->value = *content;
-            new_bucket->key = *index;
+            new_bucket->value = content;
+            new_bucket->key = index;
             new_bucket->next = start;
             start = new_bucket;
             table->total++;
