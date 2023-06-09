@@ -64,9 +64,6 @@ avm_table* avm_tablenew(void){
     return t;
 }
 
-void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
-	return;
-}
 
 void avm_tablebucketsdestroy(avm_table_bucket** p){
     for(unsigned i =0; i < AVM_TABLE_HASHSIZE; ++i, ++p){
@@ -173,8 +170,102 @@ memclear_func_t memclearFuncs[] = {
      0   /* undef */
  };
 
+int strHash(char *id){
+    int result = atoi(id) % AVM_TABLE_HASHSIZE;
+    return result;
+}
+int numHash(int x){
+    int result = x % AVM_TABLE_HASHSIZE;
+    return result;
+}
+//int boolHash(bool){
+
+//}
+//int userfuncHash(userfunc*);
+
 avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
-    
+    assert(table);
+    assert(index);
+    if(index->type != string_m || index->type != number_m){
+        avm_error("table index can only be a string or a number",&code[pc]);
+    }
+    if(index->type == number_m){
+        int key = numHash(index->data.numVal);
+        avm_table_bucket *temp = table->numIndexed[key];
+        while(!temp){
+            if(temp->value->data.numVal == index->data.numVal){
+                return temp->value;
+            }
+            temp = temp->next;
+        }
+        avm_warning("Table element cannot be found",&code[pc]);
+        return NULL;
+    }else if(index-> string_m){
+        if(index->type == string_m){
+        int key = strHash(index->data.strVal);
+        avm_table_bucket *temp = table->strIndexed[key];
+        while(!temp){
+            if(strcmp(temp->value->data.strVal ,index->data.strVal)){
+                return temp->value;
+            }
+            temp = temp->next;
+        }
+        avm_warning("Table element cannot be found",&code[pc]);
+        return NULL;
+        }
+}
+
+void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
+	assert(table);
+    assert(index);
+    int found = 0;
+    if(index->type != string_m || index->type != number_m){
+        avm_error("table index can only be a string or a number",&code[pc]);
+    }
+
+    if(index->type == number_m){
+        int key = numHash(index->data.numVal);
+        avm_table_bucket *temp = table->numIndexed[key];
+        
+        
+        while(!temp){
+            if(temp->value->data.numVal == index->data.numVal){
+                avm_assign(temp->value,content);
+                found = 1;
+            }
+            temp = temp->next;
+        }
+        if(!found){
+            avm_table_bucket *start = table->numIndexed[key];
+            avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
+            new_bucket->value = *content;
+            new_bucket->key = *index;
+            new_bucket->next = start;
+            start = new_bucket;
+            table->total++;
+        }
+    }else if(index->type == string_m){
+        if(index->type == string_m){
+        int key = strHash(index->data.strVal);
+        avm_table_bucket *temp = table->strIndexed[key];
+        while(!temp){
+            if(strcmp(temp->value->data.strVal ,index->data.strVal)){
+                avm_assign(temp->value,content);
+                found = 1;
+            }
+            temp = temp->next;
+        }
+        if(!found){
+            avm_table_bucket *start = table->strIndexed[key];
+            avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
+            new_bucket->value = *content;
+            new_bucket->key = *index;
+            new_bucket->next = start;
+            start = new_bucket;
+            table->total++;
+        }
+        }
+    }
 }
 
 
