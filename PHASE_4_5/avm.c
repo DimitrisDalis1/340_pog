@@ -29,9 +29,13 @@ char*   libfuncs_getused(unsigned index) {
 
 
 userfunc* avm_getfuncinfo(unsigned address){
-    //for(int i=0 ; i< totalUserFuncs; i++){
-       // if(address == address)
-    //}
+    for(int i=0 ; i < user; i++){
+        userfunc* temp = userfs[i];
+        if(address == temp->address){
+            return temp;
+        }
+    }
+    return NULL;
 }
 
 void avm_tableincrefcounter (avm_table* t){
@@ -284,13 +288,6 @@ int libfunc_hash(char* id){
         result = 12;
     }
     return result;
-}
-
-int getNumberOfDigits(int a){
-	int count = 0;
-	while(a > 0){
-		count++;
-		a = a/10;
 	}
 	return count;
 }
@@ -299,6 +296,13 @@ char* number_tostring(avm_memcell* a){
 	n = getNumberOfDigits(a->data.numVal);
 	char* buffer = malloc(32*sizeof(char));
 	sprintf(buffer,"%f",a->data.numVal);
+}
+
+int getNumberOfDigits(int a){
+	int count = 0;
+	while(a > 0){
+		count++;
+		a = a/10;
 	return buffer;
 }
 char* string_tostring(avm_memcell* a){
