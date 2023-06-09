@@ -392,6 +392,7 @@ int getNumberOfDigits(int a){
 	while(a > 0){
 		count++;
 		a = a/10;
+	}
 	return count;
 }
 char* string_tostring(avm_memcell* a){
