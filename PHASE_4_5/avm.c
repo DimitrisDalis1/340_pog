@@ -89,6 +89,7 @@ extern char* typeStrings[]; //done in bool.c
 
 
 
+
 avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
     assert(arg);
     if(reg)
@@ -103,7 +104,6 @@ avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
         case number_a:  { 
             reg->type = number_m;
             reg->data.numVal = consts_getnumber(arg->val);
-	    printf(" noumeros %lf", reg->data.numVal);
             return reg;
         }
 
@@ -111,17 +111,17 @@ avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
             reg->type = string_m;
 		char* fixed=consts_getstring(arg->val);
 		int length=strlen(fixed);
+		if(!strcmp(&fixed[length-1],"\""))
 		fixed[length-1]='\0';
 	
             reg->data.strVal = strdup(fixed);
-		printf(" stringos %s", reg->data.strVal);
-
             return reg;
         }
 
         case bool_a:    {
             reg->type = bool_m;
             reg->data.boolVal = arg->val;
+		
             return reg;
         }
 
@@ -141,6 +141,8 @@ avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
 
         default: assert(0);
     }
+}
+
 }
 
 
@@ -1021,35 +1023,37 @@ unsigned char avm_tobool (avm_memcell* m) {
 }
 
 
-typedef double (*toarithm_func_t)(avm_memcell*);
 
-double number_toarithm(avm_memcell* m) { return m->data.numVal; }
-double string_toarithm(avm_memcell* m) { size_t length= strlen(m->data.strVal); return length;}
-double bool_toarithm(avm_memcell* m) { return m->data.boolVal; } 
-double table_toarithm(avm_memcell* m) { return 1; }
-double userfunc_toarithm(avm_memcell* m) { return 1; }
-double libfunc_toarithm(avm_memcell* m) { return 1; }
-double nil_toarithm(avm_memcell* m) { return 0; }
-double undef_toarithm(avm_memcell* m) { assert(0); return 0; }
+typedef unsigned int(*tobool_func_t)(avm_memcell*);
+
+unsigned int  number_tobool(avm_memcell* m) { return ((m->data.numVal != 0)?1:0); }
+unsigned int  string_tobool(avm_memcell* m) { return ((m->data.strVal[0] != 0)?1:0); }
+unsigned int  bool_tobool(avm_memcell* m) { return m->data.boolVal; }
+unsigned int  table_tobool(avm_memcell* m) { return 1; }
+unsigned int  userfunc_tobool(avm_memcell* m) { return 1; }
+unsigned int  libfunc_tobool(avm_memcell* m) { return 1; }
+unsigned int  nil_tobool(avm_memcell* m) { return 0; }
+unsigned int  undef_tobool(avm_memcell* m) { assert(0); return 0; }
 
 
-toarithm_func_t toarithmFuncs[]={
-    number_toarithm,
-    string_toarithm,
-    bool_toarithm,
-    table_toarithm,
-    userfunc_toarithm,
-    libfunc_toarithm,
-    nil_toarithm,
-    undef_toarithm
+tobool_func_t toboolFuncs[]={
+    number_tobool,
+    string_tobool,
+    bool_tobool,
+    table_tobool,
+    userfunc_tobool,
+    libfunc_tobool,
+    nil_tobool,
+    undef_tobool
 };
 
 
 
-int avm_toarithm (avm_memcell* m) {
+unsigned int avm_tobool (avm_memcell* m) {
     assert(m->type >= 0 && m->type < undef_m);
-    return (*toarithmFuncs[m->type])(m);
+    return (*toboolFuncs[m->type])(m);
 }
+
 
 char* typeStrings[] = {
     "number",
