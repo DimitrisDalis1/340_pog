@@ -7,7 +7,7 @@
 
 #define AVM_STACKENV_SIZE 4
 
-#define AVM_ENDING_PC codeSize+1
+#define AVM_ENDING_PC insr_s
 #define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
 #define AVM_NUMACTUALS_OFFSET +4
 #define AVM_SAVEDPC_OFFSET +3
