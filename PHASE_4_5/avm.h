@@ -74,7 +74,7 @@ typedef struct avm_memcell {
     union {
         double          numVal;
         char*           strVal;
-        unsigned char   boolVal;
+        int            boolVal;
         avm_table*      tableVal;
         unsigned        funcVal;
         char*           libfuncVal;
@@ -123,7 +123,7 @@ userfunc* userfuncs_getfunc(unsigned);
 
 avm_memcell* avm_translate_operand(vmarg*, avm_memcell*); //done in avm.c
 
-extern unsigned char avm_tobool (avm_memcell* m);
+extern unsigned int avm_tobool (avm_memcell* m);
 extern int avm_toarithm (avm_memcell* m);
 
 
