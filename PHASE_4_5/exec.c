@@ -41,7 +41,7 @@ void execute_cycle(void){
     }
     else{
         assert(pc < AVM_ENDING_PC);
-        instruction* instr = &code[pc];
+        instruction* instr = &instrs[pc];
         assert(
             instr->opcode >= 0 &&
             instr->opcode <= AVM_MAX_INSTRUCTIONS
@@ -50,8 +50,6 @@ void execute_cycle(void){
             currLine = instr->srcLine;
         }
         unsigned oldPC = pc;
-        //printf("instr opcode = %d\n", instr->opcode);
-        //printf("top : %d , topsp : %d\n",top,topsp);
         STACK_CHECK //checks for stack over flow or under flow
         executeFuncs[instr->opcode](instr);
         if(pc == oldPC){
