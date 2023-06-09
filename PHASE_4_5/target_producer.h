@@ -38,6 +38,7 @@ extern char** lib_f;
 extern char** str_c;
 extern userfunc* userfs;
 extern instruction * instrs;
+extern int user,str,num,fun,insr_s,poffset;
 
 typedef enum vmarg_t{
     label_a     =0,
