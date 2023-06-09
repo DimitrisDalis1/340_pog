@@ -378,9 +378,8 @@ int libfunc_hash(char* id){
         result = 12;
     }
     return result;
-	}
-	return count;
 }
+
 char* number_tostring(avm_memcell* a){
 	int n;
 	n = getNumberOfDigits(a->data.numVal);
@@ -393,7 +392,7 @@ int getNumberOfDigits(int a){
 	while(a > 0){
 		count++;
 		a = a/10;
-	return buffer;
+	return count;
 }
 char* string_tostring(avm_memcell* a){
 	char* buffer =strdup(a->data.strVal);
