@@ -128,7 +128,7 @@ double sub_impl (double x, double y) { return x-y; }
 double mul_impl (double x, double y) { return x*y; }
 double div_impl (double x, double y) { assert(y); return x/y; }     // Maybe needs more errorchecking
 double mod_impl (double x, double y) { //Maybe needs more errorchecking
-    //assert(y);
+    assert(y);
     //assert(x > 0);
     //assert(y > 0);
     return ((unsigned) x) % ((unsigned) y);
@@ -161,8 +161,10 @@ void execute_arithmetic (instruction* instr) {
         avm_memcellclear(lv);
         lv->type            = number_m;
         lv->data.numVal     = (*op)(rv1->data.numVal, rv2->data.numVal);
+	printf("apotelesmas %lf",lv->data.numVal );
     }
 }
+
 
 void execute_add(instruction* instr) { execute_arithmetic(instr); return; }
 void execute_sub(instruction* instr) { execute_arithmetic(instr); return; }
