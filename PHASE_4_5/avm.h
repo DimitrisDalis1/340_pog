@@ -1,9 +1,15 @@
 #ifndef AVM_HEADER
 #define AVM_HEADER
 #include <stdio.h>
-#include "table.h"
+#include<math.h>
+#include<ctype.h>
+#define PI 3.141592654
+#include "exec.h"
 #include "target_producer.h"
 
+#define AVM_TABLE_HASHSIZE  211
+#define HASH_MULTIPLIER 65599
+extern int disable_remove_warning;
 
 #define AVM_STACKENV_SIZE 4
 
@@ -15,6 +21,8 @@
 #define AVM_SAVEDTOPSP_OFFSET +1
 #define AVM_STACKSIZE 4096
 
+
+
 #define STACK_CHECK \
     if(top < 0){ \
     avm_error("Stack underflow!", &code[pc]); \
@@ -23,6 +31,65 @@
     avm_error("Stack overflow!", &code[pc]); \
     exit(1); \
 }; \
+
+typedef struct avm_memcell avm_memcell;
+
+typedef enum avm_memcell_t {
+    number_m    = 0,
+    string_m    = 1,
+    bool_m      = 2,
+    table_m     = 3,
+    userfunc_m  = 4,
+    libfunc_m   = 5,
+    nil_m       = 6,
+    undef_m     = 7
+} avm_memcell_t;
+
+typedef struct avm_table_bucket {
+    struct avm_memcell* key;
+    struct avm_memcell* value;
+    struct avm_table_bucket* next;
+} avm_table_bucket;
+
+
+typedef struct avm_table{
+    unsigned refCounter;
+    avm_table_bucket* strIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* numIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* boolIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* userfuncIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* libfuncIndexed[AVM_TABLE_HASHSIZE];
+    avm_table_bucket* tableIndexed[AVM_TABLE_HASHSIZE];
+    unsigned total;
+}avm_table;
+
+typedef struct avm_memcell {
+    avm_memcell_t type;
+    union {
+        double          numVal;
+        char*           strVal;
+        unsigned char   boolVal;
+        avm_table*      tableVal;
+        unsigned        funcVal;
+        char*           libfuncVal;
+    } data;
+} avm_memcell;
+
+
+typedef void (*memclear_func_t) (avm_memcell*);
+
+typedef void (*library_func_t)(void);
+
+/*Struct wiht a counter and an array for the library functions*/
+typedef struct LibFuncHash{
+    unsigned counter;
+    library_func_t LibTable[12];
+}LibFuncHash;
+
+
+typedef char*(*tostring_func_t)(avm_memcell*);
+
+
 
 extern unsigned char   executionFinished;
 extern int user,str,num,fun;
@@ -47,40 +114,24 @@ userfunc* avm_getfuncinfo(unsigned); //NEEDS IMPLEMENTATION IN avm.c
 
 avm_memcell* avm_translate_operand(vmarg*, avm_memcell*); //done in avm.c
 
+extern unsigned char avm_tobool (avm_memcell* m);
+extern int avm_toarithm (avm_memcell* m);
 
-typedef void (*execute_func_t) (instruction*);
 
 
-void execute_assign(instruction*); //done in assign.c
-void execute_add(instruction*); //done in arithm.c
-void execute_sub(instruction*); //done in arithm.c
-void execute_mul(instruction*); //done in arithm.c
-void execute_div(instruction*); //done in arithm.c
-void execute_mod(instruction*); //done in arithm.c
-void execute_uminus(instruction*);      // USELESS
-void execute_and(instruction*);         // USELESS
-void execute_or(instruction*);          // USELESS
-void execute_not(instruction*);         // USELESS
-void execute_jeq(instruction*); //done in bool.c
-void execute_jne(instruction*); //done in bool.c
-void execute_jle(instruction*); //done in bool.c
-void execute_jge(instruction*); //done in bool.c
-void execute_jlt(instruction*); //done in bool.c
-void execute_jgt(instruction*); //done in bool.c
-void execute_call(instruction*); //done in function.c
-void execute_pusharg(instruction*); //done in function.c
-void execute_return(instruction*);      // USELESS
-void execute_getretval(instruction*);   // USELESS
-void execute_funcenter(instruction*); //done in function.c
-void execute_funcexit(instruction*); //done in function.c
-void execute_newtable(instruction*); //done in table.c
-void execute_tablegetelem(instruction*); //done in table.c
-void execute_tablesetelem(instruction*); //done in table.c
-void execute_jump(instruction*); //done in bool.c
-void execute_nop(instruction*);   //USELESS
+avm_table* avm_tablenew (void);
+void avm_tabledestroy (avm_table* t);
+avm_memcell* avm_tablegetelem(avm_table*  table,avm_memcell* index);
+void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content);
+void avm_tableincrefcounter (avm_table* );
+void avm_tabledecrefcounter (avm_table* );
+void avm_tablebucketsinit (avm_table_bucket** );
+avm_table* avm_tablenew(void);
+void avm_memcellclear(avm_memcell* m);
+void avm_tablebucketsdestroy (avm_table_bucket**);
 
-extern execute_func_t executeFuncs[];
-typedef void (*memclear_func_t) (avm_memcell*);
+
+
 
 extern unsigned        pc ;
 extern unsigned        currLine ;
@@ -88,7 +139,7 @@ extern unsigned        codeSize ;
 extern instruction*    code ;
 extern unsigned totalActuals;
 
-extern void execute_cycle(void); //done in exec.c
+
 
 extern memclear_func_t memclearFuncs[]; 
 
@@ -99,17 +150,8 @@ extern void memclear_string (avm_memcell*); //done in avm.c
 
 extern void memclear_table(avm_memcell*); //done in avm.c
 
-//avm.c
-void avm_error(char*,instruction*); // NEEDS IMPLEMENTATION
-extern void avm_warning(char*,instruction*); // NEEDS IMPLEMENTATION
-
-/*extern execute_assign(instruction*); */
 
 void avm_assign(avm_memcell*, avm_memcell*); //done in assign.c
-
-void execute_call(instruction*); //done in functions.c
-
-
 
 char* avm_tostring(avm_memcell*);  //done in avm.c
 
@@ -161,13 +203,8 @@ void avm_warning(char*, instruction*); //NEED IMPLEMENTATION
 /* With the following every library functiion is manually
     added in the VM library function resolution map
 */
-typedef void (*library_func_t)(void);
 
-/*Struct wiht a counter and an array for the library functions*/
-typedef struct LibFuncHash{
-    unsigned counter;
-    library_func_t LibTable[12];
-}LibFuncHash;
+
 
 extern LibFuncHash* libfunc_hashtable;
 
@@ -177,11 +214,7 @@ void avm_registerlibfunc(char* id,library_func_t addr); //done in avm.c
 
 extern void avm_push_table_arg(avm_table*);
 
-void execute_pusharg(instruction*); //done in function.c
-
 extern char* typeStrings[]; //done in bool.c
-
-typedef char*(*tostring_func_t)(avm_memcell*);
 
 extern char* number_tostring(avm_memcell*);   //done in bool.c
 extern char* string_tostring(avm_memcell*);  //done in bool.c
@@ -195,10 +228,6 @@ extern char* undef_tostring(avm_memcell*); //done in bool.c
 //tostring_func_t tostringFuncs[];
 
 char* avm_tostring(avm_memcell*); //done in avm.c
-
-void execute_tablegetelem(instruction*); //done in table.c
-
-void execute_tablesetelem(instruction*); //done in table.c
 
 void avm_initialize(void); //done in avm_main.c, uparxei kapou auth?
 

@@ -1,3 +1,4 @@
+/*
 #include"avm.h"
 
 //UNCOMMENT THIS TO RUN THE TEST MAIN FUNCTION
@@ -41,4 +42,4 @@ void avm_initstack(void){
 TEST_MAIN_START{
     avm_initstack();
     return 0;
-}
+}*/

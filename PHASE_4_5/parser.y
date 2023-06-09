@@ -2,7 +2,6 @@
 %{
     #include <stdio.h>
     #include "quadhandler.h"
-    #include "target_producer.h"
     #include "avm.h"
     #define for_each_time(item, list) \
 	for(T * item = list->head; item != NULL; item = item->next)
@@ -1524,15 +1523,14 @@ int main(int argc, char** argv)
 	printInstructions();
 	instrToBinary();
 	readBinary();
-		avm_initialize();
-   
-while(executionFinished == 0)
-        execute_cycle();	
+	avm_initialize();
+    while(executionFinished == 0)
+        execute_cycle();
     avm_memcellclear(&ax);
     avm_memcellclear(&bx);
     avm_memcellclear(&cx);
     avm_memcellclear(&retval);
-    //return 100;
+    return 100;
     }else{
 	printf("Could not produce Median Code because of compile time errors \n");
 	}
