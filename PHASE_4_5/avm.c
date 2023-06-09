@@ -16,14 +16,16 @@ int    top, topsp;
 
 /* needs binary file*/
 double  consts_getnumber(unsigned index){
-    return numConsts[index]; //numConsts?
+	
+    return numbers[index]; //numConsts?
 }
 char*   consts_getstring(unsigned index) {
-    return stringConsts[index];
+    return str_c[index];
 }
 char*   libfuncs_getused(unsigned index) {
     return lib_f[index];
 }
+
 
 
 userfunc* avm_getfuncinfo(unsigned address){
@@ -85,11 +87,11 @@ extern char* typeStrings[]; //done in bool.c
 
 
 
+
 avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
     assert(arg);
     if(reg)
         avm_memcellclear(reg);
-    //printf("arg type = %d\n", arg->type);
     switch(arg->type){
         case global_a: return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
         case local_a: return &avm_stack[topsp - arg->val];   
@@ -97,15 +99,22 @@ avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
 
         case retval_a:  return &retval;
 
-        case number_a:  {
+        case number_a:  { 
             reg->type = number_m;
             reg->data.numVal = consts_getnumber(arg->val);
+	    printf(" noumeros %lf", reg->data.numVal);
             return reg;
         }
 
         case string_a:  {
             reg->type = string_m;
-            reg->data.strVal = strdup(consts_getstring(arg->val));
+		char* fixed=consts_getstring(arg->val);
+		int length=strlen(fixed);
+		fixed[length-1]='\0';
+	
+            reg->data.strVal = strdup(fixed);
+		printf(" stringos %s", reg->data.strVal);
+
             return reg;
         }
 
@@ -203,7 +212,7 @@ void avm_call_functor(avm_table* t){
 
 void avm_dec_top(void){
     if(!top){
-        avm_error("stack overflow", &code[pc]);
+        avm_error("stack overflow", &instrs[pc]);
         executionFinished = 1;
     }
     else{
@@ -277,14 +286,81 @@ int libfunc_hash(char* id){
     return result;
 }
 
-char* number_tostring(avm_memcell* a){return "abc";}
-char* string_tostring(avm_memcell* a){return "abc";}
-char* bool_tostring(avm_memcell* a){return "abc";}
-char* table_tostring(avm_memcell* a){return "abc";}
-char* userfunc_tostring(avm_memcell* a){return "abc";}
-char* libfunc_tostring(avm_memcell* a){return "abc";}
-char* nil_tostring(avm_memcell* a){return "abc";}
-char* undef_tostring(avm_memcell* a){return "abc";}
+int getNumberOfDigits(int a){
+	int count = 0;
+	while(a > 0){
+		count++;
+		a = a/10;
+	}
+	return count;
+}
+char* number_tostring(avm_memcell* a){
+	int n;
+	n = getNumberOfDigits(a->data.numVal);
+	char* buffer = malloc(32*sizeof(char));
+	sprintf(buffer,"%f",a->data.numVal);
+	return buffer;
+}
+char* string_tostring(avm_memcell* a){
+	char* buffer =strdup(a->data.strVal);
+	return buffer;}
+char* bool_tostring(avm_memcell* a){
+	if(a->data.boolVal == 0)
+		return "false";
+	else
+		return "true";
+}
+char* table_tostring(avm_memcell* a){
+	char *buffer = malloc(12 * sizeof(char*));
+	char *dummy_buffer = malloc(sizeof(char*));
+	strcat(buffer, "[");
+
+	int i = 0;
+	while (i < 211)
+	{
+		avm_table_bucket* temp = a->data.tableVal->strIndexed[i];
+		while(temp != NULL){
+			strcat(buffer, "{");
+			strcat(buffer, temp->key->data.strVal);
+			strcat(buffer, " : ");
+			strcat(buffer, avm_tostring((temp->value)));
+			strcat(buffer, "}");
+			
+			temp= temp->next;
+		}
+
+		temp = a->data.tableVal->numIndexed[i];
+        	while (temp != NULL) {
+            		strcat(buffer, "{");
+            		sprintf(dummy_buffer, "%d", (int)temp->key->data.numVal);
+           		strcat(buffer, dummy_buffer);
+            		strcat(buffer, " : ");
+            		strcat(buffer, avm_tostring((temp->value)));
+            		strcat(buffer, "}");
+
+            		temp = temp->next;
+        	}
+		i++;
+	}
+
+	strcat(buffer, "]");
+	return buffer;
+}
+char* userfunc_tostring(avm_memcell* a){
+	char* buff;
+	buff = strdup(userfs[a->data.funcVal].id);	
+	return buff;
+}
+char* libfunc_tostring(avm_memcell* a){
+	char* buff;
+	buff = strdup(a->data.libfuncVal);	
+	return buff;
+
+}
+char* nil_tostring(avm_memcell* a){return "nil";}
+char* undef_tostring(avm_memcell* a){return "undef";}
+
+
 
 tostring_func_t tostringFuncs[]={
     number_tostring,
@@ -302,7 +378,6 @@ char* avm_tostring(avm_memcell* m){
     return (*tostringFuncs[m->type])(m);
 }
 
-char* avm_tostring(avm_memcell* cell);
 
 
 
@@ -789,6 +864,8 @@ void libfunc_objectcopy(void){
     }
 }
 
+
+
 void avm_assign(avm_memcell* lv, avm_memcell* rv){
     if(lv == rv) /*same cells? destructive to assign!*/
         return;
@@ -797,10 +874,10 @@ void avm_assign(avm_memcell* lv, avm_memcell* rv){
     return;
 
     if(rv->type == undef_m) /*from undefined r-value? warn!*/
-        avm_warning("assigning from 'undef' content! ",&code[pc]);
+        avm_warning("assigning from 'undef' content! ",&instrs[pc]);
 
     avm_memcellclear(lv); /*clear old cell contents. */
-    memcpy(lv,rv,sizeof(avm_memcell)); /* in c++ dispatch instead*/
+    memcpy(lv,rv,sizeof(avm_memcell)); 
     /*now take care of copied values or reference counting*/
     if(lv->type == string_m)
         lv->data.strVal = strdup(rv->data.strVal);
@@ -810,31 +887,13 @@ void avm_assign(avm_memcell* lv, avm_memcell* rv){
 }
 
 
+
+
 void avm_initialize(void) {
     avm_initstack();
-    libfunc_hashtable = malloc(sizeof(LibFuncHash));
-    topsp = AVM_STACKSIZE-1;
-    top   = AVM_STACKSIZE-1;
-
-    for(int i=0; i < program_offset;i++){
-        avm_stack[top].data.numVal = i;
-        avm_dec_top();
-        topsp--;
-    }
-    avm_registerlibfunc("print", libfunc_print);
-    avm_registerlibfunc("typeof", libfunc_typeof);
-    avm_registerlibfunc("totalarguments", libfunc_totalarguments);
-    avm_registerlibfunc("sqrt", libfunc_sqrt);
-    avm_registerlibfunc("cos", libfunc_cos);
-    avm_registerlibfunc("sin", libfunc_sin);
-    avm_registerlibfunc("strtonum", libfunc_strtonum);
-    avm_registerlibfunc("input", libfunc_input);
-    avm_registerlibfunc("argument", libfunc_argument);
-    avm_registerlibfunc("objecttotalmembers",libfunc_objecttotalmembers);
-    avm_registerlibfunc("objectmemberkeys",libfunc_objectmemberkeys);
-    avm_registerlibfunc("objectcopy",libfunc_objectcopy);
-
-    pc = 1;
+    //libfunc_hashtable = malloc(sizeof(LibFuncHash));
+    top = AVM_STACKSIZE-1-program_offset;
+    topsp   = top;
 }
 
 typedef unsigned char(*tobool_func_t)(avm_memcell*);
