@@ -51,6 +51,12 @@ typedef struct avm_table_bucket {
     struct avm_table_bucket* next;
 } avm_table_bucket;
 
+extern int strHash(char *);
+extern int numHash(int);
+//extern int boolHash(bool);
+//extern int userfuncHash(userfunc*);
+//int libfuncHash(char *);
+//int tableHash(char *);
 
 typedef struct avm_table{
     unsigned refCounter;
