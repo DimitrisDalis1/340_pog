@@ -462,7 +462,7 @@ void libfunc_typeof(void){
         retval.type = string_m;
         retval.data.strVal = strdup(typeStrings[avm_getactual(0)->type]);
     }else{
-        avm_error("Error : only one parameter in function typeof!",&code[pc]);
+        avm_error("Error : only one parameter in function typeof!",&instrs[pc]);
         retval.type=nil_m;
     }
 }
@@ -470,7 +470,7 @@ void libfunc_totalarguments(void){
     unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
     avm_memcellclear(&retval);
     if(!p_topsp){
-        avm_error("Error : 'totalarguments' called outside a function!", &code[pc]);
+        avm_error("Error : 'totalarguments' called outside a function!", &instrs[pc]);
         retval.type = nil_m;
     }else{
         retval.type = number_m;
@@ -480,9 +480,9 @@ void libfunc_totalarguments(void){
 void libfunc_sqrt(void){
     if(avm_totalactuals() == 1 ){
         if(avm_getactual(0)->type != number_a){
-            avm_error("Error : the parameter should be a number in sqrt!",&code[pc]);
+            avm_error("Error : the parameter should be a number in sqrt!",&instrs[pc]);
         }else if(avm_getactual(0)->data.numVal < 0){
-            avm_error("Error : the parameter cannot be a negative number!",&code[pc]);
+            avm_error("Error : the parameter cannot be a negative number!",&instrs[pc]);
         }else{
             avm_memcellclear(&retval);
             retval.type = number_m;
@@ -490,7 +490,7 @@ void libfunc_sqrt(void){
             retval.data.numVal = sqrt(tmp);
         }
     }else{
-        avm_error("Error : only one parameter in function sqrt!",&code[pc]);
+        avm_error("Error : only one parameter in function sqrt!",&instrs[pc]);
     }
 }
 
@@ -501,7 +501,7 @@ void libfunc_cos(void){
     if(avm_totalactuals() == 1)
     {
         if(avm_getactual(0)->type != number_m){
-            avm_error("In function cos, given input is not of type: number_m", &code[pc]);
+            avm_error("In function cos, given input is not of type: number_m", &instrs[pc]);
             retval.type = nil_m;
         }else
         {
@@ -514,7 +514,7 @@ void libfunc_cos(void){
         }
     }
     else{
-        avm_error("Only one parameter is allowed in function cos!\n", &code[pc]);
+        avm_error("Only one parameter is allowed in function cos!\n", &instrs[pc]);
     }
 }
 
@@ -524,7 +524,7 @@ void libfunc_sin(void){
     if(n == 1)
     {
         if(avm_getactual(0)->type != number_m){
-            avm_error("In function cos, given input is not of type: number_m", &code[pc]);
+            avm_error("In function cos, given input is not of type: number_m", &instrs[pc]);
             retval.type = nil_m;
         }else
         {
@@ -537,14 +537,14 @@ void libfunc_sin(void){
     }
     else
     if(n!= 1){
-        avm_error("Only one parameter is allowed in function cos!\n", &code[pc]);
+        avm_error("Only one parameter is allowed in function cos!\n", &instrs[pc]);
     }
 }
 
 void libfunc_strtonum(void){
      if(avm_totalactuals() == 1 ){
         if(avm_getactual(0)->type != string_m){
-            avm_error("Error : the parameter should be a string in strtonum!",&code[pc]);
+            avm_error("Error : the parameter should be a string in strtonum!",&instrs[pc]);
             retval.type = nil_m;
             return;
         }else{
@@ -559,7 +559,7 @@ void libfunc_strtonum(void){
                     continue;
                 }
                 if(!isdigit(tmp[i]) && tmp[i]!='.'){
-                    avm_error("Error : the string parameter should only contain numbers in strtonum!",&code[pc]);
+                    avm_error("Error : the string parameter should only contain numbers in strtonum!",&instrs[pc]);
                     retval.type = nil_m;
                     return;
                 }
@@ -568,14 +568,14 @@ void libfunc_strtonum(void){
                 i++;
             }
             if(counter>1){
-                avm_error("Error : the string parameter contains multiple '.' in strtonum!",&code[pc]);
+                avm_error("Error : the string parameter contains multiple '.' in strtonum!",&instrs[pc]);
                 retval.type = nil_m;
                 return;
             }
             retval.data.numVal = atof(tmp);
         }
     }else{
-        avm_error("Error : only one parameter in function strtonum!",&code[pc]);
+        avm_error("Error : only one parameter in function strtonum!",&instrs[pc]);
     }
 }
 
@@ -656,7 +656,7 @@ void libfunc_input(void){
 
     }
     else{
-        avm_warning("No need for input in function: libfunc_input\n", &code[pc]);
+        avm_warning("No need for input in function: libfunc_input\n", &instrs[pc]);
     }
 }
 
@@ -665,7 +665,7 @@ void libfunc_argument(void){
         if (avm_getactual(0)->type == number_m)
         {
             if(avm_getactual(0)->data.numVal >  avm_get_envvalue(avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET) + AVM_NUMACTUALS_OFFSET)-1 ){ //klemmeno full
-                avm_error("Error : library function_argument argument out of range!",&code[pc]);
+                avm_error("Error : library function_argument argument out of range!",&instrs[pc]);
                 retval.type=nil_m;
                 return;
             }
@@ -683,11 +683,11 @@ void libfunc_argument(void){
                 retval.type = argument->type; 
             } 
         }else{
-            avm_error("Error : only one parameter in libfunc_argument",&code[pc]);
+            avm_error("Error : only one parameter in libfunc_argument",&instrs[pc]);
         } 
         
     }else{
-        avm_error("Error : only one parameter in libfunc_argument",&code[pc]);
+        avm_error("Error : only one parameter in libfunc_argument",&instrs[pc]);
     }
 }
 
@@ -700,10 +700,10 @@ void libfunc_objecttotalmembers(void){
             retval.type = number_m;
             retval.data.numVal = total;
         }else{
-            avm_error("Error : only table type parameter in libfunc_objecttotalmembers",&code[pc]);
+            avm_error("Error : only table type parameter in libfunc_objecttotalmembers",&instrs[pc]);
         }
     }else{
-        avm_error("Error : only one parameter in libfunc_objecttotalmembers",&code[pc]);
+        avm_error("Error : only one parameter in libfunc_objecttotalmembers",&instrs[pc]);
     }
 }
 
@@ -803,10 +803,10 @@ void libfunc_objectmemberkeys(void){
     avm_tableincrefcounter(retval.data.tableVal);
 
         }else{
-            avm_error("Error : only table type parameter in libfunc_objecttotalmembers",&code[pc]);
+            avm_error("Error : only table type parameter in libfunc_objecttotalmembers",&instrs[pc]);
         }
     }else{
-        avm_error("Error : only one parameter in libfunc_objecttotalmembers",&code[pc]);
+        avm_error("Error : only one parameter in libfunc_objecttotalmembers",&instrs[pc]);
     }
 
 }
@@ -857,10 +857,10 @@ void libfunc_objectcopy(void){
             retval.type = table_m;
             retval.data.tableVal = new_table;
         }else{
-            avm_error("Error : only table type parameter in libfunc_objectcopy",&code[pc]);
+            avm_error("Error : only table type parameter in libfunc_objectcopy",&instrs[pc]);
         }
     }else{
-        avm_error("Error : only one parameter in libfunc_objectcopy",&code[pc]);
+        avm_error("Error : only one parameter in libfunc_objectcopy",&instrs[pc]);
     }
 }
 
