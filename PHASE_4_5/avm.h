@@ -110,7 +110,7 @@ extern avm_memcell avm_stack[AVM_STACKSIZE];
 extern avm_memcell ax, bx, cx;
 extern avm_memcell retval;
 extern int top, topsp;
-
+int getNumberOfDigits(int);
 double  consts_getnumber(unsigned);
 char*   consts_getstring(unsigned);
 char*   libfuncs_getused(unsigned);
