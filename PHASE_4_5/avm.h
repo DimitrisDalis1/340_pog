@@ -98,6 +98,7 @@ extern char** str_c;
 extern double* numbers;
 extern char** lib_f;
 extern instruction * instrs;
+extern double* numbers;
 
 extern avm_memcell avm_stack[AVM_STACKSIZE];
 extern avm_memcell ax, bx, cx;
