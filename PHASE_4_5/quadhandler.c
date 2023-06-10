@@ -301,10 +301,10 @@ expr* emit_iftableitem(expr* e){
 		emit(
 			tablegetelem,
 			result,
-			e->index,
 			e,
+			e->index,
 			-1,
-			currQuad
+			yylineno
 		);
 		return result;
 	}

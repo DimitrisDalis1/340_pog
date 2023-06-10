@@ -1,5 +1,5 @@
 lvalue -> id
-const -> STRING
+const -> INT
 primary -> const
 term -> primary
 expr -> term
