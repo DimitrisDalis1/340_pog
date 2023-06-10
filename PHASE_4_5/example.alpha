@@ -1,1 +1,6 @@
-if(10>=9){print("popo");}else {print("kolos");}
+a=3;
+c=333;
+d=9;
+print(a);
+print(c);
+print(d);

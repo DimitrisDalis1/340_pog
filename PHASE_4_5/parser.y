@@ -510,6 +510,9 @@ term : LEFTPAR expr RIGHTPAR
 	{
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
+		incurrscopeoffset();
+		$$->sym->offset=currscopeoffset();
+
 		emit(uminus, $$, $2, NULL, -1, yylineno); // _t0 = -x;
 	}
 	fprintf(yyout_y, "term -> -expr\n");
@@ -563,6 +566,9 @@ term : LEFTPAR expr RIGHTPAR
 		emit(add, $2, $2, num, -1, yylineno);
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
+		incurrscopeoffset();
+		$$->sym->offset=currscopeoffset();
+
 		emit(assign, $$, $2, NULL, -1, yylineno);
 	}
 
@@ -578,6 +584,8 @@ term : LEFTPAR expr RIGHTPAR
 	}
 	$$ = newexpr(var_e);
 	$$->sym = newtemp();
+	incurrscopeoffset();
+	$$->sym->offset=currscopeoffset();
 	if ($1->type == tableitem_e)
 	{
 		expr *val = emit_iftableitem($1);
@@ -613,6 +621,10 @@ term : LEFTPAR expr RIGHTPAR
 		emit(sub, $2, $2, newexpr_constint(1), -1, yylineno);
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
+		incurrscopeoffset();
+		$$->sym->offset=currscopeoffset();
+
+
 		emit(assign, $$, $2, NULL, -1, yylineno);
 	}
 	fprintf(yyout_y, "term -> --lvalue\n");
@@ -627,6 +639,8 @@ term : LEFTPAR expr RIGHTPAR
 	}
 	$$ = newexpr(var_e);
 	$$->sym = newtemp();
+	incurrscopeoffset();
+	$$->sym->offset=currscopeoffset();
 	if ($1->type == tableitem_e)
 	{
 		expr *val = emit_iftableitem($1);
@@ -675,8 +689,11 @@ assignexpr : lvalue ASSIGN expr
 		$$=newexpr(assignexpr_e);
 		
 		SymbolTableEntry *temp = newtemp();
-		
+		incurrscopeoffset();
+		temp->offset=currscopeoffset();
+
 		$$->sym = temp;
+		
 		emit(assign, $$, $1, NULL, -1, yylineno);
 	}
 };
@@ -747,7 +764,7 @@ lvalue : ID
 					entry->space = functionlocal;
 					entry->offset = offset_;
 				}
-				// incurrscopeoffset();
+				incurrscopeoffset();
 				$$ = lvalue_expr(entry);
 			}
 			else
@@ -816,7 +833,7 @@ lvalue : ID
 				entry->space = programvar;
 				entry->offset = offset_++;
 				program_offset++;
-				//incurrscopeoffset();
+				incurrscopeoffset();
 			}
 			else
 			{
@@ -824,7 +841,7 @@ lvalue : ID
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, LOCALV);
 				entry->space = functionlocal;
 				entry->offset = offset_++;
-				//incurrscopeoffset();
+				incurrscopeoffset();
 			}
 
 			$$ = lvalue_expr(entry);
@@ -1051,6 +1068,8 @@ objectdef : LEFTBRACE elist RIGHTBRACE
 {
 	expr *t = newexpr(newtable_e);
 	t->sym = newtemp();
+	incurrscopeoffset();
+	t->sym->offset=currscopeoffset();
 	emit(tablecreate, t, NULL, NULL, -1, yylineno);
 	for (int i = 0; $2; $2 = $2->next)
 		emit(tablesetelem, t, newexpr_constint(i++), $2, -1, yylineno);
@@ -1061,6 +1080,8 @@ objectdef : LEFTBRACE elist RIGHTBRACE
 {
 	expr *t = newexpr(newtable_e);
 	t->sym = newtemp();
+	incurrscopeoffset();
+	t->sym->offset=currscopeoffset();
 	emit(tablecreate, t, NULL, NULL, -1, yylineno);
 	while ($2 != NULL)
 	{
@@ -1106,6 +1127,7 @@ funcname : ID
 	fprintf(yyout_y, "funcname -> NULL\n");
 };
 
+
 funcprefix : FUNCTION funcname
 {
 	SymbolTableEntry *search = lookup_inScope(hash, (char *)$2, 0);
@@ -1147,7 +1169,7 @@ funcprefix : FUNCTION funcname
 		$$ = malloc(sizeof(expr));
 		$$->sym = search;
 	}
-	$$->iaddress = nextquadlabel()-1; 
+	$$->iaddress = nextquadlabel(); 
 
 	int *tmp = malloc(sizeof(int));
 	*tmp = nextquadlabel();
@@ -1156,8 +1178,8 @@ funcprefix : FUNCTION funcname
 	expr* func=newexpr(programfunc_e);
 	func->sym=$$->sym;
 	func->sym->value.funcVal->name=$2;
-	func->sym->address=nextquadlabel();
-	func->iaddress=nextquadlabel();
+	func->sym->address=nextquadlabel()+1;
+	func->iaddress=nextquadlabel()+1;
 	emit(funcstart,func, NULL, NULL, -1, yylineno);
 
 	push(stack_, offset_); 
@@ -1208,6 +1230,7 @@ funcblockend
 	sim_funcs--;
 	exitscopespace();
 	offset_ = pop(stack_);
+	restorecurrscopeoffset(offset);
 	patchlabel(fof,nextquad());
 	// printf("%d",fof);
 	patchlist($3->returnlist,nextquad()-1);
@@ -1526,8 +1549,8 @@ int main(int argc, char** argv)
 	readBinary();
 		avm_initialize();
    
-while(executionFinished == 0)
-        execute_cycle();	
+	while(executionFinished == 0)
+       		 execute_cycle();	
     avm_memcellclear(&ax);
     avm_memcellclear(&bx);
     avm_memcellclear(&cx);

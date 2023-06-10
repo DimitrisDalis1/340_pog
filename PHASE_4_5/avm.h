@@ -15,10 +15,10 @@ extern int disable_remove_warning;
 
 #define AVM_ENDING_PC insr_s
 #define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
-#define AVM_NUMACTUALS_OFFSET +4
-#define AVM_SAVEDPC_OFFSET +3
-#define AVM_SAVEDTOP_OFFSET +2
-#define AVM_SAVEDTOPSP_OFFSET +1
+#define AVM_NUMACTUALS_OFFSET 4
+#define AVM_SAVEDPC_OFFSET 3
+#define AVM_SAVEDTOP_OFFSET 2
+#define AVM_SAVEDTOPSP_OFFSET 1
 #define AVM_STACKSIZE 4096
 
 

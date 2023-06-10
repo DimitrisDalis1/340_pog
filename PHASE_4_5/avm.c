@@ -12,7 +12,7 @@ int disable_remove_warning = 0;
 
 avm_memcell ax, bx, cx;
 avm_memcell retval;
-int    top, topsp;
+int    top=0, topsp=0;
 
 /* needs binary file*/
 double  consts_getnumber(unsigned index){
@@ -84,7 +84,7 @@ void avm_tabledestroy (avm_table* t){
     free(t);
 }
 
-extern char* typeStrings[]; //done in bool.c
+extern char* typeStrings[]; 
 
 
 
@@ -92,11 +92,10 @@ extern char* typeStrings[]; //done in bool.c
 
 avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
     assert(arg);
-int x;
     if(reg)
         avm_memcellclear(reg);
     switch(arg->type){
-        case global_a: x = AVM_STACKSIZE - 1 - arg->val;  return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
+        case global_a: printf("\negrapsa edw %d\n",AVM_STACKSIZE - 1 - arg->val); return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
         case local_a: return &avm_stack[topsp - arg->val];   
         case formal_a: return &avm_stack[topsp + AVM_STACKENV_SIZE + 1 + arg->val];
 
@@ -322,6 +321,7 @@ void avm_dec_top(void){
 void avm_push_envvalue(unsigned val){
     avm_stack[top].type         = number_m;
     avm_stack[top].data.numVal  = val;
+
     avm_dec_top();
 }
 
@@ -391,7 +391,7 @@ int libfunc_hash(char* id){
 char* number_tostring(avm_memcell* a){
 	int n;
 	n = getNumberOfDigits(a->data.numVal);
-	char* buffer = malloc(32*sizeof(char));
+	char* buffer = malloc(40*sizeof(char));
 	sprintf(buffer,"%f",a->data.numVal);
 	return buffer;
 }
@@ -532,8 +532,7 @@ void avm_calllibfunc(char* id){
     }
 }
 
-unsigned avm_totalactuals(void){
-    return avm_get_envvalue(topsp + AVM_NUMACTUALS_OFFSET);
+unsigned avm_totalactuals(void){    return avm_get_envvalue(topsp + AVM_NUMACTUALS_OFFSET);
 }
 
 avm_memcell* avm_getactual(unsigned i){
@@ -553,10 +552,9 @@ avm_memcell* avm_getactual(unsigned i){
 void libfunc_print(void){
 
     unsigned n = avm_totalactuals();
-	//printf("%d",n);
     for(unsigned i = 0; i<n; i++){
         char* s = avm_tostring(avm_getactual(i));
-        puts(s);
+      printf("%s",s);
         free(s);
     }
 }
@@ -1009,8 +1007,7 @@ void avm_assign(avm_memcell* lv, avm_memcell* rv){
         avm_warning("assigning from 'undef' content! ",&instrs[pc]);
 
     avm_memcellclear(lv); /*clear old cell contents. */
-    memcpy(lv,rv,sizeof(avm_memcell)); 
-    /*now take care of copied values or reference counting*/
+    memcpy(lv,rv,sizeof(avm_memcell));    /*now take care of copied values or reference counting*/
     if(lv->type == string_m)
         lv->data.strVal = strdup(rv->data.strVal);
     else
@@ -1023,10 +1020,9 @@ void avm_assign(avm_memcell* lv, avm_memcell* rv){
 
 void avm_initialize(void) {
     avm_initstack();
-    //libfunc_hashtable = malloc(sizeof(LibFuncHash));
-    top = AVM_STACKSIZE-1-program_offset;
-    topsp   = top;
-	}
+    top = AVM_STACKSIZE-program_offset-1;
+    topsp   =  AVM_STACKSIZE-1;
+ 	}
 
 typedef unsigned int(*tobool_func_t)(avm_memcell*);
 
@@ -1119,7 +1115,7 @@ void push_avm_stack(avm_memcell m){
         printf("Avm stack overflow");
         exit(0);
     }else{
-        avm_stack[++current_index] = m;
+        avm_stack[current_index++] = m;
     }
 }
 

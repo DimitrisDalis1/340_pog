@@ -115,11 +115,12 @@ void execute_funcexit(instruction* unused){
 }
 
 void execute_pusharg(instruction* instr){
-    avm_memcell* arg = avm_translate_operand(instr->result,&ax);
+	avm_memcell* arg = avm_translate_operand(instr->result,&ax);
+	
     assert(arg);
     /*this is actually stack[top] = arg,but we have to use
         avm_assign.*/
-
+	
     avm_assign(&avm_stack[top],arg);
     ++totalActuals;
     avm_dec_top();
@@ -247,6 +248,7 @@ extern void execute_assign (instruction* instr){
     //assert(lv && (&avm_stack[AVM_STACKSIZE-1] >= lv && lv > &avm_stack[top] || lv==&retval));
     assert(rv);
     avm_assign(lv,rv);
+
 }
 
 /*never used*/

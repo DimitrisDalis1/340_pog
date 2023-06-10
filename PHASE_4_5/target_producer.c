@@ -311,7 +311,8 @@ void make_operand(expr* e, vmarg* arg){
         }
 
         default: {
-            assert(0);
+            assert(0); 
+
         }
     }
 }
@@ -639,6 +640,7 @@ void instrToBinary(){
 
 	fclose(executable);
 }
+
 
 void readBinary(){
 

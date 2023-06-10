@@ -236,12 +236,14 @@ SymbolTableEntry* newtemp(){
 			program_offset++;
 			sym= SymTable_insert(hash,name,yylineno,NULL,current_scope,GLOBAL);
 			sym->space=programvar;
+			//sym->offset=offset_;
 			return sym;
 
 
 		}else{
 			sym=SymTable_insert(hash,name,yylineno,NULL,current_scope,LOCALV);
 			sym->space=functionlocal;
+			//sym->offset=offset_;
 			return sym;
 
 		}
