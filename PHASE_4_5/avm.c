@@ -92,10 +92,11 @@ extern char* typeStrings[]; //done in bool.c
 
 avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
     assert(arg);
+int x;
     if(reg)
         avm_memcellclear(reg);
     switch(arg->type){
-        case global_a: return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
+        case global_a: x = AVM_STACKSIZE - 1 - arg->val;  return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
         case local_a: return &avm_stack[topsp - arg->val];   
         case formal_a: return &avm_stack[topsp + AVM_STACKENV_SIZE + 1 + arg->val];
 
@@ -129,7 +130,7 @@ avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
 
         case userfunc_a:{
             reg->type = userfunc_m;
-            reg->data.funcVal = userfuncs_getfunc(arg->val)->address;
+            reg->data.funcVal = arg->val;
             return reg;
         }
 
@@ -187,7 +188,7 @@ int numHash(int x){
 avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
     assert(table);
     assert(index);
-    if(index->type != string_m || index->type != number_m){
+    if(index->type != string_m && index->type != number_m){
         avm_error("table index can only be a string or a number",&code[pc]);
     }
     if(index->type == number_m){
@@ -216,26 +217,29 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
 }
 
 void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
-	assert(table);
+    assert(table);
     assert(index);
     int found = 0;
-    if(index->type != string_m || index->type != number_m){
+    if(index->type != string_m && index->type != number_m){
         avm_error("table index can only be a string or a number",&code[pc]);
     }
 
     if(index->type == number_m){
+
         int key = numHash(index->data.numVal);
+
         avm_table_bucket *temp = table->numIndexed[key];
-        
-        
-        while(!temp){
+
+        while(temp){
+		int x = temp->value->data.numVal;
             if(temp->value->data.numVal == index->data.numVal){
                 avm_assign(temp->value,content);
                 found = 1;
             }
             temp = temp->next;
+
         }
-        if(!found){
+        if(found == 0){
             avm_table_bucket *start = table->numIndexed[key];
             avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
             new_bucket->value = content;
@@ -255,7 +259,7 @@ void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
             }
             temp = temp->next;
         }
-        if(!found){
+        if(found){
             avm_table_bucket *start = table->strIndexed[key];
             avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
             new_bucket->value = content;
@@ -456,8 +460,8 @@ char* libfunc_tostring(avm_memcell* a){
 	return buff;
 
 }
-char* nil_tostring(avm_memcell* a){return "nil";}
-char* undef_tostring(avm_memcell* a){return "undef";}
+char* nil_tostring(avm_memcell* a){return strdup("nil");}
+char* undef_tostring(avm_memcell* a){return strdup("undef");}
 
 
 
@@ -581,10 +585,12 @@ void libfunc_totalarguments(void){
 }
 void libfunc_sqrt(void){
     if(avm_totalactuals() == 1 ){
-        if(avm_getactual(0)->type != number_a){
+        if(avm_getactual(0)->type != number_m){
             avm_error("Error : the parameter should be a number in sqrt!",&instrs[pc]);
+	    return;
         }else if(avm_getactual(0)->data.numVal < 0){
             avm_error("Error : the parameter cannot be a negative number!",&instrs[pc]);
+	    return;
         }else{
             avm_memcellclear(&retval);
             retval.type = number_m;
@@ -1060,11 +1066,11 @@ typedef double (*toarithm_func_t)(avm_memcell*);
 
 double number_toarithm(avm_memcell* m) { return m->data.numVal; }
 double string_toarithm(avm_memcell* m) { size_t length= strlen(m->data.strVal); return length;}
-double bool_toarithm(avm_memcell* m) { return m->data.boolVal; } 
-double table_toarithm(avm_memcell* m) { return 1; }
-double userfunc_toarithm(avm_memcell* m) { return 1; }
-double libfunc_toarithm(avm_memcell* m) { return 1; }
-double nil_toarithm(avm_memcell* m) { return 0; }
+double bool_toarithm(avm_memcell* m) {  assert(0); return 0; } 
+double table_toarithm(avm_memcell* m) { return m->data.tableVal->total; }
+double userfunc_toarithm(avm_memcell* m) { return m->data.numVal; }
+double libfunc_toarithm(avm_memcell* m) { return strlen(m->data.libfuncVal); }
+double nil_toarithm(avm_memcell* m) {  assert(0); return 0; }
 double undef_toarithm(avm_memcell* m) { assert(0); return 0; }
 
 

@@ -338,6 +338,8 @@ SymTable_T* SymTable_new(void){
     SymTable_insert(oSymTable,"strtonum",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"cos",0,NULL,0,LIBFUNC);
     SymTable_insert(oSymTable,"sin",0,NULL,0,LIBFUNC);
+	SymTable_insert(oSymTable,"sqrt",0,NULL,0,LIBFUNC);
+
     return oSymTable;
 }
 

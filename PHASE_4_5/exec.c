@@ -53,7 +53,6 @@ void execute_cycle(void){
         STACK_CHECK //checks for stack over flow or under flow
         executeFuncs[instr->opcode](instr);
 	
-
         if(pc == oldPC){
             ++pc;
         }
@@ -97,7 +96,7 @@ void execute_call(instruction* instr){
 void execute_funcenter (instruction* instr){
     avm_memcell* func = avm_translate_operand(instr->result, &ax);
     assert(func);
-    assert(pc == func->data.funcVal); /* Func address should match PC. */
+    assert(pc == userfs[func->data.funcVal].address); /* Func address should match PC. */
     /* Callee actions here. */
     totalActuals = 0;
     userfunc* funcInfo = userfuncs_getfunc(pc);
@@ -187,8 +186,9 @@ void execute_newtable(instruction* instr){
 }
 
 void execute_tablegetelem(instruction * instr){
+ avm_memcell *t = avm_translate_operand(instr->arg1, (avm_memcell*) 0); //seg
+
   avm_memcell *lv = avm_translate_operand(instr->result, (avm_memcell*) 0);
-  avm_memcell *t = avm_translate_operand(instr->arg1, (avm_memcell*) 0);
   avm_memcell *i = avm_translate_operand(instr->arg2, &ax);
 
   //assert(lv && &avm_stack[N-1] >= lv && lv > &avm_stack[top] || lv == &retval);
@@ -270,6 +270,7 @@ void execute_jeq (instruction* instr) {
     else
     if (rv1->type == bool_m || rv2->type == bool_m){
         result = ((avm_tobool(rv1) == avm_tobool(rv2))?1:0);
+	
 	}
     else
     if(rv1->type != rv2->type){
@@ -281,6 +282,7 @@ void execute_jeq (instruction* instr) {
         result = (!strcmp(rv1->data.strVal, rv2->data.strVal))?1:0;
     }
     else {
+	
         result = ((avm_toarithm(rv1) == avm_toarithm(rv2))?1:0);
         //equality check with dispatching 
     }
@@ -308,10 +310,10 @@ void execute_jge (instruction* instr) {
     if(rv1->type != rv2->type){
         char tmp[1024];
         sprintf(tmp, "%s >= %s is illegal!", typeStrings[rv1->type], typeStrings[rv2->type]);
-        avm_error(tmp, &code[pc]);
+        avm_error(tmp, &instrs[pc]);
     }
     else {
-        result = ((avm_toarithm(rv1) == avm_toarithm(rv2))?1:0);
+        result = ((avm_toarithm(rv1) >= avm_toarithm(rv2))?1:0);
     }
 
     if(!executionFinished && result)
@@ -346,6 +348,7 @@ void execute_jgt (instruction* instr) {
 
     if(!executionFinished && result)
         pc = instr->result->val-1;
+
 }
 
 void execute_jle (instruction* instr) {
@@ -422,8 +425,9 @@ void execute_jne (instruction* instr) {
     if (rv1->type == nil_m || rv2->type == nil_m)
         result = ((rv1->type == nil_m && rv2->type == nil_m)?1:0);
     else
-    if (rv1->type == bool_m || rv2->type == bool_m)
+    if (rv1->type == bool_m || rv2->type == bool_m){
         result = ((avm_tobool(rv1) !=avm_tobool(rv2))?1:0); 
+	}
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
@@ -436,6 +440,7 @@ void execute_jne (instruction* instr) {
 
     if(!executionFinished && result)
         pc = instr->result->val-1;
+
 }
 
 

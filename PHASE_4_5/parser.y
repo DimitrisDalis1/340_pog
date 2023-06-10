@@ -1147,7 +1147,7 @@ funcprefix : FUNCTION funcname
 		$$ = malloc(sizeof(expr));
 		$$->sym = search;
 	}
-	$$->iaddress = nextquadlabel(); 
+	$$->iaddress = nextquadlabel()-1; 
 
 	int *tmp = malloc(sizeof(int));
 	*tmp = nextquadlabel();
@@ -1156,8 +1156,8 @@ funcprefix : FUNCTION funcname
 	expr* func=newexpr(programfunc_e);
 	func->sym=$$->sym;
 	func->sym->value.funcVal->name=$2;
-	func->sym->address=nextquadlabel()+1;
-	func->iaddress=nextquadlabel()+1;
+	func->sym->address=nextquadlabel();
+	func->iaddress=nextquadlabel();
 	emit(funcstart,func, NULL, NULL, -1, yylineno);
 
 	push(stack_, offset_); 

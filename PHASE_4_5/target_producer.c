@@ -548,6 +548,7 @@ void instrToBinary(){
 	FILE *executable;
 	int i;
 	int  length;
+	int temp;
 	int magic_num = 200701202;
 	executable= fopen("executable.abc","wb");
 
@@ -557,7 +558,7 @@ void instrToBinary(){
 
 	
 	for(i=0;i<totalUserFuncs;i++){
-		
+		--userFuncs[i].address;
 		fwrite(&userFuncs[i].address,sizeof(int),1,executable);
 
 		fwrite(&userFuncs[i].localSize,sizeof(int),1,executable);
@@ -644,7 +645,7 @@ void readBinary(){
 	FILE *executable;
 	executable= fopen("executable.abc","r");
 	
-	int magic_number,i,length;
+	int magic_number,i,length,temp;
 	
     	fread(&magic_number, sizeof(int), 1, executable);
 
@@ -658,7 +659,7 @@ void readBinary(){
 	
 		userfs =(userfunc*) malloc(user*sizeof(userfunc));
 		for(i=0;i<user;i++){
-		
+			//temp=userfs[i].address-1;
 			fread(&userfs[i].address, sizeof(int), 1, executable);
 			printf("%u ", userfs[i].address);
 			fread(&userfs[i].localSize, sizeof(int), 1, executable);

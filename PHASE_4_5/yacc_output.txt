@@ -1,5 +1,16 @@
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+expr -> expr <= expr
+expr -> relop
+ifprefix -> IF ( expr )
 lvalue -> id
-const -> TRUE
+const -> STRING
 primary -> const
 term -> primary
 expr -> term
@@ -11,5 +22,26 @@ primary -> call
 term -> primary
 expr -> term
 stmt -> expr;
+stmts -> stmt
+block -> { stmts }
+stmt -> block
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+block -> { stmts }
+stmt -> block
+if -> ifprefix stmt elseprefix stmt
+stmt -> ifstmt
 stmts -> stmt
 program -> stmt(asteraki)

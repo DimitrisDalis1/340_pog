@@ -2749,7 +2749,7 @@ yyreduce:
 		(yyval.exprNode) = malloc(sizeof(expr));
 		(yyval.exprNode)->sym = search;
 	}
-	(yyval.exprNode)->iaddress = nextquadlabel(); 
+	(yyval.exprNode)->iaddress = nextquadlabel()-1; 
 
 	int *tmp = malloc(sizeof(int));
 	*tmp = nextquadlabel();
@@ -2758,8 +2758,8 @@ yyreduce:
 	expr* func=newexpr(programfunc_e);
 	func->sym=(yyval.exprNode)->sym;
 	func->sym->value.funcVal->name=(yyvsp[0].stringValue);
-	func->sym->address=nextquadlabel()+1;
-	func->iaddress=nextquadlabel()+1;
+	func->sym->address=nextquadlabel();
+	func->iaddress=nextquadlabel();
 	emit(funcstart,func, NULL, NULL, -1, yylineno);
 
 	push(stack_, offset_); 
