@@ -587,8 +587,10 @@ void libfunc_sqrt(void){
     if(avm_totalactuals() == 1 ){
         if(avm_getactual(0)->type != number_m){
             avm_error("Error : the parameter should be a number in sqrt!",&instrs[pc]);
+	    return;
         }else if(avm_getactual(0)->data.numVal < 0){
             avm_error("Error : the parameter cannot be a negative number!",&instrs[pc]);
+	    return;
         }else{
             avm_memcellclear(&retval);
             retval.type = number_m;
