@@ -200,7 +200,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
             }
             temp = temp->next;
         }
-        avm_warning("Table element cannot be found",&code[pc]);
+        avm_warning("Table element cannot be found",&instrs[pc]);
         return NULL;
     }else if(index->type == string_m){
         int key = strHash(index->data.strVal);
@@ -211,7 +211,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
             }
             temp = temp->next;
         }
-        avm_warning("Table element cannot be found",&code[pc]);
+        avm_warning("Table element cannot be found",&instrs[pc]);
         return NULL;
         }
 }
