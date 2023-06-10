@@ -189,7 +189,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
     assert(table);
     assert(index);
     if(index->type != string_m && index->type != number_m){
-        avm_error("table index can only be a string or a number",&code[pc]);
+        avm_error("table index can only be a string or a number",&instrs[pc]);
     }
     if(index->type == number_m){
         int key = numHash(index->data.numVal);
