@@ -1,15 +1,524 @@
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmt
 lvalue -> id
 const -> INT
 primary -> const
 term -> primary
 expr -> term
-assignexpr -> lvalue = expr
-expr -> assignexpr
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
 stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+expr -> expr == expr
+expr -> relop
+ifprefix -> IF ( expr )
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+expr -> arithop
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+arithop -> expr - expr
+expr -> arithop
+returnstmt -> return expr ;
+stmt -> returnstmt
+if -> ifprefix stmt elseprefix stmt
+stmt -> ifstmt
 stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
 lvalue -> id
 const -> INT
 primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+idlist -> idlist , ID
+idlist -> idlist , id
+idlist -> idlist , ID
+idlist -> idlist , id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+expr -> expr == expr
+expr -> relop
+ifprefix -> IF ( expr )
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+if -> ifprefix stmt
+stmt -> ifstmt
+stmts -> stmts stmt
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+expr -> arithop
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmts stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+idlist -> idlist , ID
+idlist -> idlist , id
+idlist -> idlist , ID
+idlist -> idlist , id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+arithop -> expr + expr
+expr -> arithop
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmts stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+idlist -> idlist , ID
+idlist -> idlist , id
+idlist -> idlist , ID
+idlist -> idlist , id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+expr -> arithop
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmts stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> elist , expr
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+elist -> elist , expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+funcname -> NULL
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+primary -> ( funcdef )
 term -> primary
 expr -> term
 assignexpr -> lvalue = expr
@@ -17,12 +526,177 @@ expr -> assignexpr
 stmt -> expr;
 stmts -> stmts stmt
 lvalue -> id
-const -> INT
+const -> STRING
 primary -> const
 term -> primary
 expr -> term
-assignexpr -> lvalue = expr
-expr -> assignexpr
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist ->  
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist ->  
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist ->  
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist ->  
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmts stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmts stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+elist -> NULL
+call -> call ( elist )
+primary -> call
+term -> primary
+expr -> term
 stmt -> expr;
 stmts -> stmts stmt
 funcname -> ID
@@ -51,4 +725,181 @@ funcblockend -> NULL
 funcdef -> funcblockend
 stmt -> funcdef
 stmts -> stmts stmt
-program -> stmt(asteraki)
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist ->  
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmt
+lvalue -> id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist ->  
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmt
+lvalue -> id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> ::id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+block -> { stmts }
+stmt -> block
+stmts -> stmts stmt
+lvalue -> ::id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+block -> { stmts }
+stmt -> block
+stmts -> stmts stmt
+lvalue -> id
+elist -> NULL
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist -> id
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
+lvalue -> id
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmt
+lvalue -> id
+primary -> lvalue
+term -> primary
+expr -> term
+returnstmt -> return expr ;
+stmt -> returnstmt
+stmts -> stmts stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
+stmts -> stmts stmt
+lvalue -> id
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+call -> call ( elist )
+const -> INT
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+call -> call ( elist )
+primary -> call
+term -> primary
+expr -> term
+stmt -> expr;
+stmts -> stmts stmt
+lvalue -> id
+const -> STRING
+primary -> const
+term -> primary
+expr -> term
+elist -> expr
+normcall -> ( elist )
+callsuffix -> normcall
+call -> lvalue callsuffix
+primary -> call
+term -> p

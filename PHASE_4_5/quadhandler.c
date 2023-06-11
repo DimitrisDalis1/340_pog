@@ -3,6 +3,7 @@ extern int  yylineno;
 quad*	quads = (quad*) 0;
 unsigned total = 0;
 int tempcounter=0;
+int offset_= -1; 
 extern int currQuad;
 unsigned programVarOffset =0; 
 unsigned functionLocalOffset=0;
@@ -163,13 +164,13 @@ unsigned int currscopeoffset(){
 void incurrscopeoffset(){
 	switch(currscopespace()){
 		case programvar:
-			++programVarOffset;
+			programVarOffset++;
 			break;
 		case functionlocal:
-			++functionLocalOffset;
+			functionLocalOffset++;
 			break;
 		case formalarg: 
-			++formalArgOffset;
+			formalArgOffset++;
 			break;
 		default: assert(0);	
 	}
@@ -177,12 +178,12 @@ void incurrscopeoffset(){
 }
 
 void enterscopespace(){
-	++scopeSpaceCounter;
+	//++scopeSpaceCounter;
 }
 
 void exitscopespace(){
 	assert(scopeSpaceCounter>1);
-	--scopeSpaceCounter;
+	//--scopeSpaceCounter;
 }
 
 void expand(){
@@ -231,14 +232,14 @@ SymbolTableEntry* newtemp(){
 	char* name=newtempname();
 	SymbolTableEntry* sym=lookup_inScope_wA(hash,name,current_scope);
 	if(sym==NULL){
-		
+		offset_++;
 		if(current_scope==0)
 		{
 			program_offset++;
 			sym= SymTable_insert(hash,name,yylineno,NULL,current_scope,GLOBAL);
 			sym->space=programvar;
-			sym->offset=currscopeoffset();
-			incurrscopeoffset();
+			sym->offset=programVarOffset++;
+			//incurrscopeoffset();
 			printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
 
 			return sym;
@@ -248,8 +249,8 @@ SymbolTableEntry* newtemp(){
 			sym=SymTable_insert(hash,name,yylineno,NULL,current_scope,LOCALV);
 			sym->space=functionlocal;
 			//sym->offset=offset_;
-			sym->offset=currscopeoffset();
-			incurrscopeoffset();
+			sym->offset=functionLocalOffset++;
+			//incurrscopeoffset();
 			printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
 
 			return sym;
@@ -257,14 +258,13 @@ SymbolTableEntry* newtemp(){
 		}
 		
 	}else{
-		sym->offset=currscopeoffset();
-		sym->space=currscopespace();
+		//sym->offset=currscopeoffset();
+		//sym->space=currscopespace();
 		return sym;
 	}
 	printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
 
-	incurrscopeoffset();
-
+	
 }
 
 void resetformalargoffset(){

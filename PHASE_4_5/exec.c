@@ -69,7 +69,6 @@ void execute_return (instruction* instr) { assert(0); return; }
 
 
 void execute_call(instruction* instr){
-	printf("%lSSAAAAFGMMMMMMMMMocal\n");
     avm_memcell* func = avm_translate_operand(instr->result,&ax);
     assert(func);
     avm_callsaveenvironment(); 
@@ -101,10 +100,8 @@ void execute_funcenter (instruction* instr){
     assert(pc == userfs[func->data.funcVal].address); /* Func address should match PC. */
     /* Callee actions here. */
     totalActuals = 0;
-    userfunc* funcInfo = userfuncs_getfunc(func->data.funcVal);
+    userfunc* funcInfo = userfuncs_getfunc(pc);
     topsp = top;
-
-	printf("%d lSSAAAAFGMMMMMMMMMocal\n",funcInfo -> localSize);
     top = top - funcInfo -> localSize; 
 }
 

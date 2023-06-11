@@ -16,6 +16,8 @@
     extern FILE* yyin;
     FILE* yyout_y; 
     int scope=0;
+	extern unsigned scopeSpaceCounter;
+	int func_flag =0;
     int block_count = 0;
     bool isFunct = false;
     bool isError=false;
@@ -28,12 +30,13 @@
     int offset=-1;
 	int program_offset=0;
     int loopcounter=0;
-	int offset_= -1; 
-    //extern unsigned functionLocalOffset;
-    //extern unsigned formalArgOffset;
+    extern int offset_; 
     extern int tempcounter;
 	extern unsigned char   executionFinished;
-    extern unsigned formalArgOffset;  
+   extern unsigned programVarOffset ; 
+	extern unsigned functionLocalOffset;
+	extern unsigned formalArgOffset;
+ 
         int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
     int b_n_bf = 0; //before func
@@ -409,7 +412,7 @@ M expr
 	{
 		$5->truelist = newlist(nextquad());
 		$5->falselist = newlist(nextquad() + 1);
-		emit(if_eq, NULL, $5, newexpr_constbool('t'), 0, yylineno);
+		emit(if_eq, NULL, $5, newexpr_constbool('t'), 0, yylineno); 
 		emit(jump, NULL, NULL, NULL, 0, yylineno);
 	}
 	$$ = newexpr(boolexpr_e);
@@ -734,14 +737,13 @@ lvalue : ID
 			entry = lookup_inScope(hash, (char *)$1, 0);
 			if (entry == NULL)
 			{
-				
 				if (current_scope == 0)
 				{
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, GLOBAL);
 					entry->space = programvar;
 					 program_offset++;
-					entry->offset =currscopeoffset();
+					entry->offset =programVarOffset++;
 					
 				}
 				else
@@ -749,10 +751,10 @@ lvalue : ID
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, LOCALV);
 					entry->space = functionlocal;
-					entry->offset = currscopeoffset();
+					entry->offset = functionLocalOffset++;
 					
 				}
-				incurrscopeoffset();
+				
 
 				$$ = lvalue_expr(entry);
 			}
@@ -823,7 +825,7 @@ lvalue : ID
 				offset_++;
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, GLOBAL);
 				entry->space = programvar;
-				entry->offset = currscopeoffset();
+				entry->offset = programVarOffset++;
 				program_offset++;
 				
 			}
@@ -832,10 +834,10 @@ lvalue : ID
 				offset_++;
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, LOCALV);
 				entry->space = functionlocal;
-				entry->offset = currscopeoffset();
+				entry->offset = functionLocalOffset++;
 				
 			}
-			incurrscopeoffset();
+			
 
 			$$ = lvalue_expr(entry);
 		}
@@ -859,10 +861,8 @@ lvalue : ID
 		isError = true;
 		$$=newexpr(nil_e);
 	}
-	else{
-		entry->space = currscopespace();
-		entry->offset = currscopeoffset();
-}
+	else
+		
 		$$ = lvalue_expr(entry);
 	fprintf(yyout_y, "lvalue -> ::id\n");
 }
@@ -1147,7 +1147,7 @@ funcprefix : FUNCTION funcname
 		$$ = newexpr(programfunc_e);
 		$$->sym = SymTable_insert(hash, (char *)$2, yylineno, NULL, temp, USERFUNC);
 		$$->sym->space=currscopespace();
-		$$->sym->offset=currscopeoffset();
+		//$$->sym->offset=currscopeoffset();
 
 	}
 	else
@@ -1189,7 +1189,7 @@ funcargs :
 	funcprefix M LEFTPAR{
 	
 	increase_scope();
-	
+	scopeSpaceCounter=2;
 	isFunct1 = true;
 	isFunct = true;
 }
@@ -1201,8 +1201,9 @@ idlist RIGHTPAR
 	fprintf(yyout_y, "funcargs -> funcprefix M ( idlist )\n");};
 
 funcblockstart:
-{
+{	scopeSpaceCounter=3;
 	offset_ = -1;
+	++func_flag;
 	sim_funcs++;
 	push(loopcounterstack, loopcounter); 
 	loopcounter = 0;
@@ -1227,9 +1228,14 @@ funcblockend
 	$$ = $1;
 	loopcounter = pop(loopcounterstack);
 	sim_funcs--;
+	--func_flag;
 	offset_ = pop(stack_);
-	restorecurrscopeoffset(offset_);
 	exitscopespace();
+	exitscopespace();/////////////////////////////////////////gia emfwlevmenes
+	if(func_flag!=0)scopeSpaceCounter=3;
+	else scopeSpaceCounter=1;
+	restorecurrscopeoffset(++offset_);
+	
 	
 	patchlabel(fof,nextquad());
 	// printf("%d",fof);
@@ -1261,11 +1267,11 @@ idlist:
 		//insertion in the symtable/scopelist
 		SymbolTableEntry* temp;
 		temp = SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
-		temp->offset = currscopeoffset();
+		temp->offset = formalArgOffset++;
 		temp->space = formalarg;
 		printf("OFFSET FOmal %d %d\n",temp->offset, temp->space);
 
-		incurrscopeoffset();
+		
 		fprintf(yyout_y,"idlist -> id\n");}
 	}
 	|idlist COMMA ID 
@@ -1293,10 +1299,10 @@ idlist:
 		//temp->offset = formalArgOffset++;
 		//temp->space = formalarg;
 		temp->space = formalarg;
-		temp->offset = currscopeoffset();
+		temp->offset = formalArgOffset++;
 		printf("OFFSET FOmal %d %d\n",temp->offset, temp->space);
 
-		incurrscopeoffset();
+
 	fprintf(yyout_y,"idlist -> idlist , ID\n");
 }
     fprintf(yyout_y,"idlist -> idlist , id\n");
