@@ -3,11 +3,12 @@ extern int  yylineno;
 quad*	quads = (quad*) 0;
 unsigned total = 0;
 int tempcounter=0;
+int offset_= -1; 
 extern int currQuad;
-unsigned programVarOffset =0; 
-unsigned functionLocalOffset=0;
+unsigned programVarOffset=0;
+ unsigned functionLocalOffset=0;
 unsigned formalArgOffset=0;
-unsigned scopeSpaceCounter=1;
+ unsigned scopeSpaceCounter=0;
 int print_flag=0;
 extern int program_offset;
 int check_for_valid_loop_stop(int counter){
@@ -140,11 +141,11 @@ void printMedianCode(){
 
 scopespace_t currscopespace(){
 	if(scopeSpaceCounter==1){
-		return programvar;
-	}else if(scopeSpaceCounter % 2 == 0){
-  		return formalarg;
-	}else{
 		return functionlocal;
+	}else if(scopeSpaceCounter ==0){
+  		return programvar;
+	}else{
+		return formalarg;
 	}
 }
 
@@ -161,28 +162,28 @@ unsigned int currscopeoffset(){
 }
 
 void incurrscopeoffset(){
-	switch(currscopespace()){
+	/*switch(currscopespace()){
 		case programvar:
-			++programVarOffset;
+			programVarOffset++;
 			break;
 		case functionlocal:
-			++functionLocalOffset;
+			functionLocalOffset++;
 			break;
 		case formalarg: 
-			++formalArgOffset;
+			formalArgOffset++;
 			break;
 		default: assert(0);	
-	}
+	}*/
 		
 }
 
 void enterscopespace(){
-	++scopeSpaceCounter;
+	//++scopeSpaceCounter;
 }
 
 void exitscopespace(){
 	assert(scopeSpaceCounter>1);
-	--scopeSpaceCounter;
+	//--s;
 }
 
 void expand(){
@@ -231,25 +232,39 @@ SymbolTableEntry* newtemp(){
 	char* name=newtempname();
 	SymbolTableEntry* sym=lookup_inScope_wA(hash,name,current_scope);
 	if(sym==NULL){
+		offset_++;
 		if(current_scope==0)
 		{
 			program_offset++;
 			sym= SymTable_insert(hash,name,yylineno,NULL,current_scope,GLOBAL);
 			sym->space=programvar;
+			sym->offset=programVarOffset++;
+			//incurrscopeoffset();
+			//printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
+
 			return sym;
 
 
 		}else{
 			sym=SymTable_insert(hash,name,yylineno,NULL,current_scope,LOCALV);
 			sym->space=functionlocal;
+			//sym->offset=offset_;
+			sym->offset=functionLocalOffset++;
+			//incurrscopeoffset();
+			//printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
+
 			return sym;
 
 		}
 		
 	}else{
+		//sym->offset=currscopeoffset();
+		//sym->space=currscopespace();
 		return sym;
 	}
+	//printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
 
+	
 }
 
 void resetformalargoffset(){

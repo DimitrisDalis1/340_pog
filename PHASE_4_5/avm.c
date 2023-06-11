@@ -12,7 +12,7 @@ int disable_remove_warning = 0;
 
 avm_memcell ax, bx, cx;
 avm_memcell retval;
-int    top, topsp;
+int    top=0, topsp=0;
 
 /* needs binary file*/
 double  consts_getnumber(unsigned index){
@@ -84,7 +84,7 @@ void avm_tabledestroy (avm_table* t){
     free(t);
 }
 
-extern char* typeStrings[]; //done in bool.c
+extern char* typeStrings[]; 
 
 
 
@@ -92,11 +92,10 @@ extern char* typeStrings[]; //done in bool.c
 
 avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
     assert(arg);
-int x;
     if(reg)
         avm_memcellclear(reg);
     switch(arg->type){
-        case global_a: x = AVM_STACKSIZE - 1 - arg->val; printf(" it is %d\n" , x); return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
+        case global_a: return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
         case local_a: return &avm_stack[topsp - arg->val];   
         case formal_a: return &avm_stack[topsp + AVM_STACKENV_SIZE + 1 + arg->val];
 
@@ -130,7 +129,7 @@ int x;
 
         case userfunc_a:{
             reg->type = userfunc_m;
-            reg->data.funcVal = userfuncs_getfunc(arg->val)->address;
+            reg->data.funcVal = arg->val;
             return reg;
         }
 
@@ -189,7 +188,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
     assert(table);
     assert(index);
     if(index->type != string_m && index->type != number_m){
-        avm_error("table index can only be a string or a number",&instrs[pc]);
+        avm_error("table index can only be a string or a number",&code[pc]);
     }
     if(index->type == number_m){
         int key = numHash(index->data.numVal);
@@ -200,7 +199,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
             }
             temp = temp->next;
         }
-        avm_warning("Table element cannot be found",&instrs[pc]);
+        avm_warning("Table element cannot be found",&code[pc]);
         return NULL;
     }else if(index->type == string_m){
         int key = strHash(index->data.strVal);
@@ -211,7 +210,7 @@ avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
             }
             temp = temp->next;
         }
-        avm_warning("Table element cannot be found",&instrs[pc]);
+        avm_warning("Table element cannot be found",&code[pc]);
         return NULL;
         }
 }
@@ -322,6 +321,7 @@ void avm_dec_top(void){
 void avm_push_envvalue(unsigned val){
     avm_stack[top].type         = number_m;
     avm_stack[top].data.numVal  = val;
+
     avm_dec_top();
 }
 
@@ -389,13 +389,12 @@ int libfunc_hash(char* id){
 }
 
 char* number_tostring(avm_memcell* a){
-	int n;
-	n = getNumberOfDigits(a->data.numVal);
-	char* buffer = malloc(32*sizeof(char));
-	sprintf(buffer,"%f",a->data.numVal);
-	return buffer;
+    int n;
+    n = getNumberOfDigits(a->data.numVal);
+    char* buffer = malloc(40*sizeof(char));
+    sprintf(buffer,"%0.3f",a->data.numVal);
+    return buffer;
 }
-
 int getNumberOfDigits(int a){
 	int count = 0;
 	while(a > 0){
@@ -460,8 +459,8 @@ char* libfunc_tostring(avm_memcell* a){
 	return buff;
 
 }
-char* nil_tostring(avm_memcell* a){return "nil";}
-char* undef_tostring(avm_memcell* a){return "undef";}
+char* nil_tostring(avm_memcell* a){return strdup("nil");}
+char* undef_tostring(avm_memcell* a){return strdup("undef");}
 
 
 
@@ -532,8 +531,7 @@ void avm_calllibfunc(char* id){
     }
 }
 
-unsigned avm_totalactuals(void){
-    return avm_get_envvalue(topsp + AVM_NUMACTUALS_OFFSET);
+unsigned avm_totalactuals(void){    return avm_get_envvalue(topsp + AVM_NUMACTUALS_OFFSET);
 }
 
 avm_memcell* avm_getactual(unsigned i){
@@ -553,10 +551,9 @@ avm_memcell* avm_getactual(unsigned i){
 void libfunc_print(void){
 
     unsigned n = avm_totalactuals();
-	//printf("%d",n);
     for(unsigned i = 0; i<n; i++){
         char* s = avm_tostring(avm_getactual(i));
-        puts(s);
+      printf("%s",s);
         free(s);
     }
 }
@@ -1009,8 +1006,7 @@ void avm_assign(avm_memcell* lv, avm_memcell* rv){
         avm_warning("assigning from 'undef' content! ",&instrs[pc]);
 
     avm_memcellclear(lv); /*clear old cell contents. */
-    memcpy(lv,rv,sizeof(avm_memcell)); 
-    /*now take care of copied values or reference counting*/
+    memcpy(lv,rv,sizeof(avm_memcell));    /*now take care of copied values or reference counting*/
     if(lv->type == string_m)
         lv->data.strVal = strdup(rv->data.strVal);
     else
@@ -1023,10 +1019,9 @@ void avm_assign(avm_memcell* lv, avm_memcell* rv){
 
 void avm_initialize(void) {
     avm_initstack();
-    //libfunc_hashtable = malloc(sizeof(LibFuncHash));
-    top = AVM_STACKSIZE-1-program_offset;
-    topsp   = top;
-	}
+    top = AVM_STACKSIZE-program_offset-1;
+    topsp   =  AVM_STACKSIZE-1;
+ 	}
 
 typedef unsigned int(*tobool_func_t)(avm_memcell*);
 
@@ -1066,11 +1061,11 @@ typedef double (*toarithm_func_t)(avm_memcell*);
 
 double number_toarithm(avm_memcell* m) { return m->data.numVal; }
 double string_toarithm(avm_memcell* m) { size_t length= strlen(m->data.strVal); return length;}
-double bool_toarithm(avm_memcell* m) { return m->data.boolVal; } 
-double table_toarithm(avm_memcell* m) { return 1; }
-double userfunc_toarithm(avm_memcell* m) { return 1; }
-double libfunc_toarithm(avm_memcell* m) { return 1; }
-double nil_toarithm(avm_memcell* m) { return 0; }
+double bool_toarithm(avm_memcell* m) {  assert(0); return 0; } 
+double table_toarithm(avm_memcell* m) { return m->data.tableVal->total; }
+double userfunc_toarithm(avm_memcell* m) { return m->data.numVal; }
+double libfunc_toarithm(avm_memcell* m) { return strlen(m->data.libfuncVal); }
+double nil_toarithm(avm_memcell* m) {  assert(0); return 0; }
 double undef_toarithm(avm_memcell* m) { assert(0); return 0; }
 
 
@@ -1119,7 +1114,7 @@ void push_avm_stack(avm_memcell m){
         printf("Avm stack overflow");
         exit(0);
     }else{
-        avm_stack[++current_index] = m;
+        avm_stack[current_index++] = m;
     }
 }
 

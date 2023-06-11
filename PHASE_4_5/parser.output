@@ -175,15 +175,17 @@ Grammar
 
   110 forprefix: FOR LEFTPAR $@10 elist SEMICOLON M expr SEMICOLON
 
-  111 forstmt: forprefix N elist RIGHTPAR N loopstmt N
+  111 $@11: %empty
 
-  112 $@11: %empty
+  112 forstmt: forprefix N elist $@11 RIGHTPAR N loopstmt N
 
-  113 returnstmt: RETURN $@11 SEMICOLON
+  113 $@12: %empty
 
-  114 $@12: %empty
+  114 returnstmt: RETURN $@12 SEMICOLON
 
-  115 returnstmt: RETURN $@12 expr SEMICOLON
+  115 $@13: %empty
+
+  116 returnstmt: RETURN $@13 expr SEMICOLON
 
 
 Terminals, with rules where they appear
@@ -201,7 +203,7 @@ Terminals, with rules where they appear
     WHILE <stringValue> (266) 103
     FOR <stringValue> (267) 110
     FUNCTION <stringValue> (268) 82
-    RETURN <stringValue> (269) 113 115
+    RETURN <stringValue> (269) 114 116
     AND <stringValue> (270) 29
     NOT <stringValue> (271) 39
     OR <stringValue> (272) 31
@@ -228,8 +230,8 @@ Terminals, with rules where they appear
     LEFTBRACE <stringValue> (293) 56 58 75 76
     RIGHTBRACE <stringValue> (294) 56 58 75 76
     LEFTPAR <stringValue> (295) 37 49 59 61 64 65 84 96 105 110
-    RIGHTPAR <stringValue> (296) 37 49 59 61 64 65 84 96 105 111
-    SEMICOLON <stringValue> (297) 3 8 9 12 110 113 115
+    RIGHTPAR <stringValue> (296) 37 49 59 61 64 65 84 96 105 112
+    SEMICOLON <stringValue> (297) 3 8 9 12 110 114 116
     COMMA <stringValue> (298) 67 78 90
     COLON <stringValue> (299) 79
     COLON2 <stringValue> (300) 53
@@ -274,7 +276,7 @@ Nonterminals, with rules where they appear
         on right: 31
     expr <exprNode> (60)
         on left: 32 33 34 35 36
-        on right: 3 15 16 17 18 19 20 21 22 23 25 27 29 31 37 38 39 45 56 58 66 67 79 96 105 110 115
+        on right: 3 15 16 17 18 19 20 21 22 23 25 27 29 31 37 38 39 45 56 58 66 67 79 96 105 110 116
     term <exprNode> (61)
         on left: 37 38 39 40 41 42 43 44
         on right: 33
@@ -304,7 +306,7 @@ Nonterminals, with rules where they appear
         on right: 63
     elist <exprNode> (70)
         on left: 66 67 68
-        on right: 59 61 64 65 67 75 110 111
+        on right: 59 61 64 65 67 75 110 112
     const <exprNode> (71)
         on left: 69 70 71 72 73 74
         on right: 50
@@ -370,7 +372,7 @@ Nonterminals, with rules where they appear
         on right: 102
     loopstmt <stmtNode> (92)
         on left: 102
-        on right: 106 111
+        on right: 106 112
     whilestart <uns> (93)
         on left: 103
         on right: 106
@@ -385,28 +387,31 @@ Nonterminals, with rules where they appear
         on right: 5
     N <uns> (97)
         on left: 107
-        on right: 111
+        on right: 112
     M <uns> (98)
         on left: 108
         on right: 29 31 84 110
     forprefix <forNode> (99)
         on left: 110
-        on right: 111
+        on right: 112
     $@10 (100)
         on left: 109
         on right: 110
     forstmt <stmtNode> (101)
-        on left: 111
-        on right: 6
-    returnstmt <stmtNode> (102)
-        on left: 113 115
-        on right: 7
-    $@11 (103)
         on left: 112
-        on right: 113
+        on right: 6
+    $@11 (102)
+        on left: 111
+        on right: 112
+    returnstmt <stmtNode> (103)
+        on left: 114 116
+        on right: 7
     $@12 (104)
-        on left: 114
-        on right: 115
+        on left: 113
+        on right: 114
+    $@13 (105)
+        on left: 115
+        on right: 116
 
 
 State 0
@@ -544,14 +549,14 @@ State 10
 
 State 11
 
-  113 returnstmt: RETURN • $@11 SEMICOLON
-  115           | RETURN • $@12 expr SEMICOLON
+  114 returnstmt: RETURN • $@12 SEMICOLON
+  116           | RETURN • $@13 expr SEMICOLON
 
-    SEMICOLON  reduce using rule 112 ($@11)
-    $default   reduce using rule 114 ($@12)
+    SEMICOLON  reduce using rule 113 ($@12)
+    $default   reduce using rule 115 ($@13)
 
-    $@11  go to state 57
-    $@12  go to state 58
+    $@12  go to state 57
+    $@13  go to state 58
 
 
 State 12
@@ -1105,7 +1110,7 @@ State 47
 
 State 48
 
-  111 forstmt: forprefix • N elist RIGHTPAR N loopstmt N
+  112 forstmt: forprefix • N elist $@11 RIGHTPAR N loopstmt N
 
     $default  reduce using rule 107 (N)
 
@@ -1199,14 +1204,14 @@ State 56
 
 State 57
 
-  113 returnstmt: RETURN $@11 • SEMICOLON
+  114 returnstmt: RETURN $@12 • SEMICOLON
 
     SEMICOLON  shift, and go to state 113
 
 
 State 58
 
-  115 returnstmt: RETURN $@12 • expr SEMICOLON
+  116 returnstmt: RETURN $@13 • expr SEMICOLON
 
     ID         shift, and go to state 1
     STRING     shift, and go to state 2
@@ -2198,7 +2203,7 @@ State 109
 
 State 110
 
-  111 forstmt: forprefix N • elist RIGHTPAR N loopstmt N
+  112 forstmt: forprefix N • elist $@11 RIGHTPAR N loopstmt N
 
     ID         shift, and go to state 1
     STRING     shift, and go to state 2
@@ -2305,9 +2310,9 @@ State 112
 
 State 113
 
-  113 returnstmt: RETURN $@11 SEMICOLON •
+  114 returnstmt: RETURN $@12 SEMICOLON •
 
-    $default  reduce using rule 113 (returnstmt)
+    $default  reduce using rule 114 (returnstmt)
 
 
 State 114
@@ -2325,7 +2330,7 @@ State 114
    27      | expr • NOT_EQUAL $@2 expr
    29 boolexpr: expr • AND $@3 M expr
    31         | expr • OR $@4 M expr
-  115 returnstmt: RETURN $@12 expr • SEMICOLON
+  116 returnstmt: RETURN $@13 expr • SEMICOLON
 
     AND            shift, and go to state 78
     OR             shift, and go to state 79
@@ -3157,10 +3162,13 @@ State 152
 State 153
 
    67 elist: elist • COMMA expr
-  111 forstmt: forprefix N elist • RIGHTPAR N loopstmt N
+  112 forstmt: forprefix N elist • $@11 RIGHTPAR N loopstmt N
 
-    RIGHTPAR  shift, and go to state 177
-    COMMA     shift, and go to state 120
+    COMMA  shift, and go to state 120
+
+    $default  reduce using rule 111 ($@11)
+
+    $@11  go to state 177
 
 
 State 154
@@ -3181,9 +3189,9 @@ State 155
 
 State 156
 
-  115 returnstmt: RETURN $@12 expr SEMICOLON •
+  116 returnstmt: RETURN $@13 expr SEMICOLON •
 
-    $default  reduce using rule 115 (returnstmt)
+    $default  reduce using rule 116 (returnstmt)
 
 
 State 157
@@ -3582,11 +3590,9 @@ State 176
 
 State 177
 
-  111 forstmt: forprefix N elist RIGHTPAR • N loopstmt N
+  112 forstmt: forprefix N elist $@11 • RIGHTPAR N loopstmt N
 
-    $default  reduce using rule 107 (N)
-
-    N  go to state 189
+    RIGHTPAR  shift, and go to state 189
 
 
 State 178
@@ -3753,12 +3759,11 @@ State 188
 
 State 189
 
-  111 forstmt: forprefix N elist RIGHTPAR N • loopstmt N
+  112 forstmt: forprefix N elist $@11 RIGHTPAR • N loopstmt N
 
-    $default  reduce using rule 100 (loopstart)
+    $default  reduce using rule 107 (N)
 
-    loopstart  go to state 151
-    loopstmt   go to state 196
+    N  go to state 196
 
 
 State 190
@@ -3832,11 +3837,12 @@ State 195
 
 State 196
 
-  111 forstmt: forprefix N elist RIGHTPAR N loopstmt • N
+  112 forstmt: forprefix N elist $@11 RIGHTPAR N • loopstmt N
 
-    $default  reduce using rule 107 (N)
+    $default  reduce using rule 100 (loopstart)
 
-    N  go to state 199
+    loopstart  go to state 151
+    loopstmt   go to state 199
 
 
 State 197
@@ -3881,9 +3887,11 @@ State 198
 
 State 199
 
-  111 forstmt: forprefix N elist RIGHTPAR N loopstmt N •
+  112 forstmt: forprefix N elist $@11 RIGHTPAR N loopstmt • N
 
-    $default  reduce using rule 111 (forstmt)
+    $default  reduce using rule 107 (N)
+
+    N  go to state 201
 
 
 State 200
@@ -3891,3 +3899,10 @@ State 200
   110 forprefix: FOR LEFTPAR $@10 elist SEMICOLON M expr SEMICOLON •
 
     $default  reduce using rule 110 (forprefix)
+
+
+State 201
+
+  112 forstmt: forprefix N elist $@11 RIGHTPAR N loopstmt N •
+
+    $default  reduce using rule 112 (forstmt)

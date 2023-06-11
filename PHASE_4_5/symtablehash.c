@@ -531,21 +531,3 @@ SymbolTableEntry* lookup_inBucket_without_isActive(SymTable_T *oSymTable, const 
     return NULL;
 }
 
-/*
-int main()
-{
-    id_list *p = create_id_list("hello");
-    insert(p,"bye2");
-    insert(p,"bye");
-    while (p->head != NULL)
-    {
-        printf(" %s \n",p->head->id);
-        p->head = p->head->next;
-    }
-    free(p);
-    
-    //printf("%d", SymTable_getLength(hash));
-
-    return 0;
-}
-*/

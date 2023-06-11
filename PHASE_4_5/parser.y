@@ -16,6 +16,8 @@
     extern FILE* yyin;
     FILE* yyout_y; 
     int scope=0;
+	extern unsigned scopeSpaceCounter;
+	int func_flag =0;
     int block_count = 0;
     bool isFunct = false;
     bool isError=false;
@@ -28,12 +30,13 @@
     int offset=-1;
 	int program_offset=0;
     int loopcounter=0;
-	int offset_= -1; 
-    //extern unsigned functionLocalOffset;
-    //extern unsigned formalArgOffset;
+    extern int offset_; 
     extern int tempcounter;
 	extern unsigned char   executionFinished;
-    extern unsigned formalArgOffset;  
+   extern unsigned programVarOffset ; 
+	extern unsigned functionLocalOffset;
+	extern unsigned formalArgOffset;
+ 
         int b_n_b = 0; //before loop
     int b_a = 0;   //after loop
     int b_n_bf = 0; //before func
@@ -409,7 +412,7 @@ M expr
 	{
 		$5->truelist = newlist(nextquad());
 		$5->falselist = newlist(nextquad() + 1);
-		emit(if_eq, NULL, $5, newexpr_constbool('t'), 0, yylineno);
+		emit(if_eq, NULL, $5, newexpr_constbool('t'), 0, yylineno); 
 		emit(jump, NULL, NULL, NULL, 0, yylineno);
 	}
 	$$ = newexpr(boolexpr_e);
@@ -510,6 +513,7 @@ term : LEFTPAR expr RIGHTPAR
 	{
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
+
 		emit(uminus, $$, $2, NULL, -1, yylineno); // _t0 = -x;
 	}
 	fprintf(yyout_y, "term -> -expr\n");
@@ -613,6 +617,8 @@ term : LEFTPAR expr RIGHTPAR
 		emit(sub, $2, $2, newexpr_constint(1), -1, yylineno);
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
+
+
 		emit(assign, $$, $2, NULL, -1, yylineno);
 	}
 	fprintf(yyout_y, "term -> --lvalue\n");
@@ -675,8 +681,8 @@ assignexpr : lvalue ASSIGN expr
 		$$=newexpr(assignexpr_e);
 		
 		SymbolTableEntry *temp = newtemp();
-		
 		$$->sym = temp;
+		
 		emit(assign, $$, $1, NULL, -1, yylineno);
 	}
 };
@@ -689,10 +695,10 @@ primary : lvalue
 | call
 {
 	fprintf(yyout_y, "primary -> call\n");
-	$$ = $1;
+	//$$ = $1;
 }
 | objectdef
-{	$$=$1;
+{	//$$=$1;
 	fprintf(yyout_y, "primary -> objectdef\n");
 	}
 | LEFTPAR funcdef RIGHTPAR
@@ -704,7 +710,7 @@ primary : lvalue
 | const
 {
 	fprintf(yyout_y, "primary -> const\n");
-	$$ = $1;
+	//$$ = $1;
 };
 
 lvalue : ID
@@ -731,23 +737,25 @@ lvalue : ID
 			entry = lookup_inScope(hash, (char *)$1, 0);
 			if (entry == NULL)
 			{
-
 				if (current_scope == 0)
 				{
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, GLOBAL);
 					entry->space = programvar;
 					 program_offset++;
-					entry->offset = offset_;
+					entry->offset =programVarOffset++;
+					
 				}
 				else
 				{
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, LOCALV);
 					entry->space = functionlocal;
-					entry->offset = offset_;
+					entry->offset = functionLocalOffset++;
+					
 				}
-				// incurrscopeoffset();
+				
+
 				$$ = lvalue_expr(entry);
 			}
 			else
@@ -790,6 +798,8 @@ lvalue : ID
 	}
 	else 
 	$$ = lvalue_expr(entry);
+	//printf("OFFSET LVALUE %d %d\n",entry->offset, entry->space);
+	
 }
 | LOCAL ID
 {
@@ -809,23 +819,25 @@ lvalue : ID
 		}
 		else
 		{
+			
 			if (current_scope == 0)
 			{
 				offset_++;
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, GLOBAL);
 				entry->space = programvar;
-				entry->offset = offset_++;
+				entry->offset = programVarOffset++;
 				program_offset++;
-				//incurrscopeoffset();
+				
 			}
 			else
 			{
 				offset_++;
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, LOCALV);
 				entry->space = functionlocal;
-				entry->offset = offset_++;
-				//incurrscopeoffset();
+				entry->offset = functionLocalOffset++;
+				
 			}
+			
 
 			$$ = lvalue_expr(entry);
 		}
@@ -838,6 +850,7 @@ lvalue : ID
 	}
 	
 	$$ = lvalue_expr(entry);
+	
 }
 | COLON2 ID
 {
@@ -849,12 +862,12 @@ lvalue : ID
 		$$=newexpr(nil_e);
 	}
 	else
-
+		
 		$$ = lvalue_expr(entry);
 	fprintf(yyout_y, "lvalue -> ::id\n");
 }
 | member
-{	$$=$1;
+{	//$$=$1;
 	fprintf(yyout_y, "lvalue -> member\n");
 };
 
@@ -1106,8 +1119,11 @@ funcname : ID
 	fprintf(yyout_y, "funcname -> NULL\n");
 };
 
+
 funcprefix : FUNCTION funcname
 {
+	
+	
 	SymbolTableEntry *search = lookup_inScope(hash, (char *)$2, 0);
 	if (search != NULL)
 	{
@@ -1130,7 +1146,9 @@ funcprefix : FUNCTION funcname
 	{
 		$$ = newexpr(programfunc_e);
 		$$->sym = SymTable_insert(hash, (char *)$2, yylineno, NULL, temp, USERFUNC);
-		$$->sym->space=currscopespace();
+		//$$->sym->space=currscopespace();
+		//$$->sym->offset=currscopeoffset();
+
 	}
 	else
 	{
@@ -1148,7 +1166,6 @@ funcprefix : FUNCTION funcname
 		$$->sym = search;
 	}
 	$$->iaddress = nextquadlabel(); 
-
 	int *tmp = malloc(sizeof(int));
 	*tmp = nextquadlabel();
 	push(func_stack, *tmp);
@@ -1156,32 +1173,34 @@ funcprefix : FUNCTION funcname
 	expr* func=newexpr(programfunc_e);
 	func->sym=$$->sym;
 	func->sym->value.funcVal->name=$2;
-	func->sym->address=nextquadlabel()+1;
-	func->iaddress=nextquadlabel()+1;
+	func->sym->address=nextquadlabel();
+	func->iaddress=nextquadlabel();
 	emit(funcstart,func, NULL, NULL, -1, yylineno);
-
-	push(stack_, offset_); 
-	offset_ = -1;
-	enterscopespace();
-	resetformalargoffset(); // Start formals from zero
+	if(scopeSpaceCounter==1)
+	push(stack_, functionLocalOffset); 
+	else push(stack_,programVarOffset);
+	//offset_ = -1;	
 	fprintf(yyout_y, "funcprefix -> FUNCTION funcname\n");};
 
 funcargs :
 	funcprefix M LEFTPAR{
+	
 	increase_scope();
+	scopeSpaceCounter=2;
+	formalArgOffset=0;
 	isFunct1 = true;
 	isFunct = true;
 }
 idlist RIGHTPAR
 {
 	$1->sym->value.funcVal->args = $5;
-	enterscopespace();		
-	resetfunctionlocaloffset(); 
 	fprintf(yyout_y, "funcargs -> funcprefix M ( idlist )\n");};
 
 funcblockstart:
-{
+{	scopeSpaceCounter=1;
 	offset_ = -1;
+	++func_flag;
+	functionLocalOffset=0;
 	sim_funcs++;
 	push(loopcounterstack, loopcounter); 
 	loopcounter = 0;
@@ -1200,14 +1219,22 @@ funcdef : funcargs funcblockstart block
 funcblockend
 {
 	int fof = pop(func_stack);
+	int off=0;
 	assert($$);
 	$1->sym->value.funcVal->totalLocals = offset_ + 1;
 	emit(funcend, $$, NULL, NULL, -1, yylineno);
 	$$ = $1;
 	loopcounter = pop(loopcounterstack);
 	sim_funcs--;
-	exitscopespace();
-	offset_ = pop(stack_);
+	--func_flag;
+	off = pop(stack_);
+	if(func_flag!=0)scopeSpaceCounter=1;
+	else scopeSpaceCounter=0;
+	//restorecurrscopeoffset(offset_);
+	if(scopeSpaceCounter==1)
+		functionLocalOffset=off;
+	else programVarOffset=off;
+	
 	patchlabel(fof,nextquad());
 	// printf("%d",fof);
 	patchlist($3->returnlist,nextquad()-1);
@@ -1231,7 +1258,7 @@ idlist:
 		}else{
 		
 		//insertion in the idlist and saving the idlist
-
+		
 		$$ = create_id_list();
 		insert($$,$1);
 
@@ -1240,6 +1267,9 @@ idlist:
 		temp = SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
 		temp->offset = formalArgOffset++;
 		temp->space = formalarg;
+		//printf("OFFSET FOmal %d %d\n",temp->offset, temp->space);
+
+		
 		fprintf(yyout_y,"idlist -> id\n");}
 	}
 	|idlist COMMA ID 
@@ -1260,14 +1290,16 @@ idlist:
     //insertion in the idlist and saving the idlist
     insert($1,$3);
     $$ = $1; //not sure if this is functional 
-
+	
 	//insertion in the symtable/scopelist
 	SymbolTableEntry* temp;
 		temp =SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
 		//temp->offset = formalArgOffset++;
 		//temp->space = formalarg;
-		temp->space = currscopespace();
-		temp->offset = currscopeoffset();
+		temp->space = formalarg;
+		temp->offset = formalArgOffset++;
+		//printf("OFFSET FOmal %d %d\n",temp->offset, temp->space);
+
 
 	fprintf(yyout_y,"idlist -> idlist , ID\n");
 }
@@ -1440,16 +1472,16 @@ elist SEMICOLON M expr SEMICOLON
 	fprintf(yyout_y, "forprefix -> for ( \n");
 };
 
-forstmt : forprefix N elist RIGHTPAR N loopstmt N
+forstmt : forprefix N elist{tempcounter = 0;} RIGHTPAR N loopstmt N
 {
-	patchlabel($1->enter, $5 + 1); // true jump
+	patchlabel($1->enter, $6 + 1); // true jump
 	patchlabel($2, nextquad());	   // false jump
-	patchlabel($5, $1->test);	   // loop jump
-	patchlabel($7, $2 + 1);		   // closure jump
+	patchlabel($6, $1->test);	   // loop jump
+	patchlabel($8, $2 + 1);		   // closure jump
 
-	patchlist($6->breaklist, nextquad());
-	patchlist($6->contlist, $2 + 1);
-	$$ = $6;
+	patchlist($7->breaklist, nextquad());
+	patchlist($7->contlist, $2 + 1);
+	$$ = $7;
 	fprintf(yyout_y, "forstmt -> forprefix N elist ( N loopstmt N \n");
 };
 returnstmt : RETURN
@@ -1526,8 +1558,8 @@ int main(int argc, char** argv)
 	readBinary();
 		avm_initialize();
    
-while(executionFinished == 0)
-        execute_cycle();	
+	while(executionFinished == 0)
+       		 execute_cycle();	
     avm_memcellclear(&ax);
     avm_memcellclear(&bx);
     avm_memcellclear(&cx);

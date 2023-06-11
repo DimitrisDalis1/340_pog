@@ -311,7 +311,8 @@ void make_operand(expr* e, vmarg* arg){
         }
 
         default: {
-            assert(0);
+            assert(0); 
+
         }
     }
 }
@@ -329,7 +330,7 @@ void make_booloperand(vmarg* arg, unsigned val){
 
 void make_retvaloperand(vmarg* arg){
     arg->type = retval_a;
-	arg->val=-8;
+	arg->val=0;
 }
 
 
@@ -512,7 +513,7 @@ void generate_RETURN(quad* q){
     instruction *t=malloc(sizeof(instruction)); 
     t->opcode = assign_v;
     t->srcLine=q->line;  
-t->arg1 = NULL;
+    t->arg1 = NULL;
     t->arg2 = NULL;
     t->result = NULL;
   
@@ -521,7 +522,11 @@ t->arg1 = NULL;
     if(q->result!=NULL){
         t->arg1 = malloc(sizeof(vmarg));
         make_operand(q->result , t->arg1 );
-    }
+    }else{
+        t->arg1 = malloc(sizeof(vmarg));
+
+		 t->arg1->type=nil_a;
+	}
    
 
     emit_v(t);
@@ -548,6 +553,7 @@ void instrToBinary(){
 	FILE *executable;
 	int i;
 	int  length;
+	int temp;
 	int magic_num = 200701202;
 	executable= fopen("executable.abc","wb");
 
@@ -557,7 +563,7 @@ void instrToBinary(){
 
 	
 	for(i=0;i<totalUserFuncs;i++){
-		
+		--userFuncs[i].address;
 		fwrite(&userFuncs[i].address,sizeof(int),1,executable);
 
 		fwrite(&userFuncs[i].localSize,sizeof(int),1,executable);
@@ -639,12 +645,13 @@ void instrToBinary(){
 	fclose(executable);
 }
 
+
 void readBinary(){
 
 	FILE *executable;
 	executable= fopen("executable.abc","r");
 	
-	int magic_number,i,length;
+	int magic_number,i,length,temp;
 	
     	fread(&magic_number, sizeof(int), 1, executable);
 
@@ -658,7 +665,7 @@ void readBinary(){
 	
 		userfs =(userfunc*) malloc(user*sizeof(userfunc));
 		for(i=0;i<user;i++){
-		
+			//temp=userfs[i].address-1;
 			fread(&userfs[i].address, sizeof(int), 1, executable);
 			printf("%u ", userfs[i].address);
 			fread(&userfs[i].localSize, sizeof(int), 1, executable);

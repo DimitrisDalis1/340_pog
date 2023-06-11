@@ -35,7 +35,6 @@ void execute_cycle(void){
         return;
     }
     else if(pc == AVM_ENDING_PC){
-        printf("tellos\n");
         executionFinished = 1;
         return;
     }
@@ -77,6 +76,7 @@ void execute_call(instruction* instr){
     case userfunc_m :{
         pc = userfs[func->data.funcVal].address;
         assert(pc < AVM_ENDING_PC);
+
         assert(instrs[pc].opcode == funcenter_v);
         break;
     }
@@ -96,7 +96,7 @@ void execute_call(instruction* instr){
 void execute_funcenter (instruction* instr){
     avm_memcell* func = avm_translate_operand(instr->result, &ax);
     assert(func);
-    assert(pc == func->data.funcVal); /* Func address should match PC. */
+    assert(pc == userfs[func->data.funcVal].address); /* Func address should match PC. */
     /* Callee actions here. */
     totalActuals = 0;
     userfunc* funcInfo = userfuncs_getfunc(pc);
@@ -110,16 +110,18 @@ void execute_funcexit(instruction* unused){
     pc = avm_get_envvalue(topsp + AVM_SAVEDPC_OFFSET);
     topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
 
-   // while(++oldTop <= top)
-        //avm_memcellclear(&stack[oldTop]);
+    while(++oldTop <= top)
+      avm_memcellclear(&avm_stack[oldTop]);
 }
 
 void execute_pusharg(instruction* instr){
-    avm_memcell* arg = avm_translate_operand(instr->result,&ax);
+	
+	avm_memcell* arg = avm_translate_operand(instr->result,&ax);
+	
     assert(arg);
     /*this is actually stack[top] = arg,but we have to use
         avm_assign.*/
-
+	
     avm_assign(&avm_stack[top],arg);
     ++totalActuals;
     avm_dec_top();
@@ -186,11 +188,9 @@ void execute_newtable(instruction* instr){
 }
 
 void execute_tablegetelem(instruction * instr){
-printf("enter execute get \n");
- avm_memcell *t = avm_translate_operand(instr->arg1, (avm_memcell*) 0); //seg
-printf("enter execute get \n");
-  avm_memcell *lv = avm_translate_operand(instr->result, (avm_memcell*) 0);
-  avm_memcell *i = avm_translate_operand(instr->arg2, &ax);
+	avm_memcell *lv = avm_translate_operand(instr->result, (avm_memcell*) 0);
+ 	avm_memcell *t = avm_translate_operand(instr->arg1, (avm_memcell*) 0); //seg
+  	avm_memcell *i = avm_translate_operand(instr->arg2, &ax);
 
   //assert(lv && &avm_stack[N-1] >= lv && lv > &avm_stack[top] || lv == &retval);
   //assert(t && &avm_stack[N-1] >= t && t > &avm_stack[top]);
@@ -248,6 +248,7 @@ extern void execute_assign (instruction* instr){
     //assert(lv && (&avm_stack[AVM_STACKSIZE-1] >= lv && lv > &avm_stack[top] || lv==&retval));
     assert(rv);
     avm_assign(lv,rv);
+
 }
 
 /*never used*/
@@ -271,7 +272,7 @@ void execute_jeq (instruction* instr) {
     else
     if (rv1->type == bool_m || rv2->type == bool_m){
         result = ((avm_tobool(rv1) == avm_tobool(rv2))?1:0);
-	printf("%d",result);
+	
 	}
     else
     if(rv1->type != rv2->type){
@@ -314,7 +315,7 @@ void execute_jge (instruction* instr) {
         avm_error(tmp, &instrs[pc]);
     }
     else {
-        result = ((avm_toarithm(rv1) == avm_toarithm(rv2))?1:0);
+        result = ((avm_toarithm(rv1) >= avm_toarithm(rv2))?1:0);
     }
 
     if(!executionFinished && result)
@@ -428,7 +429,7 @@ void execute_jne (instruction* instr) {
     else
     if (rv1->type == bool_m || rv2->type == bool_m){
         result = ((avm_tobool(rv1) !=avm_tobool(rv2))?1:0); 
-	printf("rrr %d",result);}
+	}
     else
     if(rv1->type != rv2->type){
         char tmp[1024];
