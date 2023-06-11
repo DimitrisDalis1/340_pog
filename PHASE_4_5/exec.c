@@ -193,8 +193,9 @@ void execute_tablegetelem(instruction * instr){
  	avm_memcell *t = avm_translate_operand(instr->arg1, (avm_memcell*) 0); //seg
   	avm_memcell *i = avm_translate_operand(instr->arg2, &ax);
 
-  //assert(lv && &avm_stack[N-1] >= lv && lv > &avm_stack[top] || lv == &retval);
-  //assert(t && &avm_stack[N-1] >= t && t > &avm_stack[top]);
+
+  //assert(lv && &avm_stack[AVM_STACKSIZE-1] >= lv && lv > &avm_stack[top] || lv == &retval);
+  //assert(t && &avm_stack[AVM_STACKSIZE-1] >= t && t > &avm_stack[top]);
   assert(i);
 
   avm_memcellclear(lv);
@@ -206,12 +207,9 @@ void execute_tablegetelem(instruction * instr){
     avm_error(tmp, &instrs[pc]);
   }else{
     avm_memcell * content = avm_tablegetelem(t->data.tableVal, i);
-    if(content){
+    if(content != NULL){
       avm_assign(lv, content);
     }else{
-      if(disable_remove_warning)
-        disable_remove_warning--;
-      else{
         char* ts = avm_tostring(t);
         char* is = avm_tostring(i);
         char tmp[1024]; //dika tous
@@ -219,7 +217,7 @@ void execute_tablegetelem(instruction * instr){
         avm_warning(tmp, &instrs[pc]); //dika tous
         free(ts);
         free(is);
-      }
+      
     }
   }
 }
@@ -241,6 +239,7 @@ void execute_tablesetelem(instruction* instr) {
         avm_tablesetelem(t->data.tableVal, i, c);
 
 }
+
 
 extern void execute_assign (instruction* instr){
     avm_memcell* lv = avm_translate_operand(instr->result,(avm_memcell*)0);
