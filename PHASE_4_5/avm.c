@@ -388,6 +388,8 @@ int libfunc_hash(char* id){
 
 }
 
+
+
 char* number_tostring(avm_memcell* a){
     int n;
     n = getNumberOfDigits(a->data.numVal);
