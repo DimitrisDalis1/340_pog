@@ -69,6 +69,7 @@ void execute_return (instruction* instr) { assert(0); return; }
 
 
 void execute_call(instruction* instr){
+	printf("%lSSAAAAFGMMMMMMMMMocal\n");
     avm_memcell* func = avm_translate_operand(instr->result,&ax);
     assert(func);
     avm_callsaveenvironment(); 
@@ -77,6 +78,7 @@ void execute_call(instruction* instr){
     case userfunc_m :{
         pc = userfs[func->data.funcVal].address;
         assert(pc < AVM_ENDING_PC);
+
         assert(instrs[pc].opcode == funcenter_v);
         break;
     }
@@ -99,8 +101,10 @@ void execute_funcenter (instruction* instr){
     assert(pc == userfs[func->data.funcVal].address); /* Func address should match PC. */
     /* Callee actions here. */
     totalActuals = 0;
-    userfunc* funcInfo = userfuncs_getfunc(pc);
+    userfunc* funcInfo = userfuncs_getfunc(func->data.funcVal);
     topsp = top;
+
+	printf("%d lSSAAAAFGMMMMMMMMMocal\n",funcInfo -> localSize);
     top = top - funcInfo -> localSize; 
 }
 
@@ -110,11 +114,12 @@ void execute_funcexit(instruction* unused){
     pc = avm_get_envvalue(topsp + AVM_SAVEDPC_OFFSET);
     topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
 
-   // while(++oldTop <= top)
-        //avm_memcellclear(&stack[oldTop]);
+    //while(++oldTop <= top)
+     //  avm_memcellclear(&avm_stack[oldTop]);
 }
 
 void execute_pusharg(instruction* instr){
+	
 	avm_memcell* arg = avm_translate_operand(instr->result,&ax);
 	
     assert(arg);
@@ -187,10 +192,9 @@ void execute_newtable(instruction* instr){
 }
 
 void execute_tablegetelem(instruction * instr){
- avm_memcell *t = avm_translate_operand(instr->arg1, (avm_memcell*) 0); //seg
-
-  avm_memcell *lv = avm_translate_operand(instr->result, (avm_memcell*) 0);
-  avm_memcell *i = avm_translate_operand(instr->arg2, &ax);
+	avm_memcell *lv = avm_translate_operand(instr->result, (avm_memcell*) 0);
+ 	avm_memcell *t = avm_translate_operand(instr->arg1, (avm_memcell*) 0); //seg
+  	avm_memcell *i = avm_translate_operand(instr->arg2, &ax);
 
   //assert(lv && &avm_stack[N-1] >= lv && lv > &avm_stack[top] || lv == &retval);
   //assert(t && &avm_stack[N-1] >= t && t > &avm_stack[top]);

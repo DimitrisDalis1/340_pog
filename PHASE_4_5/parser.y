@@ -510,8 +510,6 @@ term : LEFTPAR expr RIGHTPAR
 	{
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
-		incurrscopeoffset();
-		$$->sym->offset=currscopeoffset();
 
 		emit(uminus, $$, $2, NULL, -1, yylineno); // _t0 = -x;
 	}
@@ -566,9 +564,6 @@ term : LEFTPAR expr RIGHTPAR
 		emit(add, $2, $2, num, -1, yylineno);
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
-		incurrscopeoffset();
-		$$->sym->offset=currscopeoffset();
-
 		emit(assign, $$, $2, NULL, -1, yylineno);
 	}
 
@@ -584,8 +579,6 @@ term : LEFTPAR expr RIGHTPAR
 	}
 	$$ = newexpr(var_e);
 	$$->sym = newtemp();
-	incurrscopeoffset();
-	$$->sym->offset=currscopeoffset();
 	if ($1->type == tableitem_e)
 	{
 		expr *val = emit_iftableitem($1);
@@ -621,8 +614,6 @@ term : LEFTPAR expr RIGHTPAR
 		emit(sub, $2, $2, newexpr_constint(1), -1, yylineno);
 		$$ = newexpr(arithexpr_e);
 		$$->sym = newtemp();
-		incurrscopeoffset();
-		$$->sym->offset=currscopeoffset();
 
 
 		emit(assign, $$, $2, NULL, -1, yylineno);
@@ -639,8 +630,6 @@ term : LEFTPAR expr RIGHTPAR
 	}
 	$$ = newexpr(var_e);
 	$$->sym = newtemp();
-	incurrscopeoffset();
-	$$->sym->offset=currscopeoffset();
 	if ($1->type == tableitem_e)
 	{
 		expr *val = emit_iftableitem($1);
@@ -689,9 +678,6 @@ assignexpr : lvalue ASSIGN expr
 		$$=newexpr(assignexpr_e);
 		
 		SymbolTableEntry *temp = newtemp();
-		incurrscopeoffset();
-		temp->offset=currscopeoffset();
-
 		$$->sym = temp;
 		
 		emit(assign, $$, $1, NULL, -1, yylineno);
@@ -748,23 +734,26 @@ lvalue : ID
 			entry = lookup_inScope(hash, (char *)$1, 0);
 			if (entry == NULL)
 			{
-
+				
 				if (current_scope == 0)
 				{
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, GLOBAL);
 					entry->space = programvar;
 					 program_offset++;
-					entry->offset = offset_;
+					entry->offset =currscopeoffset();
+					
 				}
 				else
 				{
 					offset_++;
 					entry = SymTable_insert(hash, (char *)$1, yylineno, NULL, current_scope, LOCALV);
 					entry->space = functionlocal;
-					entry->offset = offset_;
+					entry->offset = currscopeoffset();
+					
 				}
 				incurrscopeoffset();
+
 				$$ = lvalue_expr(entry);
 			}
 			else
@@ -807,6 +796,8 @@ lvalue : ID
 	}
 	else 
 	$$ = lvalue_expr(entry);
+	printf("OFFSET LVALUE %d %d\n",entry->offset, entry->space);
+	
 }
 | LOCAL ID
 {
@@ -826,23 +817,25 @@ lvalue : ID
 		}
 		else
 		{
+			
 			if (current_scope == 0)
 			{
 				offset_++;
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, GLOBAL);
 				entry->space = programvar;
-				entry->offset = offset_++;
+				entry->offset = currscopeoffset();
 				program_offset++;
-				incurrscopeoffset();
+				
 			}
 			else
 			{
 				offset_++;
 				entry = SymTable_insert(hash, (char *)$2, yylineno, NULL, current_scope, LOCALV);
 				entry->space = functionlocal;
-				entry->offset = offset_++;
-				incurrscopeoffset();
+				entry->offset = currscopeoffset();
+				
 			}
+			incurrscopeoffset();
 
 			$$ = lvalue_expr(entry);
 		}
@@ -855,6 +848,7 @@ lvalue : ID
 	}
 	
 	$$ = lvalue_expr(entry);
+	
 }
 | COLON2 ID
 {
@@ -865,8 +859,10 @@ lvalue : ID
 		isError = true;
 		$$=newexpr(nil_e);
 	}
-	else
-
+	else{
+		entry->space = currscopespace();
+		entry->offset = currscopeoffset();
+}
 		$$ = lvalue_expr(entry);
 	fprintf(yyout_y, "lvalue -> ::id\n");
 }
@@ -1068,8 +1064,6 @@ objectdef : LEFTBRACE elist RIGHTBRACE
 {
 	expr *t = newexpr(newtable_e);
 	t->sym = newtemp();
-	incurrscopeoffset();
-	t->sym->offset=currscopeoffset();
 	emit(tablecreate, t, NULL, NULL, -1, yylineno);
 	for (int i = 0; $2; $2 = $2->next)
 		emit(tablesetelem, t, newexpr_constint(i++), $2, -1, yylineno);
@@ -1080,8 +1074,6 @@ objectdef : LEFTBRACE elist RIGHTBRACE
 {
 	expr *t = newexpr(newtable_e);
 	t->sym = newtemp();
-	incurrscopeoffset();
-	t->sym->offset=currscopeoffset();
 	emit(tablecreate, t, NULL, NULL, -1, yylineno);
 	while ($2 != NULL)
 	{
@@ -1130,6 +1122,8 @@ funcname : ID
 
 funcprefix : FUNCTION funcname
 {
+	
+	
 	SymbolTableEntry *search = lookup_inScope(hash, (char *)$2, 0);
 	if (search != NULL)
 	{
@@ -1153,6 +1147,8 @@ funcprefix : FUNCTION funcname
 		$$ = newexpr(programfunc_e);
 		$$->sym = SymTable_insert(hash, (char *)$2, yylineno, NULL, temp, USERFUNC);
 		$$->sym->space=currscopespace();
+		$$->sym->offset=currscopeoffset();
+
 	}
 	else
 	{
@@ -1170,7 +1166,7 @@ funcprefix : FUNCTION funcname
 		$$->sym = search;
 	}
 	$$->iaddress = nextquadlabel(); 
-
+	//incurrscopeoffset();
 	int *tmp = malloc(sizeof(int));
 	*tmp = nextquadlabel();
 	push(func_stack, *tmp);
@@ -1178,26 +1174,29 @@ funcprefix : FUNCTION funcname
 	expr* func=newexpr(programfunc_e);
 	func->sym=$$->sym;
 	func->sym->value.funcVal->name=$2;
-	func->sym->address=nextquadlabel()+1;
-	func->iaddress=nextquadlabel()+1;
+	func->sym->address=nextquadlabel();
+	func->iaddress=nextquadlabel();
 	emit(funcstart,func, NULL, NULL, -1, yylineno);
 
 	push(stack_, offset_); 
 	offset_ = -1;
 	enterscopespace();
 	resetformalargoffset(); // Start formals from zero
+	
 	fprintf(yyout_y, "funcprefix -> FUNCTION funcname\n");};
 
 funcargs :
 	funcprefix M LEFTPAR{
+	
 	increase_scope();
+	
 	isFunct1 = true;
 	isFunct = true;
 }
 idlist RIGHTPAR
 {
 	$1->sym->value.funcVal->args = $5;
-	enterscopespace();		
+	enterscopespace();	
 	resetfunctionlocaloffset(); 
 	fprintf(yyout_y, "funcargs -> funcprefix M ( idlist )\n");};
 
@@ -1228,9 +1227,10 @@ funcblockend
 	$$ = $1;
 	loopcounter = pop(loopcounterstack);
 	sim_funcs--;
-	exitscopespace();
 	offset_ = pop(stack_);
-	restorecurrscopeoffset(offset);
+	restorecurrscopeoffset(offset_);
+	exitscopespace();
+	
 	patchlabel(fof,nextquad());
 	// printf("%d",fof);
 	patchlist($3->returnlist,nextquad()-1);
@@ -1254,15 +1254,18 @@ idlist:
 		}else{
 		
 		//insertion in the idlist and saving the idlist
-
+		
 		$$ = create_id_list();
 		insert($$,$1);
 
 		//insertion in the symtable/scopelist
 		SymbolTableEntry* temp;
 		temp = SymTable_insert(hash, $1, yylineno , NULL , current_scope, FORMAL);
-		temp->offset = formalArgOffset++;
+		temp->offset = currscopeoffset();
 		temp->space = formalarg;
+		printf("OFFSET FOmal %d %d\n",temp->offset, temp->space);
+
+		incurrscopeoffset();
 		fprintf(yyout_y,"idlist -> id\n");}
 	}
 	|idlist COMMA ID 
@@ -1283,15 +1286,17 @@ idlist:
     //insertion in the idlist and saving the idlist
     insert($1,$3);
     $$ = $1; //not sure if this is functional 
-
+	
 	//insertion in the symtable/scopelist
 	SymbolTableEntry* temp;
 		temp =SymTable_insert(hash, (const char*)$3, yylineno , NULL , current_scope, FORMAL); /*to 2o orisma htan $1 kai de douleue to print (obviously, afou to ena einai idlist kai to allo string)*/
 		//temp->offset = formalArgOffset++;
 		//temp->space = formalarg;
-		temp->space = currscopespace();
+		temp->space = formalarg;
 		temp->offset = currscopeoffset();
+		printf("OFFSET FOmal %d %d\n",temp->offset, temp->space);
 
+		incurrscopeoffset();
 	fprintf(yyout_y,"idlist -> idlist , ID\n");
 }
     fprintf(yyout_y,"idlist -> idlist , id\n");

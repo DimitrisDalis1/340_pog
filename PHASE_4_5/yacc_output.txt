@@ -25,9 +25,15 @@ assignexpr -> lvalue = expr
 expr -> assignexpr
 stmt -> expr;
 stmts -> stmts stmt
+funcname -> ID
+funcprefix -> FUNCTION funcname
+M -> NULL
+idlist ->  
+funcargs -> funcprefix M ( idlist )
+funcblockstart -> NULL
 lvalue -> id
-lvalue -> id
-primary -> lvalue
+const -> STRING
+primary -> const
 term -> primary
 expr -> term
 elist -> expr
@@ -38,33 +44,11 @@ primary -> call
 term -> primary
 expr -> term
 stmt -> expr;
-stmts -> stmts stmt
-lvalue -> id
-lvalue -> id
-primary -> lvalue
-term -> primary
-expr -> term
-elist -> expr
-normcall -> ( elist )
-callsuffix -> normcall
-call -> lvalue callsuffix
-primary -> call
-term -> primary
-expr -> term
-stmt -> expr;
-stmts -> stmts stmt
-lvalue -> id
-lvalue -> id
-primary -> lvalue
-term -> primary
-expr -> term
-elist -> expr
-normcall -> ( elist )
-callsuffix -> normcall
-call -> lvalue callsuffix
-primary -> call
-term -> primary
-expr -> term
-stmt -> expr;
+stmts -> stmt
+block -> { stmts }
+funcdef -> funcargs funcblockstart block
+funcblockend -> NULL
+funcdef -> funcblockend
+stmt -> funcdef
 stmts -> stmts stmt
 program -> stmt(asteraki)

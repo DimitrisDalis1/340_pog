@@ -95,7 +95,7 @@ avm_memcell* avm_translate_operand(vmarg* arg, avm_memcell* reg){
     if(reg)
         avm_memcellclear(reg);
     switch(arg->type){
-        case global_a: printf("\negrapsa edw %d\n",AVM_STACKSIZE - 1 - arg->val); return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
+        case global_a: return &avm_stack[AVM_STACKSIZE - 1 - arg->val];
         case local_a: return &avm_stack[topsp - arg->val];   
         case formal_a: return &avm_stack[topsp + AVM_STACKENV_SIZE + 1 + arg->val];
 

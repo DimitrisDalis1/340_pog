@@ -1,6 +1,10 @@
-a=3;
-c=333;
-d=9;
-print(a);
-print(c);
-print(d);
+f=9;
+d=90;
+s=23;
+function koko(){
+
+ print("pop");
+
+}
+
+//koko();

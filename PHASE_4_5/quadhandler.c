@@ -231,12 +231,16 @@ SymbolTableEntry* newtemp(){
 	char* name=newtempname();
 	SymbolTableEntry* sym=lookup_inScope_wA(hash,name,current_scope);
 	if(sym==NULL){
+		
 		if(current_scope==0)
 		{
 			program_offset++;
 			sym= SymTable_insert(hash,name,yylineno,NULL,current_scope,GLOBAL);
 			sym->space=programvar;
-			//sym->offset=offset_;
+			sym->offset=currscopeoffset();
+			incurrscopeoffset();
+			printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
+
 			return sym;
 
 
@@ -244,13 +248,22 @@ SymbolTableEntry* newtemp(){
 			sym=SymTable_insert(hash,name,yylineno,NULL,current_scope,LOCALV);
 			sym->space=functionlocal;
 			//sym->offset=offset_;
+			sym->offset=currscopeoffset();
+			incurrscopeoffset();
+			printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
+
 			return sym;
 
 		}
 		
 	}else{
+		sym->offset=currscopeoffset();
+		sym->space=currscopespace();
 		return sym;
 	}
+	printf("OFFSET LVALUE  tem %d %d\n",sym->offset, sym->space);
+
+	incurrscopeoffset();
 
 }
 
