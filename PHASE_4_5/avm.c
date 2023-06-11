@@ -184,91 +184,115 @@ int numHash(int x){
 //}
 //int userfuncHash(userfunc*);
 
-avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
-    assert(table);
-    assert(index);
-    if(index->type != string_m && index->type != number_m){
-        avm_error("table index can only be a string or a number",&code[pc]);
-    }
+avm_table_bucket* avm_tablelookup(avm_table* table, avm_memcell* index) {
+    avm_table_bucket* temp= (avm_table_bucket*) 0;
+	int key;
     if(index->type == number_m){
-        int key = numHash(index->data.numVal);
-        avm_table_bucket *temp = table->numIndexed[key];
-        while(!temp){
-            if(temp->value->data.numVal == index->data.numVal){
-                return temp->value;
+    	 key = numHash(index->data.numVal);
+         temp = table->numIndexed[key];
+	if(temp != NULL){printf("prin loopa temp numval is %lf \n",temp->value->data.numVal); }else{printf("used in set\n");};
+	 printf("prin loopa index numval is %lf \n",index->data.numVal);
+	 
+
+         while(temp !=NULL){ 
+		printf("loop index numval is %lf \n",index->data.numVal);
+             if(temp != NULL){printf("loop temp numval is %lf \n",temp->key->data.numVal);}
+		if(temp->key->data.numVal == index->data.numVal){
+			return temp;
+		}
+                temp = temp->next;
+	}
+		printf("end loop index numval is %lf \n",index->data.numVal);
+             	 if(temp != NULL){printf("end loop temp numval is %lf \n",temp->key->data.numVal);}
+
+
+	}else if(index->type == string_m){
+	key = strHash(index->data.strVal);
+        temp = table->strIndexed[key];
+        while(temp){
+            if(!strcmp(temp->value->data.strVal ,index->data.strVal)){
+                return temp;
             }
             temp = temp->next;
         }
-        avm_warning("Table element cannot be found",&code[pc]);
-        return NULL;
-    }else if(index->type == string_m){
-        int key = strHash(index->data.strVal);
-        avm_table_bucket *temp = table->strIndexed[key];
-        while(!temp){
-            if(strcmp(temp->value->data.strVal ,index->data.strVal)){
-                return temp->value;
-            }
-            temp = temp->next;
-        }
-        avm_warning("Table element cannot be found",&code[pc]);
-        return NULL;
-        }
+	}
+    return temp;
 }
 
 void avm_tablesetelem(avm_table* table,avm_memcell* index,avm_memcell* content){
+	avm_table_bucket* new_bucket;
+	avm_table_bucket *start;
     assert(table);
     assert(index);
-    int found = 0;
     if(index->type != string_m && index->type != number_m){
-        avm_error("table index can only be a string or a number",&code[pc]);
+        avm_error("table index can only be a string or a number",&instrs[pc]);
     }
-
     if(index->type == number_m){
-
         int key = numHash(index->data.numVal);
+        avm_table_bucket *temp =  avm_tablelookup(table, index);
+	if(content->type == nil_m){
+		if(temp != NULL) {
+            		avm_memcellclear(temp->key);
+            		avm_memcellclear(temp->value);
+        	}
+		if(table->total > 0) 
+            		table->total--;
+        	return;
+	}
+        if(temp == NULL){
+		 start = table->numIndexed[key];
+            	new_bucket = malloc(sizeof(avm_table_bucket));
+		new_bucket->key = index;
+        	new_bucket->value = content;
+		new_bucket->next = table->numIndexed[key];
+		table->numIndexed[key] = new_bucket;
 
-        avm_table_bucket *temp = table->numIndexed[key];
+		//new_bucket->next = start;
+		//table->numIndexed[key] = new_bucket;
+            	
+          }else{
+		avm_assign(temp->value, content);
+	}
+	table->total++;
+}else if(index->type == string_m){
+     int key = strHash(index->data.strVal);
+        avm_table_bucket *temp =  avm_tablelookup(table, index);
+	if(content->type == nil_m){
+		if(temp != NULL) {
+            		avm_memcellclear(temp->key);
+            		avm_memcellclear(temp->value);
+        	}
+		if(table->total > 0) 
+            		table->total--;
+        	return;
+	}
+        if(temp == NULL){
+		 start = table->strIndexed[key];
+            	new_bucket = malloc(sizeof(avm_table_bucket));
+		if(!new_bucket){ avm_error("Not enough space \n",&instrs[pc]);}
+		new_bucket->key= index;
+        	new_bucket->value= content;
+		table->strIndexed[key] = new_bucket;
+            	new_bucket->next = start;
+          }else{
+		avm_assign(temp->value, content);
+	}
+	table->total++;
+}
+}
 
-        while(temp){
-		int x = temp->value->data.numVal;
-            if(temp->value->data.numVal == index->data.numVal){
-                avm_assign(temp->value,content);
-                found = 1;
-            }
-            temp = temp->next;
+avm_memcell* avm_tablegetelem (avm_table*  table,avm_memcell* index){
+printf("psaxnoume index numval is %lf \n",index->data.numVal);
+             
+    assert(table);
+    assert(index);
+	
 
-        }
-        if(found == 0){
-            avm_table_bucket *start = table->numIndexed[key];
-            avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
-            new_bucket->value = content;
-            new_bucket->key = index;
-            new_bucket->next = start;
-            start = new_bucket;
-            table->total++;
-        }
-    }else if(index->type == string_m){
-        if(index->type == string_m){
-        int key = strHash(index->data.strVal);
-        avm_table_bucket *temp = table->strIndexed[key];
-        while(!temp){
-            if(strcmp(temp->value->data.strVal ,index->data.strVal)){
-                avm_assign(temp->value,content);
-                found = 1;
-            }
-            temp = temp->next;
-        }
-        if(found){
-            avm_table_bucket *start = table->strIndexed[key];
-            avm_table_bucket *new_bucket = malloc(sizeof(avm_table_bucket));
-            new_bucket->value = content;
-            new_bucket->key = index;
-            new_bucket->next = start;
-            start = new_bucket;
-            table->total++;
-        }
-        }
-    }
+    avm_memcell* result = (avm_memcell*) 0;
+    avm_table_bucket* temp = avm_tablelookup(table, index);
+    if(temp == NULL){printf("here i am commiting suicide");}
+    if(temp){ result = temp->value;}
+    return result;
 }
 
 
